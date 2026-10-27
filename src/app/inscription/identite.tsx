@@ -6,9 +6,9 @@ import { Button, Field, Intro, Screen, TopBar } from '@/components/ui';
 
 export default function InscriptionIdentite() {
   return (
-    <Screen footer={<Button label="Continuer" onPress={() => router.push('/inscription/permis')} />}>
+    <Screen footer={<Button label="Continuer" onPress={() => router.push('/inscription/vehicule')} />}>
       <TopBar title="Inscription" />
-      <Steps step={1} total={3} label="Identité" />
+      <Steps step={1} total={4} label="Identité" />
       <Intro title="Faisons connaissance" description="Ces informations serviront à créer votre dossier ANTS et votre contrat de formation." />
       <View style={{ gap: 16 }}>
         <View style={{ flexDirection: 'row', gap: 12 }}>

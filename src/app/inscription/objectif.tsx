@@ -24,7 +24,7 @@ export default function InscriptionObjectif() {
   return (
     <Screen footer={<Button label="Créer mon dossier" onPress={() => router.replace('/inscription/confirmee')} />}>
       <TopBar title="Inscription" />
-      <Steps step={3} total={3} label="Objectif et disponibilités" />
+      <Steps step={4} total={4} label="Objectif et disponibilités" />
       <Intro title="Votre objectif" description="On s’en sert pour vous proposer un planning de leçons adapté." />
       <View style={{ gap: 10 }}>
         {goals.map((g) => (

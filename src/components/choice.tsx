@@ -1,9 +1,11 @@
-import { Check } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { colors, font, radius } from '@/theme';
+import { Radio, SelectCard } from '@/components/animated';
+import { colors, font } from '@/theme';
 
-/** Carte sélectionnable (formule, type de permis…) */
+/** Carte sélectionnable animée (objectif, formule…) */
 export function ChoiceCard({
   title,
   subtitle,
@@ -18,14 +20,14 @@ export function ChoiceCard({
   onPress?: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.card, selected && styles.selected]}>
-      <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <Check size={14} color="#fff" strokeWidth={3} /> : null}</View>
+    <SelectCard selected={!!selected} onPress={onPress} style={styles.card}>
+      <Radio on={!!selected} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={font.h3}>{title}</Text>
         {subtitle ? <Text style={font.small}>{subtitle}</Text> : null}
       </View>
       {right ? <Text style={[font.h3, { color: selected ? colors.primary : colors.ink }]}>{right}</Text> : null}
-    </Pressable>
+    </SelectCard>
   );
 }
 
@@ -35,7 +37,9 @@ export function Steps({ step, total, label }: { step: number; total: number; lab
     <View style={{ gap: 10 }}>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {Array.from({ length: total }, (_, i) => (
-          <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i < step ? colors.primary : '#E3E7F2' }} />
+          <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E3E7F2', overflow: 'hidden' }}>
+            {i < step ? <StepFill animate={i === step - 1} /> : null}
+          </View>
         ))}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -48,18 +52,16 @@ export function Steps({ step, total, label }: { step: number; total: number; lab
   );
 }
 
+/** Segment rempli ; celui de l'étape en cours se remplit à l'arrivée sur l'écran */
+function StepFill({ animate }: { animate: boolean }) {
+  const fill = useSharedValue(animate ? 0 : 1);
+  useEffect(() => {
+    fill.value = withDelay(150, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+  }, [fill]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
+  return <Animated.View style={[{ flex: 1, backgroundColor: colors.primary, transformOrigin: 'left' }, style]} />;
+}
+
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  selected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.input, alignItems: 'center', justifyContent: 'center' },
-  radioOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
 });

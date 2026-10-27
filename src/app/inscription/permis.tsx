@@ -1,25 +1,47 @@
-import { router } from 'expo-router';
-import { Car, CarFront, CircleCheck, HeartHandshake, type LucideIcon } from 'lucide-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Bike, Car, CarFront, CircleCheck, HeartHandshake, Motorbike, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, LinearTransition } from 'react-native-reanimated';
 
+import { Radio, SelectCard } from '@/components/animated';
 import { Steps } from '@/components/choice';
 import { CtaButton, Screen, TopBar } from '@/components/ui';
-import { colors, font, radius } from '@/theme';
+import { colors, font } from '@/theme';
 
-const licences: { key: string; title: string; subtitle: string; icon: LucideIcon }[] = [
-  { key: 'manuelle', title: 'Permis B · Manuelle', subtitle: 'Le classique, sans limites', icon: CarFront },
-  { key: 'auto', title: 'Permis B · Automatique', subtitle: 'La conduite, en toute simplicité', icon: Car },
-];
+type Licence = { key: string; title: string; subtitle: string; icon: LucideIcon };
+type Formula = { key: string; name: string; short: string; badge: string; price: string; split: string; detail: string; pitch: string };
 
-const formulas = [
-  { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', badge: 'LE BON DÉPART', price: '1 190 €', split: 'ou 3 × 396,67 €', detail: '20 h de conduite + code en ligne inclus', pitch: 'L’essentiel pour bien démarrer' },
-  { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 30 h', badge: 'LE PLUS COMPLET', price: '1 590 €', split: 'ou 3 × 530 €', detail: '30 h de conduite + code en ligne + examen blanc inclus', pitch: 'Plus de pratique, plus de confiance' },
-];
+const offers: Record<'voiture' | 'moto', { title: string; licences: Licence[]; formulas: Formula[] }> = {
+  voiture: {
+    title: 'À chacun sa route.',
+    licences: [
+      { key: 'manuelle', title: 'Permis B · Manuelle', subtitle: 'Le classique, sans limites', icon: CarFront },
+      { key: 'auto', title: 'Permis B · Automatique', subtitle: 'La conduite, en toute simplicité', icon: Car },
+    ],
+    formulas: [
+      { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', badge: 'LE BON DÉPART', price: '1 190 €', split: 'ou 3 × 396,67 €', detail: '20 h de conduite + code en ligne inclus', pitch: 'L’essentiel pour bien démarrer' },
+      { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 30 h', badge: 'LE PLUS COMPLET', price: '1 590 €', split: 'ou 3 × 530 €', detail: '30 h de conduite + code en ligne + examen blanc inclus', pitch: 'Plus de pratique, plus de confiance' },
+    ],
+  },
+  moto: {
+    title: 'À chacun sa trajectoire.',
+    licences: [
+      { key: 'a2', title: 'Permis A2', subtitle: 'Toutes les motos jusqu’à 35 kW, dès 18 ans', icon: Motorbike },
+      { key: '125', title: 'Formation 125 cm³', subtitle: '7 h pour rouler en 125 avec le permis B', icon: Bike },
+    ],
+    formulas: [
+      { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', badge: 'LE BON DÉPART', price: '990 €', split: 'ou 3 × 330 €', detail: '20 h plateau et circulation + code moto inclus', pitch: 'L’essentiel pour bien démarrer' },
+      { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 28 h', badge: 'LE PLUS COMPLET', price: '1 290 €', split: 'ou 3 × 430 €', detail: '28 h plateau et circulation + code moto + équipement prêté', pitch: 'Plus de pratique, plus de confiance' },
+    ],
+  },
+};
 
-/** Inscription · Permis et formule (étape 2) — calqué sur la maquette Figma */
+/** Inscription · Permis et formule (étape 3) — calqué sur la maquette Figma */
 export default function InscriptionPermis() {
-  const [licence, setLicence] = useState('manuelle');
+  const { vehicule } = useLocalSearchParams<{ vehicule?: string }>();
+  const offer = offers[vehicule === 'moto' ? 'moto' : 'voiture'];
+  const [licence, setLicence] = useState(offer.licences[0].key);
   const [formula, setFormula] = useState('essentiel');
 
   return (
@@ -34,20 +56,20 @@ export default function InscriptionPermis() {
         </View>
       }>
       <TopBar title="Inscription" />
-      <Steps step={2} total={3} label="Votre liberté commence ici" />
+      <Steps step={3} total={4} label="Votre liberté commence ici" />
 
       <View style={{ gap: 10 }}>
-        <Text style={styles.title}>À chacun sa route.</Text>
+        <Text style={styles.title}>{offer.title}</Text>
         <Text style={[font.body, { color: colors.muted }]}>Un permis et une formule qui vous ressemblent.</Text>
       </View>
 
       <View style={{ gap: 12 }}>
         <Text style={styles.label}>Je choisis mon permis</Text>
-        {licences.map((l) => {
+        {offer.licences.map((l) => {
           const on = licence === l.key;
           const Icon = l.icon;
           return (
-            <Pressable key={l.key} onPress={() => setLicence(l.key)} style={[styles.option, on && styles.optionOn]}>
+            <SelectCard key={l.key} selected={on} onPress={() => setLicence(l.key)} style={styles.option}>
               <View style={[styles.iconBox, on && styles.iconBoxOn]}>
                 <Icon size={20} color={on ? colors.ink : colors.primary} strokeWidth={1.8} />
               </View>
@@ -56,83 +78,63 @@ export default function InscriptionPermis() {
                 <Text style={font.tiny}>{l.subtitle}</Text>
               </View>
               <Radio on={on} />
-            </Pressable>
+            </SelectCard>
           );
         })}
       </View>
 
       <View style={{ gap: 12 }}>
         <Text style={styles.label}>Ma formule de départ</Text>
-        {formulas.map((f) =>
-          formula === f.key ? (
-            <View key={f.key} style={styles.formulaOn}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 19, fontWeight: '700', color: colors.ink }}>{f.name}</Text>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{f.badge}</Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                <Text style={styles.price}>{f.price}</Text>
-                <Text style={font.tiny}>{f.split}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <CircleCheck size={16} color={colors.primary} />
-                <Text style={{ fontSize: 13, color: colors.ink }}>{f.detail}</Text>
-              </View>
-            </View>
-          ) : (
-            <Pressable key={f.key} onPress={() => setFormula(f.key)} style={styles.formula}>
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text style={{ fontSize: 15, fontWeight: '500', color: colors.ink }}>{f.short}</Text>
-                <Text style={font.tiny}>{f.pitch}</Text>
-              </View>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>{f.price}</Text>
-            </Pressable>
-          ),
-        )}
+        {offer.formulas.map((f) => {
+          const on = formula === f.key;
+          return (
+            // La carte change de taille en douceur quand elle se déplie ou se replie
+            <Animated.View key={f.key} layout={LinearTransition.springify().damping(20).stiffness(180)}>
+              <SelectCard selected={on} onPress={() => setFormula(f.key)} selectedBackground={colors.card} style={styles.formula}>
+                {on ? (
+                  <Animated.View key="open" entering={FadeIn.duration(260)} style={{ gap: 12 }}>
+                    <View style={styles.row}>
+                      <Text style={{ fontSize: 19, fontWeight: '700', color: colors.ink }}>{f.name}</Text>
+                      <Animated.View entering={FadeInDown.delay(80).duration(260)} style={styles.badge}>
+                        <Text style={styles.badgeText}>{f.badge}</Text>
+                      </Animated.View>
+                    </View>
+                    <Animated.View entering={FadeInDown.delay(60).duration(300)} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                      <Text style={styles.price}>{f.price}</Text>
+                      <Text style={font.tiny}>{f.split}</Text>
+                    </Animated.View>
+                    <Animated.View entering={FadeInDown.delay(120).duration(300)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <CircleCheck size={16} color={colors.primary} />
+                      <Text style={{ fontSize: 13, color: colors.ink, flex: 1 }}>{f.detail}</Text>
+                    </Animated.View>
+                  </Animated.View>
+                ) : (
+                  <Animated.View key="closed" entering={FadeIn.duration(220)} style={styles.row}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '500', color: colors.ink }}>{f.short}</Text>
+                      <Text style={font.tiny}>{f.pitch}</Text>
+                    </View>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>{f.price}</Text>
+                  </Animated.View>
+                )}
+              </SelectCard>
+            </Animated.View>
+          );
+        })}
       </View>
     </Screen>
-  );
-}
-
-function Radio({ on }: { on: boolean }) {
-  return (
-    <View style={[styles.radio, on && { borderColor: colors.primary, backgroundColor: colors.primary }]}>
-      {on ? <View style={styles.radioDot} /> : null}
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: '800', color: colors.ink, letterSpacing: -0.8 },
   label: { fontSize: 14, fontWeight: '600', color: colors.ink },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 14,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  optionOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 },
   optionTitle: { fontSize: 15, fontWeight: '600', color: colors.ink },
   iconBox: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   iconBoxOn: { backgroundColor: colors.card },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.input, alignItems: 'center', justifyContent: 'center' },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
-  formulaOn: { gap: 12, padding: 16, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.primary, backgroundColor: colors.card },
-  formula: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
+  formula: { padding: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.primarySoft },
   badgeText: { fontSize: 10.5, fontWeight: '700', color: colors.primary, letterSpacing: 0.4 },
   price: { fontSize: 32, fontWeight: '800', color: colors.primary, letterSpacing: -0.8 },
