@@ -1,25 +1,24 @@
 /**
  * Virage — design system
- * Repris de Nautiflow : un bleu franc pour l'action, un bleu nuit pour le texte,
- * des fonds blancs légèrement bleutés. Les couleurs d'état restent discrètes.
- * Toutes les couleurs de l'app passent par ce fichier : pour coller aux maquettes
- * Figma, il suffit d'ajuster les valeurs ici.
+ * Couleurs reprises des maquettes Figma : un bleu électrique pour l'action, un bleu nuit
+ * pour le texte, des fonds blancs légèrement bleutés. Les couleurs d'état restent discrètes.
+ * Toutes les couleurs de l'app passent par ce fichier.
  */
 
 export const colors = {
-  background: '#F5F8FC',
+  background: '#F6F7FB',
   card: '#FFFFFF',
   subtle: '#F8FAFD',
-  ink: '#0B1B33',
-  text: '#0B1B33',
+  ink: '#14203C',
+  text: '#14203C',
   muted: '#5B6B82',
   faint: '#8A99AF',
   border: '#E3EAF4',
   input: '#DBE4F0',
 
-  primary: '#1E6FD9',
-  primaryStrong: '#1557B0',
-  primarySoft: '#EAF2FD',
+  primary: '#2D50F5',
+  primaryStrong: '#1F3BD1',
+  primarySoft: '#ECEFFE',
   onPrimary: '#FFFFFF',
 
   success: '#12865A',
@@ -65,7 +64,7 @@ export const shadow = {
     elevation: 1,
   },
   primary: {
-    shadowColor: '#1E6FD9',
+    shadowColor: '#2D50F5',
     shadowOpacity: 0.3,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },

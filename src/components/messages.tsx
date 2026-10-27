@@ -35,7 +35,7 @@ export function Inbox({ basePath, intro }: { basePath: string; intro: string }) 
         <Section title="À lire" action="Tout marquer lu">
           <View style={{ gap: 10 }}>
             {unread.map((c) => (
-              <Card key={c.id} onPress={() => open(c)} style={{ padding: 14, borderColor: '#CFE0F8' }}>
+              <Card key={c.id} onPress={() => open(c)} style={{ padding: 14, borderColor: '#D5DCFD' }}>
                 <ConversationRow c={c} />
               </Card>
             ))}
