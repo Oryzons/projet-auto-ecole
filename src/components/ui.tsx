@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowLeft, ChevronRight, CircleQuestionMark, type LucideIcon } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, ChevronRight, CircleQuestionMark, type LucideIcon } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import {
   Pressable,
@@ -247,6 +247,16 @@ export function Button({
   );
 }
 
+/** Bouton d'action principal des parcours : libellé à gauche, flèche à droite */
+export function CtaButton({ label, onPress, icon: Icon = ArrowRight }: { label: string; onPress?: () => void; icon?: LucideIcon }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.cta, shadow.primary, pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] }]}>
+      <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{label}</Text>
+      <Icon size={20} color={colors.onPrimary} />
+    </Pressable>
+  );
+}
+
 export function Field({ label, hint, ...props }: TextInputProps & { label: string; hint?: string }) {
   return (
     <View style={{ gap: 6 }}>
@@ -351,7 +361,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   topBar: { height: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  topBarTitle: { fontSize: 14, fontWeight: '600', color: colors.muted },
+  topBarTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
   iconButton: {
     width: 40,
     height: 40,
@@ -386,6 +396,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   buttonText: { fontSize: 16, fontWeight: '600' },
+  cta: {
+    height: 54,
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   label: { fontSize: 13, fontWeight: '600', color: colors.ink },
   input: {
     height: 50,

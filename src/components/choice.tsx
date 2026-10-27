@@ -1,7 +1,6 @@
 import { Check } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Progress } from '@/components/ui';
 import { colors, font, radius } from '@/theme';
 
 /** Carte sélectionnable (formule, type de permis…) */
@@ -30,17 +29,21 @@ export function ChoiceCard({
   );
 }
 
-/** En-tête d'étape du parcours d'inscription */
+/** En-tête d'étape du parcours d'inscription : barre segmentée + libellés */
 export function Steps({ step, total, label }: { step: number; total: number; label: string }) {
   return (
-    <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={[font.small, { fontWeight: '700', color: colors.primary }]}>
-          Étape {step} sur {total}
-        </Text>
-        <Text style={font.small}>{label}</Text>
+    <View style={{ gap: 10 }}>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {Array.from({ length: total }, (_, i) => (
+          <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i < step ? colors.primary : '#E3E7F2' }} />
+        ))}
       </View>
-      <Progress value={step / total} height={5} />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, letterSpacing: 0.4 }}>
+          ÉTAPE {step} SUR {total}
+        </Text>
+        <Text style={font.tiny}>{label}</Text>
+      </View>
     </View>
   );
 }
