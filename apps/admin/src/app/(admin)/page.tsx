@@ -1,5 +1,4 @@
 import { ArrowUpRight, CalendarPlus, Car, Flag, FolderCheck, MapPin, MessageCircle, TriangleAlert, Trophy, UserPlus, UsersRound, Wallet, type LucideIcon } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import { adminKpis, instructors, planningGrid, school } from '@virage/shared/mock';
@@ -34,7 +33,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Carte principale, comme sur l'app : la journée de l'auto-école et la voiture */}
+      {/* Carte principale, comme sur l'app : la journée de l'auto-école */}
       <section className={s.hero} style={{ ['--i' as string]: 1 }}>
         <div className={s.heroText}>
           <p className={s.heroEyebrow}>
@@ -55,15 +54,6 @@ export default function Dashboard() {
             <span>
               <Flag size={14} /> Objectif d’octobre à {Math.round((k.revenueMonth / MONTH_GOAL) * 100)} %
             </span>
-          </div>
-        </div>
-        <div className={s.scene} aria-hidden>
-          <div className={s.road}>
-            <i />
-          </div>
-          <div className={s.carWrap}>
-            <Image src="/images/voiture.png" alt="" width={321} height={175} priority className={s.car} />
-            <span className={s.carShadow} />
           </div>
         </div>
       </section>
