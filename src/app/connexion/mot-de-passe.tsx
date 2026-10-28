@@ -32,7 +32,7 @@ export default function ConnexionMotDePasse() {
       <TopBar title="Connexion" />
       <Steps step={2} total={2} label="Votre espace vous attend" />
       <AuthHero source={require('@/assets/images/connexion-cadenas.jpg')} />
-      <AuthTitle title={`Bonjour,\n${name}.`} text="Plus qu’un mot de passe avant de retrouver votre liberté." />
+      <AuthTitle title={`Bonjour, ${name}.`} text="Plus qu’un mot de passe avant de retrouver votre liberté." />
 
       <Animated.View entering={FadeInDown.delay(120).duration(380)} style={{ gap: 18 }}>
         <View style={styles.account}>
