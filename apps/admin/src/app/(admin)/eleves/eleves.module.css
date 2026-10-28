@@ -1,7 +1,114 @@
-.table {
-  padding: 0;
-  overflow: hidden;
+/* Élèves : même langage visuel que l'app (cartes arrondies, barres fines, pastilles) */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1180px;
 }
+
+.header,
+.journey,
+.toolbar {
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+/* ---------- Parcours ---------- */
+
+.journey {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 22px 12px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.stage strong {
+  margin-top: 6px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.stage > span:last-child {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.stageIcon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 4px solid var(--card);
+}
+
+.stageDone {
+  background: var(--success);
+  color: #fff;
+}
+
+.link {
+  position: absolute;
+  top: 23px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-soft), var(--primary));
+  opacity: 0.5;
+}
+
+/* ---------- Filtres ---------- */
 
 .toolbar {
   display: flex;
@@ -9,26 +116,25 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
 }
 
 .chips {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted);
+  background: var(--card);
+  box-shadow: var(--shadow);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -37,100 +143,173 @@
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--neutral-soft);
+  color: var(--muted);
 }
 
-.chip:hover {
-  background: var(--subtle);
-}
-
-.chipOn,
-.chipOn:hover {
+.chipOn {
   background: var(--ink);
   color: #fff;
 }
 
 .chipOn span {
   background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .search {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  transition: box-shadow 0.15s ease;
+}
+
+.search:focus-within {
+  box-shadow: 0 0 0 3px var(--primary-soft), var(--shadow);
 }
 
 .search input {
+  width: 200px;
   border: 0;
   outline: 0;
   background: none;
-  width: 160px;
+  color: var(--ink);
 }
 
-.scroll {
-  overflow-x: auto;
+/* ---------- Cartes élèves ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
 }
 
-.table table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 760px;
-}
-
-.table th {
-  text-align: left;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  color: var(--faint);
-  padding: 12px 20px;
-  background: var(--subtle);
-}
-
-.table td {
-  padding: 14px 20px;
-  border-top: 1px solid var(--border);
-}
-
-.table tbody tr {
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  transition: background 0.12s ease;
+  animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(0.18s + var(--c, 0) * 50ms);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
 }
 
-.table tbody tr:hover {
-  background: var(--subtle);
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 2px 4px rgba(15, 40, 84, 0.04), 0 16px 32px rgba(15, 40, 84, 0.1);
 }
 
-.person {
+.cardHead {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
-.docs {
+.name {
+  display: block;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+}
+
+.sub {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.bars {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.progress {
+  width: 100%;
+}
+
+.progressHead {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.progressHead span {
+  color: var(--muted);
 }
 
 .track {
-  width: 80px;
-  height: 6px;
+  height: 5px;
   border-radius: 3px;
-  background: var(--neutral-soft);
+  background: #e6eaf8;
   overflow: hidden;
 }
 
-.track div {
+.track span {
+  display: block;
   height: 100%;
   border-radius: 3px;
+  transform-origin: left;
+  animation: fill 0.9s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-/* ---------- Panneau latéral ---------- */
+@keyframes fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.pillOk {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.balance {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ---------- Fiche élève ---------- */
 
 .backdrop {
   position: fixed;
@@ -153,12 +332,15 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  width: min(400px, 100vw);
-  padding: 28px;
-  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(420px, 100vw);
+  padding: 32px 28px;
+  background: var(--background);
   box-shadow: -20px 0 40px rgba(15, 40, 84, 0.12);
   transform: translateX(105%);
-  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   overflow-y: auto;
 }
 
@@ -168,14 +350,15 @@
 
 .close {
   position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  top: 20px;
+  right: 20px;
   display: grid;
   place-items: center;
-  background: var(--subtle);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
 }
 
 .drawerHead {
@@ -184,44 +367,112 @@
   align-items: center;
   gap: 6px;
   text-align: center;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .drawerHead h2 {
   margin: 8px 0 0;
-  font-size: 21px;
-  letter-spacing: -0.4px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.7px;
 }
 
-.drawerHead p {
-  margin: 0 0 6px;
+.quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
-.actions {
+.quickBtn {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin: 22px 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--primary);
+  transition: transform 0.15s ease;
+}
+
+.quickBtn span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.quickBtn:hover {
+  transform: translateY(-2px);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow);
 }
 
 .facts {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px 16px;
   margin: 0;
-  padding: 18px;
-  border-radius: 14px;
-  background: var(--subtle);
+  padding: 6px 18px;
+  list-style: none;
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow);
 }
 
-.facts dt {
+.facts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  font-size: 13.5px;
+}
+
+.facts li + li {
+  border-top: 1px solid var(--border);
+}
+
+.facts span {
   color: var(--muted);
-  font-size: 13px;
 }
 
-.facts dd {
-  margin: 0;
-  text-align: right;
-  font-weight: 600;
-  font-size: 13px;
+.wide {
+  justify-content: center;
+  height: 50px;
+  border-radius: 14px;
+}
+
+@media (max-width: 760px) {
+  .title {
+    font-size: 26px;
+  }
+  .journey {
+    grid-template-columns: repeat(5, minmax(56px, 1fr));
+    overflow-x: auto;
+  }
+  .stage > span:last-child {
+    font-size: 11px;
+  }
+  .search,
+  .search input {
+    width: 100%;
+  }
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .journey,
+  .toolbar,
+  .card,
+  .track span {
+    animation: none;
+  }
 }

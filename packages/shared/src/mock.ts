@@ -279,15 +279,22 @@ export type AdminStudent = {
   tone: Tone;
   balance: number;
   docs: string;
+  /** heures de conduite faites / prévues au forfait */
+  hours: number;
+  hoursTotal: number;
+  /** moyenne aux séries de code, sur 40 */
+  code: number;
+  instructor: string;
+  phone: string;
 };
 
 export const adminStudents: AdminStudent[] = [
-  { id: 'lucas', name: 'Lucas Martin', licence: 'Permis B · Forfait 20 h', step: 'Pièces à vérifier', tone: 'warning', balance: 450, docs: '3/5' },
-  { id: 'emma', name: 'Emma Petit', licence: 'Permis B · AAC', step: 'Prête pour l’examen', tone: 'success', balance: 0, docs: '5/5' },
-  { id: 'ines', name: 'Inès Moreau', licence: 'Permis B · Forfait 20 h', step: 'En formation', tone: 'primary', balance: 900, docs: '5/5' },
-  { id: 'nathan', name: 'Nathan Roux', licence: 'Permis B · Forfait 30 h', step: 'Examen le 12 nov.', tone: 'violet', balance: 0, docs: '5/5' },
-  { id: 'chloe', name: 'Chloé Garnier', licence: 'Permis B · Boîte auto', step: 'Impayé', tone: 'danger', balance: 620, docs: '5/5' },
-  { id: 'hugo', name: 'Hugo Lefebvre', licence: 'Code seul', step: 'Dossier incomplet', tone: 'neutral', balance: 0, docs: '1/5' },
+  { id: 'lucas', name: 'Lucas Martin', licence: 'Permis B · Forfait 20 h', step: 'Pièces à vérifier', tone: 'warning', balance: 450, docs: '3/5', hours: 12, hoursTotal: 20, code: 32, instructor: 'Julie Bernard', phone: '06 12 34 56 78' },
+  { id: 'emma', name: 'Emma Petit', licence: 'Permis B · AAC', step: 'Prête pour l’examen', tone: 'success', balance: 0, docs: '5/5', hours: 22, hoursTotal: 20, code: 38, instructor: 'Julie Bernard', phone: '06 45 12 78 90' },
+  { id: 'ines', name: 'Inès Moreau', licence: 'Permis B · Forfait 20 h', step: 'En formation', tone: 'primary', balance: 900, docs: '5/5', hours: 8, hoursTotal: 20, code: 29, instructor: 'Karim Haddad', phone: '07 81 22 43 10' },
+  { id: 'nathan', name: 'Nathan Roux', licence: 'Permis B · Forfait 30 h', step: 'Examen le 12 nov.', tone: 'violet', balance: 0, docs: '5/5', hours: 27, hoursTotal: 30, code: 36, instructor: 'Julie Bernard', phone: '06 98 55 21 04' },
+  { id: 'chloe', name: 'Chloé Garnier', licence: 'Permis B · Boîte auto', step: 'Impayé', tone: 'danger', balance: 620, docs: '5/5', hours: 10, hoursTotal: 13, code: 34, instructor: 'Sophie Laurent', phone: '07 66 31 09 87' },
+  { id: 'hugo', name: 'Hugo Lefebvre', licence: 'Code seul', step: 'Dossier incomplet', tone: 'neutral', balance: 0, docs: '1/5', hours: 0, hoursTotal: 0, code: 21, instructor: '—', phone: '06 02 47 85 33' },
 ];
 
 export const docsToReview = [
