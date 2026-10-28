@@ -27,11 +27,26 @@ const toPath = (pts: Point[]) => {
  * Zone de signature au doigt. `onChange(true)` dès qu'un tracé suffisant existe ;
  * `onDrawing` permet de bloquer le défilement de la page pendant le tracé.
  */
-export function SignaturePad({ onChange, onDrawing, disabled }: { onChange: (signed: boolean) => void; onDrawing?: (drawing: boolean) => void; disabled?: boolean }) {
+export type SignatureData = { paths: string[]; width: number; height: number };
+
+export function SignaturePad({
+  onChange,
+  onDrawing,
+  onData,
+  disabled,
+}: {
+  onChange: (signed: boolean) => void;
+  onDrawing?: (drawing: boolean) => void;
+  /** Tracés SVG de la signature, pour l'intégrer au PDF */
+  onData?: (data: SignatureData) => void;
+  disabled?: boolean;
+}) {
   const [strokes, setStrokes] = useState<Point[][]>([]);
   const [current, setCurrent] = useState<Point[]>([]);
   // copie synchrone du tracé en cours, lue à la fin du geste
   const live = useRef<Point[]>([]);
+  const size = useRef({ width: 0, height: 0 });
+  const emit = (all: Point[][]) => onData?.({ paths: all.map(toPath), ...size.current });
 
   const length = strokes.reduce((n, s) => n + s.length, 0);
 
@@ -57,6 +72,7 @@ export function SignaturePad({ onChange, onDrawing, disabled }: { onChange: (sig
         const next = [...strokes, stroke];
         setStrokes(next);
         onChange(next.reduce((n, x) => n + x.length, 0) > 12);
+        emit(next);
       }
     },
   });
@@ -65,6 +81,7 @@ export function SignaturePad({ onChange, onDrawing, disabled }: { onChange: (sig
     setStrokes([]);
     setCurrent([]);
     onChange(false);
+    emit([]);
   };
 
   const empty = !strokes.length && !current.length;
@@ -72,7 +89,11 @@ export function SignaturePad({ onChange, onDrawing, disabled }: { onChange: (sig
   return (
     <View style={{ gap: 10 }}>
       <GestureDetector gesture={pan}>
-        <View style={[styles.pad, !empty && styles.padActive, disabled && { borderStyle: 'solid', borderColor: colors.success }]}>
+        <View
+          onLayout={(e) => {
+            size.current = { width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height };
+          }}
+          style={[styles.pad, !empty && styles.padActive, disabled && { borderStyle: 'solid', borderColor: colors.success }]}>
           <Svg style={StyleSheet.absoluteFill}>
             {[...strokes, current].map((s, i) => (
               <Path key={i} d={toPath(s)} stroke={colors.ink} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" fill="none" />

@@ -1,24 +1,20 @@
 import { router } from 'expo-router';
-import { Check, ChevronDown, Download, FileSignature, Lock, ShieldCheck } from 'lucide-react-native';
+import { Check, ChevronDown, FileSignature, Lock, ShieldCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, LinearTransition, ZoomIn } from 'react-native-reanimated';
 
-import { SignaturePad } from '@/components/signature-pad';
+import { ContractDownload } from '@/components/contract-download';
+import { SignaturePad, type SignatureData } from '@/components/signature-pad';
 import { CtaButton, Screen, TopBar } from '@/components/ui';
+import { contractArticles, contractHtml } from '@/data/contrat-pdf';
 import { student } from '@/data/mock';
 import { useProfile } from '@/data/profile';
 import { colors, shadow } from '@/theme';
 
 const ease = Easing.out(Easing.cubic);
 
-const articles = [
-  { title: 'Objet du contrat', body: 'Formation à la conduite en vue de l’obtention du permis B, conformément à l’arrêté du 13 mai 2013 relatif au contrat type d’enseignement de la conduite.' },
-  { title: 'Programme et calendrier', body: 'Évaluation de départ, formation théorique (code) et pratique (20 h minimum), suivie dans le livret d’apprentissage numérique.' },
-  { title: 'Prix et paiement', body: 'Prix total de 1 350 € TTC, payable comptant ou en 3 échéances de 450 € sans frais.' },
-  { title: 'Annulation des leçons', body: 'Toute leçon non décommandée 48 h à l’avance est due, sauf motif légitime justifié.' },
-  { title: 'Rétractation et résiliation', body: 'Délai de rétractation de 14 jours. Résiliation possible à tout moment, les prestations effectuées restant dues.' },
-];
+const articles = contractArticles;
 
 /** Contrat de formation : lecture, signature au doigt, acceptation obligatoire */
 export default function EleveContrat() {
@@ -27,6 +23,7 @@ export default function EleveContrat() {
   const [accepted, setAccepted] = useState(false);
   const [signed, setSigned] = useState<string | null>(null);
   const [drawing, setDrawing] = useState(false);
+  const [signature, setSignature] = useState<SignatureData>();
   const [expanded, setExpanded] = useState(false);
   const ready = hasSignature && accepted;
 
@@ -75,16 +72,13 @@ export default function EleveContrat() {
             <ChevronDown size={16} color={colors.primary} />
           </View>
         </Pressable>
-        <Pressable style={styles.pdf}>
-          <Download size={16} color={colors.primary} />
-          <Text style={styles.link}>Télécharger le contrat complet (PDF)</Text>
-        </Pressable>
+        <ContractDownload getHtml={() => contractHtml({ permis: profile.permis, formule: profile.formule, signature: signed ? signature : undefined, signedAt: signed })} signed={!!signed} />
       </Animated.View>
 
       {/* Signature */}
       <Animated.View entering={FadeInDown.delay(80).duration(360).easing(ease)} style={{ gap: 10 }}>
         <Text style={styles.h2}>Votre signature</Text>
-        <SignaturePad onChange={setHasSignature} onDrawing={setDrawing} disabled={!!signed} />
+        <SignaturePad onChange={setHasSignature} onDrawing={setDrawing} onData={setSignature} disabled={!!signed} />
       </Animated.View>
 
       {!signed ? (
@@ -147,7 +141,6 @@ const styles = StyleSheet.create({
   articleTitle: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
   articleBody: { fontSize: 13, lineHeight: 19, color: colors.muted },
   more: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  pdf: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 12, backgroundColor: colors.primarySoft },
   accept: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   box: { width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: colors.input, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: colors.primary, borderColor: colors.primary },
