@@ -30,7 +30,7 @@ type ScreenProps = {
 export function Screen({ children, footer, scroll = true, withTabBar = false }: ScreenProps) {
   const content = scroll ? (
     <ScrollView
-      contentContainerStyle={[styles.scroll, withTabBar && { paddingBottom: 110 }]}
+      contentContainerStyle={[styles.scroll, withTabBar && { paddingBottom: 120 }]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
       {children}
