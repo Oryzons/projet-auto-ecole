@@ -8,17 +8,21 @@ import {
   FileCheck,
   FileX,
   GraduationCap,
+  Mail,
+  MailOpen,
   MessageCircle,
   Receipt,
   Settings2,
   Sparkles,
+  Trash2,
   TrendingUp,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 
+import { SwipeableRow } from '@/components/swipeable';
 import { Chips, Screen, TopBar } from '@/components/ui';
 import { colors, font, radius, shadow, toneColors, type Tone } from '@/theme';
 
@@ -61,6 +65,8 @@ export default function EleveNotifications() {
   const visible = items.filter((n) => (filter === 'all' ? true : filter === 'unread' ? n.unread : n.category === filter));
 
   const markRead = (id: string) => setItems((list) => list.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+  const toggleRead = (id: string) => setItems((list) => list.map((n) => (n.id === id ? { ...n, unread: !n.unread } : n)));
+  const remove = (id: string) => setItems((list) => list.filter((n) => n.id !== id));
   const markAll = () => setItems((list) => list.map((n) => ({ ...n, unread: false })));
 
   return (
@@ -81,6 +87,8 @@ export default function EleveNotifications() {
           </Pressable>
         ) : null}
       </View>
+
+      <Text style={styles.hint}>Glissez une notification vers la droite pour la marquer lue ou non lue, vers la gauche pour la supprimer.</Text>
 
       <Chips
         value={filter}
@@ -108,15 +116,22 @@ export default function EleveNotifications() {
           const list = visible.filter((n) => n.group === g);
           if (!list.length) return null;
           return (
-            <Animated.View key={g} layout={LinearTransition.duration(220)} style={{ gap: 10 }}>
+            <Animated.View key={g} layout={LinearTransition.duration(240).easing(Easing.out(Easing.cubic))} exiting={FadeOut.duration(150)} style={{ gap: 10 }}>
               <Text style={styles.group}>{g.toUpperCase()}</Text>
               {list.map((n, i) => (
                 <Animated.View
                   key={n.id}
                   entering={FadeInDown.delay(i * 50).duration(300)}
-                  exiting={FadeOut.duration(150)}
-                  layout={LinearTransition.duration(220)}>
-                  <NotificationCard n={n} onPress={() => markRead(n.id)} />
+                  exiting={FadeOut.duration(120)}
+                  layout={LinearTransition.duration(240).easing(Easing.out(Easing.cubic))}>
+                  <SwipeableRow
+                    right={n.unread ? { label: 'Lue', icon: MailOpen, color: colors.primary } : { label: 'Non lue', icon: Mail, color: colors.primary }}
+                    left={{ label: 'Supprimer', icon: Trash2, color: colors.danger }}
+                    onSwipeRight={() => toggleRead(n.id)}
+                    onSwipeLeft={() => remove(n.id)}
+                    dismissLeft>
+                    <NotificationCard n={n} onPress={() => markRead(n.id)} />
+                  </SwipeableRow>
                 </Animated.View>
               ))}
             </Animated.View>
@@ -149,7 +164,7 @@ function NotificationCard({ n, onPress }: { n: Notification; onPress: () => void
             {n.title}
           </Text>
           <Text style={[font.tiny, { marginTop: 2 }, n.unread && { color: colors.primary, fontWeight: '700' }]}>{n.time}</Text>
-          {n.unread ? <Animated.View exiting={FadeOut.duration(200)} style={styles.dot} /> : null}
+          {n.unread ? <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(200)} style={styles.dot} /> : null}
         </View>
         <Text style={[font.small, { lineHeight: 19 }]}>{n.text}</Text>
         {n.action ? (
@@ -180,6 +195,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: '800', color: colors.ink, letterSpacing: -0.8 },
   markAll: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingBottom: 3 },
   link: { fontSize: 13, fontWeight: '600', color: colors.primary },
+  hint: { fontSize: 12, color: colors.faint, marginTop: -8 },
   group: { fontSize: 11, fontWeight: '700', color: colors.muted, letterSpacing: 0.6, marginTop: 4 },
   card: { flexDirection: 'row', gap: 14, padding: 16, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: 'transparent', ...shadow.card },
   cardUnread: { borderColor: '#D5DCFD' },
