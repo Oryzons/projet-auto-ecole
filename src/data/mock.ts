@@ -25,7 +25,7 @@ export const student = {
   status: 'Dossier en cours de validation',
   code: { score: 32, max: 40, series: 18, seriesTotal: 25, ratio: 0.82 },
   driving: { done: 12, total: 20, skills: 9, skillsTotal: 22 },
-  balance: { remainingHours: 8, due: 450, paid: 900, total: 1350 },
+  balance: { remainingHours: 7, due: 450, paid: 900, total: 1350 },
 };
 
 export type DocStatus = 'accepted' | 'pending' | 'refused' | 'missing';

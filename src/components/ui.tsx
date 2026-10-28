@@ -50,16 +50,19 @@ export function Screen({ children, footer, scroll = true, withTabBar = false }: 
 export function TopBar({
   title,
   back = true,
+  onBack,
   right,
 }: {
   title?: string;
   back?: boolean;
+  /** Action du bouton retour (par défaut : page précédente) */
+  onBack?: () => void;
   right?: ReactNode;
 }) {
   return (
     <View style={styles.topBar}>
       {back ? (
-        <IconButton icon={ArrowLeft} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        <IconButton icon={ArrowLeft} onPress={onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))} />
       ) : (
         <View style={{ width: 40 }} />
       )}
