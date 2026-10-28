@@ -115,11 +115,7 @@ export function useRemainingHours() {
 /** L'offre de rachat apparaît dès la moitié du forfait réalisée */
 export const halfwayReached = student.driving.done >= student.driving.total / 2;
 
-/** 1350 → « 1 350 € », 337.5 → « 337,50 € » (sans dépendre de l'Intl du moteur JS) */
-export const euro = (n: number) => {
-  const [int, dec] = (Number.isInteger(n) ? String(n) : n.toFixed(2)).split('.');
-  return `${int.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')}${dec ? `,${dec}` : ''} €`;
-};
+export { euro } from '@virage/shared/format';
 
 /** Paiement en attente de saisie d'une nouvelle carte (page /eleve/carte) */
 export type PendingCheckout = { title: string; amount: number; onPaid: () => void };

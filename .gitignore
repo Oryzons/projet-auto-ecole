@@ -41,3 +41,12 @@ example
 # generated native folders
 /ios
 /android
+
+# Next.js (site admin)
+.next/
+out/
+next-env.d.ts
+
+# Supabase local
+supabase/.branches
+supabase/.temp

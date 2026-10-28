@@ -3,7 +3,7 @@
  * quand le backend sera branché : les types ci-dessous servent de premier contrat.
  */
 
-import type { Tone } from '@/theme';
+import type { Tone } from './theme';
 
 export const school = { name: 'Virage', city: 'Lyon 7e', phone: '04 78 00 00 00' };
 
