@@ -16,6 +16,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { CtaButton, Screen, TopBar } from '@/components/ui';
+import { useRemainingHours } from '@/data/billing';
 import { student } from '@/data/mock';
 import { colors, font, shadow } from '@/theme';
 
@@ -67,7 +68,7 @@ export default function EleveLecons() {
   });
   const day = days[dayIndex];
   const placeInfo = places.find((p) => p.key === place)!;
-  const remaining = student.balance.remainingHours;
+  const remaining = useRemainingHours();
 
   const selectDay = (i: number) => {
     setDayIndex(i);

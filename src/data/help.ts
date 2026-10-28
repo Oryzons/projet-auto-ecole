@@ -175,9 +175,21 @@ const entries: Entry[] = [
     title: 'Mes documents',
     intro: 'Les pièces nécessaires à votre dossier ANTS.',
     items: [
+      { q: 'Comment déposer un document ?', a: 'Touchez le document puis « Prendre une photo », « Choisir une image » ou « Importer un PDF ». Il passe ensuite en vérification.' },
       { q: 'Quels formats sont acceptés ?', a: 'Photo ou PDF, lisible, en couleur, sans reflet. 10 Mo maximum par fichier.' },
       { q: 'Mon document est refusé', a: 'Le motif est indiqué sous le document. Déposez une nouvelle version : elle est revérifiée sous 48 h.' },
       { q: 'Justificatif de domicile', a: 'Il doit dater de moins de 6 mois : facture d’énergie, d’internet, avis d’imposition ou quittance de loyer.' },
+    ],
+  },
+  {
+    match: /^\/eleve\/examen/,
+    title: 'Mon examen',
+    intro: 'Date, lieu, convocation et préparation.',
+    items: [
+      { q: 'Où est ma convocation ?', a: 'Touchez « Voir ma convocation » : présentez le QR code et une pièce d’identité le jour J.' },
+      { q: 'Le rappel 2 jours avant', a: 'Activez-le en haut de la page : une notification vous rappelle l’heure, le lieu et ce qu’il faut apporter.' },
+      { q: 'Quand aurai-je mon résultat ?', a: 'Sous 48 h en général, directement dans l’application et sur le site de l’ANTS.' },
+      { q: 'Je ne peux plus venir', a: 'Prévenez l’agence au plus vite par message : un report est possible jusqu’à 7 jours avant.' },
     ],
   },
   {
@@ -185,7 +197,9 @@ const entries: Entry[] = [
     title: 'Mes paiements',
     intro: 'Échéances, factures et moyens de paiement.',
     items: [
-      { q: 'Changer ma carte bancaire', a: 'Touchez le moyen de paiement enregistré puis « Remplacer ». Les prochaines échéances utiliseront la nouvelle carte.' },
+      { q: 'Payer en une fois ou par échéances ?', a: 'Choisissez « Régler la prochaine échéance » ou « Tout régler maintenant ». Vous pouvez aussi répartir le reste en 2, 3 ou 4 fois sans frais via « Modifier ».' },
+      { q: 'Racheter des heures', a: 'Dès la moitié de votre forfait, des packs de 2, 5 ou 10 h sont proposés à prix réduit. Elles s’ajoutent tout de suite à votre solde.' },
+      { q: 'Changer ma carte bancaire', a: 'Au moment de payer, choisissez « Nouvelle carte ». Elle sera utilisée pour les prochaines échéances.' },
       { q: 'Où trouver mes factures ?', a: 'Elles sont listées en bas de la page et téléchargeables en PDF.' },
       { q: 'Un prélèvement a échoué', a: 'Une nouvelle tentative a lieu 3 jours plus tard. Vous pouvez aussi régler tout de suite depuis cette page.' },
     ],
@@ -195,7 +209,8 @@ const entries: Entry[] = [
     title: 'Mon contrat',
     intro: 'Votre contrat de formation et ses conditions.',
     items: [
-      { q: 'Comment signer ?', a: 'Lisez le contrat puis touchez « Signer » : un code vous est envoyé par SMS pour valider.' },
+      { q: 'Comment signer ?', a: 'Lisez le contrat, signez au doigt dans le cadre puis cochez la case d’acceptation : le bouton « Signer le contrat » devient alors disponible.' },
+      { q: 'Ma signature est ratée', a: 'Touchez « Effacer » et recommencez autant de fois que nécessaire.' },
       { q: 'Délai de rétractation', a: 'Vous disposez de 14 jours après la signature pour changer d’avis, sans frais.' },
     ],
   },

@@ -22,6 +22,7 @@ import Animated, { Easing, FadeIn, FadeInDown, FadeOut, LinearTransition } from 
 
 import { Segmented } from '@/components/settings';
 import { Screen, TopBar } from '@/components/ui';
+import { useRemainingHours } from '@/data/billing';
 import { journey, lessonHistory, type LessonReport } from '@/data/formation';
 import { remc, student, upcomingLessons } from '@/data/mock';
 import { useProfile } from '@/data/profile';
@@ -44,6 +45,7 @@ const moodInfo: Record<LessonReport['mood'], { label: string; tone: Tone }> = {
 /** Ma formation : progression, prochaine étape et historique des leçons avec débriefs */
 export default function EleveFormation() {
   const profile = useProfile();
+  const hours = useRemainingHours();
   const [filter, setFilter] = useState<'all' | 'conduite' | 'code'>('all');
   const [open, setOpen] = useState<string | null>(lessonHistory[0].id);
   const next = upcomingLessons[0];
@@ -101,7 +103,7 @@ export default function EleveFormation() {
           ))}
         </View>
         <View style={styles.heroStats}>
-          <HeroStat label="Restantes" value={`${student.balance.remainingHours} h`} />
+          <HeroStat label="Restantes" value={`${hours} h`} />
           <View style={styles.heroSep} />
           <HeroStat label="Compétences" value={`${mastered}/${allSkills.length}`} />
           <View style={styles.heroSep} />
@@ -135,7 +137,10 @@ export default function EleveFormation() {
             </View>
             <View style={{ gap: 2 }}>
               <Text style={styles.cardTitle}>Code de la route</Text>
-              <Text style={styles.small}>Examen le jeudi 12 nov.</Text>
+              <Pressable onPress={() => router.push('/eleve/examen')} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Text style={[styles.small, { color: colors.primary, fontWeight: '600' }]}>Examen le jeudi 12 nov.</Text>
+                <ChevronRight size={13} color={colors.primary} />
+              </Pressable>
             </View>
           </View>
           <View style={[styles.pill, { backgroundColor: colors.successSoft }]}>

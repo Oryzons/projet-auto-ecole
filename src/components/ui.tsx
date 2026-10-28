@@ -27,13 +27,16 @@ type ScreenProps = {
   scroll?: boolean;
   /** Les écrans d'onglets laissent la place à la barre de navigation */
   withTabBar?: boolean;
+  /** Bloque le défilement (ex. pendant une signature) */
+  scrollEnabled?: boolean;
 };
 
-export function Screen({ children, footer, scroll = true, withTabBar = false }: ScreenProps) {
+export function Screen({ children, footer, scroll = true, withTabBar = false, scrollEnabled = true }: ScreenProps) {
   const content = scroll ? (
     <ScrollView
       contentContainerStyle={[styles.scroll, withTabBar && { paddingBottom: 120 }]}
       keyboardShouldPersistTaps="handled"
+      scrollEnabled={scrollEnabled}
       showsVerticalScrollIndicator={false}>
       {children}
     </ScrollView>

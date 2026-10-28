@@ -4,6 +4,7 @@ import { ArrowUpRight, Bell, BookOpen, CalendarPlus, CarFront, Files, Flag, MapP
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { HoursOffer } from '@/components/hours-offer';
 import { Screen } from '@/components/ui';
 import { student, upcomingLessons } from '@/data/mock';
 import { useProfile } from '@/data/profile';
@@ -115,6 +116,9 @@ export default function EleveAccueil() {
           <Shortcut icon={MessageCircle} label="Mon aide" href="/eleve/messages" />
         </View>
       </Animated.View>
+
+      {/* Proposition de rachat d'heures dès la moitié du forfait */}
+      <HoursOffer dismissible delay={200} />
     </Screen>
   );
 }

@@ -49,8 +49,8 @@ const initial: Notification[] = [
   { id: 'n4', group: 'Hier', category: 'formation', icon: TrendingUp, tone: 'success', title: 'Compte rendu de leçon disponible', text: 'Créneau et démarrage en côte validés. 2 nouvelles compétences acquises.', time: '18:40', unread: false, action: { label: 'Voir mes acquis', href: '/eleve/progression' } },
   { id: 'n5', group: 'Hier', category: 'lecons', icon: CalendarCheck, tone: 'success', title: 'Leçon confirmée', text: 'Votre réservation du jeudi 29 oct. à 14:00 est confirmée.', time: '11:02', unread: false },
   { id: 'n6', group: 'Hier', category: 'dossier', icon: FileCheck, tone: 'success', title: 'Pièce d’identité acceptée', text: 'Votre pièce d’identité a été validée par l’équipe Virage.', time: '09:15', unread: false },
-  { id: 'n7', group: 'Plus tôt', category: 'paiements', icon: CreditCard, tone: 'warning', title: 'Prochaine échéance le 21 nov.', text: '396,67 € seront prélevés pour votre formule Essentiel (2e échéance sur 3).', time: 'Lun.', unread: false, action: { label: 'Mes paiements', href: '/eleve/paiements' } },
-  { id: 'n8', group: 'Plus tôt', category: 'paiements', icon: Receipt, tone: 'neutral', title: 'Facture disponible', text: 'Votre facture F-2026-0312 de 396,67 € est disponible.', time: '21 oct.', unread: false },
+  { id: 'n7', group: 'Plus tôt', category: 'paiements', icon: CreditCard, tone: 'warning', title: 'Prochaine échéance le 21 nov.', text: '450 € seront prélevés pour votre forfait 20 h (2e échéance sur 3).', time: 'Lun.', unread: false, action: { label: 'Mes paiements', href: '/eleve/paiements' } },
+  { id: 'n8', group: 'Plus tôt', category: 'paiements', icon: Receipt, tone: 'neutral', title: 'Facture disponible', text: 'Votre facture F-2026-0312 de 450 € est disponible.', time: '21 oct.', unread: false },
   { id: 'n9', group: 'Plus tôt', category: 'formation', icon: GraduationCap, tone: 'primary', title: 'Inscription à l’examen du code', text: 'Vous êtes inscrit à la session du jeudi 12 novembre, La Poste Lyon 7.', time: '15 oct.', unread: false },
 ];
 

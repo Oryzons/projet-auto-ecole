@@ -1,11 +1,12 @@
 import { router, type Href } from 'expo-router';
-import { Camera, Check, CreditCard, FileCheck, Flag, GraduationCap, Pencil, Signature, TrendingUp } from 'lucide-react-native';
+import { CalendarClock, Camera, Check, CreditCard, FileCheck, Flag, GraduationCap, Pencil, Signature, TrendingUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { MenuGroup, MenuRow } from '@/components/settings';
 import { Screen, TopBar } from '@/components/ui';
+import { euro, nextInstallment, useBilling } from '@/data/billing';
 import { student } from '@/data/mock';
 import { useProfile } from '@/data/profile';
 import { colors, shadow } from '@/theme';
@@ -24,6 +25,7 @@ type Info = Record<(typeof fields)[number]['key'], string>;
 /** Profil de l'élève : identité modifiable, formation et accès au dossier */
 export default function EleveProfil() {
   const profile = useProfile();
+  const next = nextInstallment(useBilling());
   const [info, setInfo] = useState<Info>({
     firstName: student.firstName,
     lastName: student.lastName,
@@ -110,12 +112,13 @@ export default function EleveProfil() {
         <MenuRow icon={GraduationCap} title={profile.permis} subtitle={profile.formule} />
         <MenuRow icon={Flag} tone="success" title={`Objectif : ${profile.objectif}`} subtitle={`Dossier n° ${student.fileNumber}`} />
         <MenuRow icon={TrendingUp} tone="violet" title="Mes acquis" subtitle={`${student.driving.done}/${student.driving.total} h de conduite`} onPress={go('/eleve/progression')} />
+        <MenuRow icon={CalendarClock} tone="primary" title="Mon examen" subtitle="Code · jeudi 12 nov. à 10:30" onPress={go('/eleve/examen')} />
       </MenuGroup>
 
       <MenuGroup title="Mon dossier" delay={140}>
         <MenuRow icon={FileCheck} tone="warning" title="Documents" subtitle="1 document à remplacer" onPress={go('/eleve/documents')} />
         <MenuRow icon={Signature} tone="neutral" title="Contrat de formation" onPress={go('/eleve/contrat')} />
-        <MenuRow icon={CreditCard} tone="success" title="Paiements et factures" subtitle={`Prochaine échéance : ${student.balance.due} €`} onPress={go('/eleve/paiements')} />
+        <MenuRow icon={CreditCard} tone="success" title="Paiements et factures" subtitle={next ? `Prochaine échéance : ${euro(next.amount)}` : 'Formation réglée'} onPress={go('/eleve/paiements')} />
       </MenuGroup>
     </Screen>
   );
