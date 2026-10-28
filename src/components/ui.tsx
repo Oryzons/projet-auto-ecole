@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ArrowLeft, ArrowRight, ChevronRight, CircleQuestionMark, type LucideIcon } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -15,6 +15,7 @@ import {
 import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HelpSheet } from '@/components/help-sheet';
 import { colors, font, radius, shadow, space, toneColors, type Tone } from '@/theme';
 
 /* ---------- Mise en page ---------- */
@@ -68,8 +69,19 @@ export function TopBar({
         <View style={{ width: 40 }} />
       )}
       {title ? <Text style={styles.topBarTitle}>{title}</Text> : <View />}
-      {right ?? <IconButton icon={CircleQuestionMark} onPress={() => {}} />}
+      {right ?? <HelpButton />}
     </View>
+  );
+}
+
+/** Bouton « ? » : ouvre l'aide de la page dans un panneau qui descend du haut */
+function HelpButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <IconButton icon={CircleQuestionMark} onPress={() => setOpen(true)} />
+      <HelpSheet open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }
 
