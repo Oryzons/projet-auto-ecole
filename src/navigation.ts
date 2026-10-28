@@ -2,7 +2,7 @@ import { colors } from '@/theme';
 
 /**
  * Transitions communes à toutes les piles : glissement façon iOS (sur iOS et Android),
- * retour par balayage depuis le bord gauche (le plein écran gênerait les listes glissables).
+ * retour en glissant vers la droite depuis n'importe où sur la page (iOS).
  */
 export const stackOptions = {
   headerShown: false,
@@ -10,6 +10,7 @@ export const stackOptions = {
   animation: 'ios_from_right',
   animationDuration: 320,
   gestureEnabled: true,
+  fullScreenGestureEnabled: true,
 } as const;
 
 /** Entrée dans un espace (élève, moniteur, admin) : fondu doux plutôt qu'un glissement */

@@ -12,6 +12,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
+import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, font, radius, shadow, space, toneColors, type Tone } from '@/theme';
@@ -285,11 +286,12 @@ export function Chip({ label, active, onPress, count }: { label: string; active?
 
 export function Chips({ items, value, onChange }: { items: { key: string; label: string; count?: number }[]; value: string; onChange: (k: string) => void }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+    // ScrollView de gesture-handler : le défilement des filtres reste prioritaire sur le glissement entre onglets
+    <GHScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
       {items.map((i) => (
         <Chip key={i.key} label={i.label} count={i.count} active={value === i.key} onPress={() => onChange(i.key)} />
       ))}
-    </ScrollView>
+    </GHScrollView>
   );
 }
 

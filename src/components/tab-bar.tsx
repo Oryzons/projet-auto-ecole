@@ -1,18 +1,22 @@
-import type { Href } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps, type TabsDescriptor, type TabsSlotRenderOptions } from 'expo-router/ui';
 import type { LucideIcon } from 'lucide-react-native';
-import { useEffect, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   FadeIn,
+  interpolate,
   LinearTransition,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { Screen as NativeScreen } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { colors } from '@/theme';
 
@@ -25,13 +29,81 @@ const pill = LinearTransition.duration(260).easing(ease);
 /**
  * Navigation principale (5 destinations), commune aux trois espaces.
  * Barre flottante : l'onglet actif s'élargit en pastille bleue avec son libellé,
- * les autres n'affichent que leur icône.
+ * les autres n'affichent que leur icône. On passe aussi d'un onglet à l'autre en glissant.
  */
 export function SpaceTabs({ items }: { items: TabItem[] }) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const pathname = usePathname();
+
+  // onglet courant et sens du dernier changement (pour faire glisser la page du bon côté)
+  const found = items.findIndex((i) => i.href === pathname);
+  const [nav, setNav] = useState({ index: Math.max(found, 0), dir: 0 });
+  if (found >= 0 && found !== nav.index) setNav({ index: found, dir: Math.sign(found - nav.index) });
+  const index = nav.index;
+
+  // glisser horizontalement sur la page pour passer à l'onglet voisin
+  const x = useSharedValue(0);
+  useEffect(() => {
+    x.value = 0;
+  }, [index, x]);
+
+  const goTo = (i: number) => router.navigate(items[i].href);
+  const hasPrev = index > 0;
+  const hasNext = index < items.length - 1;
+
+  const pan = usePanGesture({
+    activeOffsetX: [-18, 18],
+    failOffsetY: [-12, 12],
+    onUpdate: (e) => {
+      'worklet';
+      const t = e.translationX;
+      const blocked = (t > 0 && !hasPrev) || (t < 0 && !hasNext);
+      x.value = blocked ? t * 0.15 : t * 0.6;
+    },
+    onDeactivate: (e) => {
+      'worklet';
+      const v = e.translationX + e.velocityX * 0.15;
+      const target = v < -SWIPE && hasNext ? index + 1 : v > SWIPE && hasPrev ? index - 1 : -1;
+      if (target >= 0) {
+        const out = v < 0 ? -width * 0.35 : width * 0.35;
+        x.value = withTiming(out, { duration: 140, easing: Easing.in(Easing.quad) }, (done) => {
+          if (done) scheduleOnRN(goTo, target);
+        });
+      } else {
+        x.value = withSpring(0, { damping: 22, stiffness: 260 });
+      }
+    },
+  });
+
+  const slotStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(Math.abs(x.value), [0, width * 0.35], [1, 0], 'clamp'),
+    transform: [{ translateX: x.value }],
+  }));
+
+  const renderTab = (descriptor: TabsDescriptor, { isFocused, loaded, detachInactiveScreens }: TabsSlotRenderOptions) => {
+    if (!loaded && !isFocused) return null;
+    return (
+      <NativeScreen
+        key={descriptor.route.key}
+        enabled={detachInactiveScreens}
+        activityState={isFocused ? 2 : 0}
+        freezeOnBlur={false}
+        style={[styles.screen, isFocused ? styles.focused : styles.unfocused]}>
+        <TabEnter focused={isFocused} dir={nav.dir}>
+          {descriptor.render()}
+        </TabEnter>
+      </NativeScreen>
+    );
+  };
+
   return (
     <Tabs>
-      <TabSlot style={{ flex: 1 }} renderFn={renderTab} />
+      <GestureDetector gesture={pan}>
+        <Animated.View style={[{ flex: 1 }, slotStyle]}>
+          <TabSlot style={{ flex: 1 }} renderFn={renderTab} />
+        </Animated.View>
+      </GestureDetector>
       <TabList style={StyleSheet.flatten([styles.bar, { bottom: Math.max(insets.bottom, 12) }])}>
         {items.map((item) => (
           <TabTrigger key={item.name} name={item.name} href={item.href} asChild>
@@ -43,30 +115,24 @@ export function SpaceTabs({ items }: { items: TabItem[] }) {
   );
 }
 
-/** Rendu d'un onglet : même logique que celui d'expo-router, avec un fondu à l'arrivée */
-function renderTab(descriptor: TabsDescriptor, { isFocused, loaded, detachInactiveScreens }: TabsSlotRenderOptions) {
-  if (!loaded && !isFocused) return null;
-  return (
-    <NativeScreen
-      key={descriptor.route.key}
-      enabled={detachInactiveScreens}
-      activityState={isFocused ? 2 : 0}
-      freezeOnBlur={false}
-      style={[styles.screen, isFocused ? styles.focused : styles.unfocused]}>
-      <TabFade focused={isFocused}>{descriptor.render()}</TabFade>
-    </NativeScreen>
-  );
-}
+const SWIPE = 70;
 
-function TabFade({ focused, children }: { focused: boolean; children: ReactNode }) {
-  const p = useSharedValue(focused ? 0 : 1);
+/** Arrivée d'un onglet : la page glisse depuis le côté de l'onglet choisi, avec un fondu */
+function TabEnter({ focused, dir, children }: { focused: boolean; dir: number; children: ReactNode }) {
+  const p = useSharedValue(1);
+  const from = useSharedValue(0);
   useEffect(() => {
     if (focused) {
+      from.value = dir * 44;
       p.value = 0;
-      p.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) });
+      p.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
     }
-  }, [focused, p]);
-  const style = useAnimatedStyle(() => ({ opacity: 0.35 + p.value * 0.65, transform: [{ translateY: (1 - p.value) * 8 }] }));
+    // seul le passage à « focused » déclenche l'animation (dir est lu à ce moment-là)
+  }, [focused]);
+  const style = useAnimatedStyle(() => ({
+    opacity: p.value,
+    transform: [{ translateX: (1 - p.value) * from.value }, { scale: 0.985 + p.value * 0.015 }],
+  }));
   return <Animated.View style={[{ flex: 1 }, style]}>{children}</Animated.View>;
 }
 

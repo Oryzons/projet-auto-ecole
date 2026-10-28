@@ -88,7 +88,7 @@ export default function EleveNotifications() {
         ) : null}
       </View>
 
-      <Text style={styles.hint}>Glissez une notification vers la droite pour la marquer lue ou non lue, vers la gauche pour la supprimer.</Text>
+      <Text style={styles.hint}>Glissez une notification vers la gauche pour la marquer lue ou non lue, ou la supprimer.</Text>
 
       <Chips
         value={filter}
@@ -125,11 +125,10 @@ export default function EleveNotifications() {
                   exiting={FadeOut.duration(120)}
                   layout={LinearTransition.duration(240).easing(Easing.out(Easing.cubic))}>
                   <SwipeableRow
-                    right={n.unread ? { label: 'Lue', icon: MailOpen, color: colors.primary } : { label: 'Non lue', icon: Mail, color: colors.primary }}
-                    left={{ label: 'Supprimer', icon: Trash2, color: colors.danger }}
-                    onSwipeRight={() => toggleRead(n.id)}
-                    onSwipeLeft={() => remove(n.id)}
-                    dismissLeft>
+                    actions={[
+                      { label: n.unread ? 'Lue' : 'Non lue', icon: n.unread ? MailOpen : Mail, color: colors.primary, onPress: () => toggleRead(n.id) },
+                      { label: 'Supprimer', icon: Trash2, color: colors.danger, onPress: () => remove(n.id) },
+                    ]}>
                     <NotificationCard n={n} onPress={() => markRead(n.id)} />
                   </SwipeableRow>
                 </Animated.View>
