@@ -28,9 +28,9 @@ export default function InscriptionConfirmee() {
           </Animated.View>
         </View>
 
-        <Animated.View entering={ZoomIn.duration(500).springify().damping(14)} style={styles.hero}>
+        <View style={styles.hero}>
           <Image source={require('@/assets/images/confirmation-cle.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" />
-        </Animated.View>
+        </View>
 
         <Animated.View entering={enter(1)} style={{ alignItems: 'center', gap: 10 }}>
           <Text style={styles.eyebrow}>INSCRIPTION CONFIRMÉE</Text>
