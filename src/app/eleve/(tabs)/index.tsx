@@ -27,7 +27,7 @@ export default function EleveAccueil() {
           <Text style={styles.date}>{today}</Text>
           <Text style={styles.hello}>Ça roule, {student.firstName} ?</Text>
         </View>
-        <Pressable style={styles.bell}>
+        <Pressable style={styles.bell} onPress={() => router.push('/eleve/notifications')}>
           <Bell size={20} color={colors.ink} />
           <View style={styles.bellDot} />
         </Pressable>
