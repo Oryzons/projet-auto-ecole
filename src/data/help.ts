@@ -193,6 +193,16 @@ const entries: Entry[] = [
     ],
   },
   {
+    match: /^\/eleve\/carte/,
+    title: 'Nouvelle carte',
+    intro: 'Payer avec une carte qui n’est pas encore enregistrée.',
+    items: [
+      { q: 'Où trouver le cryptogramme ?', a: 'Ce sont les 3 chiffres au dos de la carte, à côté de la signature. La carte à l’écran se retourne pour vous le montrer.' },
+      { q: 'Mes données sont-elles protégées ?', a: 'Oui : la saisie est chiffrée et validée par votre banque (3D Secure). L’auto-école ne voit jamais le numéro complet.' },
+      { q: 'Enregistrer la carte', a: 'Cochez la case pour l’utiliser automatiquement aux prochaines échéances. Vous pourrez la changer à tout moment.' },
+    ],
+  },
+  {
     match: /^\/eleve\/paiements/,
     title: 'Mes paiements',
     intro: 'Échéances, factures et moyens de paiement.',

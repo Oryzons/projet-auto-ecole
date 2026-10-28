@@ -120,3 +120,11 @@ export const euro = (n: number) => {
   const [int, dec] = (Number.isInteger(n) ? String(n) : n.toFixed(2)).split('.');
   return `${int.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')}${dec ? `,${dec}` : ''} €`;
 };
+
+/** Paiement en attente de saisie d'une nouvelle carte (page /eleve/carte) */
+export type PendingCheckout = { title: string; amount: number; onPaid: () => void };
+let pending: PendingCheckout | null = null;
+export const setPendingCheckout = (p: PendingCheckout | null) => {
+  pending = p;
+};
+export const getPendingCheckout = () => pending;

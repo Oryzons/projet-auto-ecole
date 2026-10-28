@@ -1,10 +1,11 @@
+import { router } from 'expo-router';
 import { Check, CreditCard, Lock, ShieldCheck, Smartphone, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, ZoomIn, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { BottomSheet, settingsStyles } from '@/components/settings';
-import { euro } from '@/data/billing';
+import { euro, setPendingCheckout } from '@/data/billing';
 import { student } from '@/data/mock';
 import { colors, shadow } from '@/theme';
 
@@ -39,7 +40,6 @@ export function CheckoutSheet({
   const [method, setMethod] = useState<Method>('applepay');
   const [stage, setStage] = useState<Stage>('review');
   const [step, setStep] = useState(0);
-  const [card, setCard] = useState({ number: '', exp: '', cvc: '' });
   // montant figé au moment du paiement : la page derrière se met à jour entre-temps
   const [charged, setCharged] = useState(amount);
 
@@ -67,8 +67,6 @@ export function CheckoutSheet({
     // onPaid n'a besoin d'être appelé qu'une fois par paiement
   }, [stage]);
 
-  const cardOk = card.number.replace(/\s/g, '').length >= 16 && card.exp.length >= 5 && card.cvc.length >= 3;
-  const canPay = method !== 'new' || cardOk;
   const close = stage === 'processing' ? () => {} : onClose;
 
   return (
@@ -102,46 +100,22 @@ export function CheckoutSheet({
             })}
           </View>
 
-          {method === 'new' ? (
-            <Animated.View entering={FadeInDown.duration(220)} style={{ gap: 10 }}>
-              <TextInput
-                placeholder="Numéro de carte"
-                placeholderTextColor={colors.faint}
-                keyboardType="number-pad"
-                value={card.number}
-                onChangeText={(t) => setCard({ ...card, number: t.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ') })}
-                style={styles.input}
-              />
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <TextInput
-                  placeholder="MM/AA"
-                  placeholderTextColor={colors.faint}
-                  keyboardType="number-pad"
-                  value={card.exp}
-                  onChangeText={(t) => setCard({ ...card, exp: t.replace(/\D/g, '').slice(0, 4).replace(/(\d{2})(?=\d)/, '$1/') })}
-                  style={[styles.input, { flex: 1 }]}
-                />
-                <TextInput
-                  placeholder="CVC"
-                  placeholderTextColor={colors.faint}
-                  keyboardType="number-pad"
-                  value={card.cvc}
-                  onChangeText={(t) => setCard({ ...card, cvc: t.replace(/\D/g, '').slice(0, 3) })}
-                  style={[styles.input, { flex: 1 }]}
-                />
-              </View>
-            </Animated.View>
-          ) : null}
 
           <Pressable
-            disabled={!canPay}
-            onPress={() => {
+                        onPress={() => {
+              if (method === 'new') {
+                // la saisie de la carte se fait sur une page dédiée
+                setPendingCheckout({ title, amount, onPaid });
+                onClose();
+                setTimeout(() => router.push('/eleve/carte'), 250);
+                return;
+              }
               setCharged(amount);
               setStage('processing');
             }}
-            style={({ pressed }) => [styles.pay, method === 'applepay' && { backgroundColor: colors.ink }, !canPay && { opacity: 0.45 }, pressed && { transform: [{ scale: 0.99 }] }]}>
-            <Lock size={16} color="#fff" />
-            <Text style={styles.payText}>{method === 'applepay' ? `Payer ${euro(amount)} avec Apple Pay` : `Payer ${euro(amount)}`}</Text>
+            style={({ pressed }) => [styles.pay, method === 'applepay' && { backgroundColor: colors.ink }, pressed && { transform: [{ scale: 0.99 }] }]}>
+            {method === 'new' ? <CreditCard size={16} color="#fff" /> : <Lock size={16} color="#fff" />}
+            <Text style={styles.payText}>{method === 'applepay' ? `Payer ${euro(amount)} avec Apple Pay` : method === 'new' ? 'Saisir ma carte' : `Payer ${euro(amount)}`}</Text>
           </Pressable>
           <View style={styles.secure}>
             <ShieldCheck size={14} color={colors.success} />
@@ -176,7 +150,7 @@ export function CheckoutSheet({
   );
 }
 
-function Spinner() {
+export function Spinner() {
   const r = useSharedValue(0);
   useEffect(() => {
     r.value = withRepeat(withTiming(360, { duration: 900, easing: Easing.linear }), -1);
@@ -202,7 +176,6 @@ const styles = StyleSheet.create({
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.input, alignItems: 'center', justifyContent: 'center' },
   radioOn: { borderColor: colors.primary },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
-  input: { height: 50, borderRadius: 14, borderWidth: 1, borderColor: colors.input, backgroundColor: colors.card, paddingHorizontal: 14, fontSize: 15, color: colors.ink },
   pay: { height: 56, borderRadius: 16, backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, ...shadow.primary },
   payText: { fontSize: 16, fontWeight: '700', color: '#fff' },
   secure: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
