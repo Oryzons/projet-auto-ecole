@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/logo';
 import { CtaButton } from '@/components/ui';
 import { student } from '@/data/mock';
+import { setProfile } from '@/data/profile';
 import { colors, font, radius, shadow } from '@/theme';
 
 /** Arrivée en cascade des blocs de l'écran */
@@ -62,7 +63,18 @@ export default function InscriptionConfirmee() {
             Un lien pour créer votre mot de passe a été envoyé à{'\n'}
             <Text style={{ color: colors.ink }}>{student.email}</Text>
           </Text>
-          <CtaButton label="Découvrir mon espace" onPress={() => router.replace('/eleve')} />
+          <CtaButton
+            label="Découvrir mon espace"
+            onPress={() => {
+              setProfile({
+                vehicule: p.vehicule === 'moto' ? 'moto' : 'voiture',
+                ...(p.permis ? { permis: p.permis } : null),
+                ...(p.formule ? { formule: p.formule } : null),
+                ...(p.objectif ? { objectif: p.objectif } : null),
+              });
+              router.replace('/eleve');
+            }}
+          />
           <Pressable hitSlop={8}>
             <Text style={styles.link}>Renvoyer l’e-mail de bienvenue</Text>
           </Pressable>
