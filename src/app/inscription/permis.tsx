@@ -10,7 +10,7 @@ import { CtaButton, Screen, TopBar } from '@/components/ui';
 import { colors, font } from '@/theme';
 
 type Licence = { key: string; title: string; subtitle: string; icon: LucideIcon };
-type Formula = { key: string; name: string; short: string; badge: string; price: string; split: string; detail: string; pitch: string };
+type Formula = { key: string; name: string; short: string; summary: string; badge: string; price: string; split: string; detail: string; pitch: string };
 
 const offers: Record<'voiture' | 'moto', { title: string; licences: Licence[]; formulas: Formula[] }> = {
   voiture: {
@@ -20,8 +20,8 @@ const offers: Record<'voiture' | 'moto', { title: string; licences: Licence[]; f
       { key: 'auto', title: 'Permis B · Automatique', subtitle: 'La conduite, en toute simplicité', icon: Car },
     ],
     formulas: [
-      { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', badge: 'LE BON DÉPART', price: '1 190 €', split: 'ou 3 × 396,67 €', detail: '20 h de conduite + code en ligne inclus', pitch: 'L’essentiel pour bien démarrer' },
-      { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 30 h', badge: 'LE PLUS COMPLET', price: '1 590 €', split: 'ou 3 × 530 €', detail: '30 h de conduite + code en ligne + examen blanc inclus', pitch: 'Plus de pratique, plus de confiance' },
+      { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', summary: 'Essentiel · 20 h + code inclus', badge: 'LE BON DÉPART', price: '1 190 €', split: 'ou 3 × 396,67 €', detail: '20 h de conduite + code en ligne inclus', pitch: 'L’essentiel pour bien démarrer' },
+      { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 30 h', summary: 'Sérénité · 30 h + code + examen blanc', badge: 'LE PLUS COMPLET', price: '1 590 €', split: 'ou 3 × 530 €', detail: '30 h de conduite + code en ligne + examen blanc inclus', pitch: 'Plus de pratique, plus de confiance' },
     ],
   },
   moto: {
@@ -31,8 +31,8 @@ const offers: Record<'voiture' | 'moto', { title: string; licences: Licence[]; f
       { key: '125', title: 'Formation 125 cm³', subtitle: '7 h pour rouler en 125 avec le permis B', icon: Bike },
     ],
     formulas: [
-      { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', badge: 'LE BON DÉPART', price: '990 €', split: 'ou 3 × 330 €', detail: '20 h plateau et circulation + code moto inclus', pitch: 'L’essentiel pour bien démarrer' },
-      { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 28 h', badge: 'LE PLUS COMPLET', price: '1 290 €', split: 'ou 3 × 430 €', detail: '28 h plateau et circulation + code moto + équipement prêté', pitch: 'Plus de pratique, plus de confiance' },
+      { key: 'essentiel', name: 'Essentiel', short: 'Essentiel · 20 h', summary: 'Essentiel · 20 h + code moto inclus', badge: 'LE BON DÉPART', price: '990 €', split: 'ou 3 × 330 €', detail: '20 h plateau et circulation + code moto inclus', pitch: 'L’essentiel pour bien démarrer' },
+      { key: 'serenite', name: 'Sérénité', short: 'Sérénité · 28 h', summary: 'Sérénité · 28 h + code moto + équipement', badge: 'LE PLUS COMPLET', price: '1 290 €', split: 'ou 3 × 430 €', detail: '28 h plateau et circulation + code moto + équipement prêté', pitch: 'Plus de pratique, plus de confiance' },
     ],
   },
 };
@@ -48,7 +48,19 @@ export default function InscriptionPermis() {
     <Screen
       footer={
         <View style={{ gap: 12 }}>
-          <CtaButton label="Choisir cette formule" onPress={() => router.push('/inscription/objectif')} />
+          <CtaButton
+            label="Choisir cette formule"
+            onPress={() =>
+              router.push({
+                pathname: '/inscription/objectif',
+                params: {
+                  vehicule: vehicule === 'moto' ? 'moto' : 'voiture',
+                  permis: offer.licences.find((l) => l.key === licence)?.title ?? '',
+                  formule: offer.formulas.find((f) => f.key === formula)?.summary ?? '',
+                },
+              })
+            }
+          />
           <View style={styles.reassure}>
             <HeartHandshake size={14} color={colors.muted} />
             <Text style={font.tiny}>Aucun paiement maintenant. Prenez le temps.</Text>
