@@ -11,6 +11,16 @@ type Entry = { match: RegExp } & HelpContent;
 const entries: Entry[] = [
   /* ---------- Connexion & inscription ---------- */
   {
+    match: /^\/connexion\/mot-de-passe-oublie/,
+    title: 'Mot de passe oublié',
+    intro: 'Récupérez l’accès à votre espace en deux minutes.',
+    items: [
+      { q: 'Je ne reçois pas l’e-mail', a: 'Vérifiez vos courriers indésirables, puis touchez « Renvoyer le lien » après 30 secondes.' },
+      { q: 'Le lien ne fonctionne plus', a: 'Il est valable 30 minutes et une seule fois. Demandez-en simplement un nouveau.' },
+      { q: 'Je n’ai plus accès à mon adresse e-mail', a: 'Contactez l’agence avec une pièce d’identité : elle mettra votre adresse à jour.' },
+    ],
+  },
+  {
     match: /^\/connexion\/mot-de-passe/,
     title: 'Votre mot de passe',
     intro: 'Dernière étape avant de retrouver votre espace.',

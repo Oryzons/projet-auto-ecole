@@ -66,7 +66,7 @@ export default function ConnexionMotDePasse() {
               </Pressable>
             }
           />
-          <Pressable style={{ alignSelf: 'flex-end' }} hitSlop={8}>
+          <Pressable onPress={() => router.push({ pathname: '/connexion/mot-de-passe-oublie', params: { email } })} style={{ alignSelf: 'flex-end' }} hitSlop={8}>
             <Text style={styles.link}>Mot de passe oublié ?</Text>
           </Pressable>
         </View>
