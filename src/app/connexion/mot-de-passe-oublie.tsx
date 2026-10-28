@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Check, CircleCheck, Eye, EyeOff, LockKeyhole, Mail, MailCheck, RotateCcw, Send, ShieldCheck } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Check, CircleCheck, Eye, EyeOff, LockKeyhole, Mail, Send, ShieldCheck } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown, FadeOut, ZoomIn, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { AuthHero, AuthInput, AuthTitle } from '@/components/auth';
+import { VerifyCode } from '@/components/otp';
 import { Steps } from '@/components/choice';
 import { CtaButton, Screen, TopBar } from '@/components/ui';
 import { student } from '@/data/mock';
@@ -22,46 +23,34 @@ const rules = [
 ];
 
 /**
- * Mot de passe oublié : adresse e-mail → lien envoyé → nouveau mot de passe → terminé.
- * (Le lien reçu par e-mail ouvrira directement l'étape 3 ; ici on la simule.)
+ * Mot de passe oublié : adresse e-mail → code à 4 chiffres → nouveau mot de passe → terminé.
  */
 export default function MotDePasseOublie() {
   const params = useLocalSearchParams<{ email?: string }>();
   const [step, setStep] = useState<'email' | 'sent' | 'reset' | 'done'>('email');
   const [email, setEmail] = useState(params.email || student.email);
-  const [countdown, setCountdown] = useState(0);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    if (!countdown) return;
-    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
-
-  const sendLink = () => {
-    setStep('sent');
-    setCountdown(30);
-  };
 
   const passed = rules.filter((r) => r.test(password)).length;
   const match = confirm.length > 0 && confirm === password;
   const canSave = passed === rules.length && match;
-  const stepIndex = { email: 1, sent: 1, reset: 2, done: 2 }[step];
+  const stepIndex = { email: 1, sent: 2, reset: 3, done: 3 }[step];
 
   return (
     <Screen>
       <TopBar
         title="Mot de passe oublié"
-        onBack={() => (step === 'sent' ? setStep('email') : step === 'reset' ? setStep('sent') : router.back())}
+        onBack={() => (step === 'sent' ? setStep('email') : step === 'reset' ? setStep('email') : router.back())}
       />
-      {step !== 'done' ? <Steps step={stepIndex} total={2} label={stepIndex === 1 ? 'Vérification' : 'Nouveau mot de passe'} /> : null}
+      {step !== 'done' ? <Steps step={stepIndex} total={3} label={['Adresse e-mail', 'Vérification', 'Nouveau mot de passe'][stepIndex - 1]} /> : null}
 
       {step === 'email' ? (
         <Animated.View key="email" entering={FadeInDown.duration(360).easing(ease)} exiting={FadeOut.duration(120)} style={styles.block}>
           <AuthHero source={require('@/assets/images/connexion-cadenas.jpg')} />
-          <AuthTitle title="Pas de panique." text="Indiquez votre adresse e-mail : on vous envoie un lien pour choisir un nouveau mot de passe." />
+          <AuthTitle title="Pas de panique." text="Indiquez votre adresse e-mail : on vous envoie un code à 4 chiffres pour choisir un nouveau mot de passe." />
           <AuthInput
             label="Adresse e-mail"
             icon={Mail}
@@ -75,7 +64,7 @@ export default function MotDePasseOublie() {
             right={isEmail(email) ? <CircleCheck size={18} color={colors.primary} strokeWidth={1.9} /> : null}
           />
           <View style={{ opacity: isEmail(email) ? 1 : 0.5 }} pointerEvents={isEmail(email) ? 'auto' : 'none'}>
-            <CtaButton label="Recevoir le lien" icon={Send} onPress={sendLink} />
+            <CtaButton label="Recevoir le code" icon={Send} onPress={() => setStep('sent')} />
           </View>
           <Pressable onPress={() => router.back()} style={styles.center} hitSlop={8}>
             <Text style={styles.small}>
@@ -86,36 +75,8 @@ export default function MotDePasseOublie() {
       ) : null}
 
       {step === 'sent' ? (
-        <Animated.View key="sent" entering={FadeInDown.duration(360).easing(ease)} exiting={FadeOut.duration(120)} style={styles.block}>
-          <View style={styles.sentHero}>
-            <Animated.View entering={ZoomIn.delay(120).springify().damping(14)} style={styles.sentIcon}>
-              <MailCheck size={34} color="#fff" strokeWidth={1.8} />
-            </Animated.View>
-          </View>
-          <AuthTitle title="Vérifiez vos e-mails." text="Si un compte existe avec cette adresse, vous allez recevoir un lien valable 30 minutes." />
-          <View style={styles.emailCard}>
-            <Mail size={18} color={colors.primary} strokeWidth={1.9} />
-            <Text style={styles.emailText} numberOfLines={1}>
-              {email.trim()}
-            </Text>
-            <Pressable onPress={() => setStep('email')} hitSlop={8}>
-              <Text style={styles.link}>Modifier</Text>
-            </Pressable>
-          </View>
-          <CtaButton
-            label="Ouvrir ma messagerie"
-            icon={Mail}
-            onPress={() => Linking.openURL(Platform.OS === 'ios' ? 'message://' : 'mailto:').catch(() => {})}
-          />
-          <Pressable disabled={countdown > 0} onPress={() => setCountdown(30)} style={[styles.resend, countdown > 0 && { opacity: 0.55 }]}>
-            <RotateCcw size={15} color={colors.primary} />
-            <Text style={styles.link}>{countdown > 0 ? `Renvoyer le lien dans ${countdown} s` : 'Renvoyer le lien'}</Text>
-          </Pressable>
-          {/* raccourci de démonstration : simule l'ouverture du lien reçu */}
-          <Pressable onPress={() => setStep('reset')} style={styles.demo}>
-            <Text style={styles.demoText}>Démo : ouvrir le lien reçu</Text>
-          </Pressable>
-          <Text style={[styles.small, { textAlign: 'center' }]}>Pensez à vérifier vos courriers indésirables.</Text>
+        <Animated.View key="sent" entering={FadeInDown.duration(360).easing(ease)} exiting={FadeOut.duration(120)}>
+          <VerifyCode destination={email.trim()} onSuccess={() => setStep('reset')} />
         </Animated.View>
       ) : null}
 
@@ -219,13 +180,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center' },
   small: { fontSize: 12.5, color: colors.muted },
   link: { fontSize: 13, fontWeight: '600', color: colors.primary },
-  sentHero: { width: '100%', aspectRatio: 680 / 372, borderRadius: 18, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   sentIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', ...shadow.primary },
-  emailCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: colors.card, ...shadow.card },
-  emailText: { flex: 1, fontSize: 14.5, fontWeight: '700', color: colors.ink },
-  resend: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  demo: { alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.input },
-  demoText: { fontSize: 11.5, color: colors.faint, fontWeight: '600' },
   rules: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 },
   rule: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 8 },
   ruleDot: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: colors.input, alignItems: 'center', justifyContent: 'center' },

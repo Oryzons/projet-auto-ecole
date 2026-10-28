@@ -138,7 +138,7 @@ export default function EleveNotifications() {
         })
       )}
 
-      <Pressable onPress={() => router.push('/eleve/reglages')} style={styles.settingsRow}>
+      <Pressable onPress={() => router.push('/eleve/parametres/notifications')} style={styles.settingsRow}>
         <Sparkles size={18} color={colors.primary} strokeWidth={1.8} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[font.h3, { fontSize: 14 }]}>Choisissez ce que vous recevez</Text>
@@ -183,7 +183,7 @@ function NotificationCard({ n, onPress }: { n: Notification; onPress: () => void
 
 function SettingsButton() {
   return (
-    <Pressable onPress={() => router.push('/eleve/reglages')} style={styles.settingsBtn} hitSlop={6}>
+    <Pressable onPress={() => router.push('/eleve/parametres/notifications')} style={styles.settingsBtn} hitSlop={6}>
       <Settings2 size={19} color={colors.ink} />
     </Pressable>
   );

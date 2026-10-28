@@ -1,134 +1,111 @@
-import { router } from 'expo-router';
-import { Bell, CircleCheck, FileCheck, FilePlus, Flag, LockKeyhole, LogOut, MessageCircle, Plus, TrendingUp } from 'lucide-react-native';
+import { router, type Href } from 'expo-router';
+import {
+  Accessibility,
+  Bell,
+  ChevronRight,
+  FileText,
+  Landmark,
+  LifeBuoy,
+  LockKeyhole,
+  LogOut,
+  ScrollText,
+  Shield,
+  Trash2,
+} from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
 
-import { Avatar, Badge, Card, Divider, ListItem, Progress, Row, Screen, Section, Toggle, TopBar } from '@/components/ui';
-import { docStatus, documents, student } from '@/data/mock';
-import { colors, font } from '@/theme';
+import { BottomSheet, MenuGroup, MenuRow, PageTitle, settingsStyles as s } from '@/components/settings';
+import { Screen, TopBar } from '@/components/ui';
+import { student } from '@/data/mock';
+import { colors, shadow } from '@/theme';
 
-/** Paramètres / profil élève */
+const go = (href: Href) => () => router.push(href);
+
+/** Paramètres de l'élève : profil en tête, puis uniquement des menus */
 export default function EleveReglages() {
-  const [notif, setNotif] = useState(true);
+  const [logout, setLogout] = useState(false);
   const fullName = `${student.firstName} ${student.lastName}`;
+  const initials = `${student.firstName[0]}${student.lastName[0]}`;
 
   return (
     <Screen withTabBar>
-      <TopBar title="Mon compte" back={false} />
+      <TopBar title="Paramètres" onBack={() => router.navigate('/eleve')} />
+      <PageTitle title="Paramètres" />
 
-      <Section title="Profil" action="Modifier">
-        <Row>
-          <Avatar name={fullName} size={68} />
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 24, fontWeight: '700', color: colors.ink }}>{fullName}</Text>
-            <Badge label={student.status} tone="warning" />
+      {/* Profil : ouvre la page profil */}
+      <Animated.View entering={FadeInDown.delay(40).duration(360).easing(Easing.out(Easing.cubic))}>
+        <Pressable onPress={go('/eleve/profil')} style={({ pressed }) => [styles.profile, pressed && { transform: [{ scale: 0.99 }] }]}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
-        </Row>
-      </Section>
-
-      <Section title="Informations personnelles" action="Modifier">
-        <Card style={{ gap: 14 }}>
-          <Info label="Adresse e-mail" value={student.email} />
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Info label="Date de naissance" value={student.birthDate} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Info label="Téléphone" value={student.phone} />
-            </View>
-          </View>
-          <Info label="Adresse postale" value={student.address} />
-        </Card>
-      </Section>
-
-      <Card style={{ gap: 14 }} tone="soft">
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Text style={font.h2}>Progression du parcours</Text>
-          <TrendingUp size={20} color={colors.primary} />
-        </Row>
-        <View style={{ gap: 8 }}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <Text style={font.small}>Code · bonnes réponses</Text>
-            <Text style={font.h3}>{Math.round(student.code.ratio * 100)} %</Text>
-          </Row>
-          <Progress value={student.code.ratio} tone="success" />
-        </View>
-        <View style={{ gap: 8 }}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <Text style={font.small}>Conduite · heures réalisées</Text>
-            <Text style={font.h3}>
-              {student.driving.done}/{student.driving.total} h
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={styles.name} numberOfLines={1}>
+              {fullName}
             </Text>
-          </Row>
-          <Progress value={student.driving.done / student.driving.total} />
-        </View>
-      </Card>
-
-      <Section title="Mon permis et ma formule" action="Modifier">
-        <Card style={{ gap: 12 }}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <Text style={font.h3}>{student.licence}</Text>
-            <Text style={[font.small, { color: colors.primary, fontWeight: '600' }]}>{student.formula}</Text>
-          </Row>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <Text style={font.small}>Dossier</Text>
-            <Text style={[font.small, { color: colors.ink }]}>{student.fileNumber}</Text>
-          </Row>
-          <Divider />
-          <Row gap={8}>
-            <Flag size={15} color={colors.primary} />
-            <Text style={font.small}>{student.goalDate}</Text>
-          </Row>
-          <Text style={font.body}>{student.availability}</Text>
-        </Card>
-      </Section>
-
-      <Section title="Documents administratifs" action="Tout voir" onAction={() => router.push('/eleve/documents')}>
-        <Card style={{ paddingVertical: 4 }}>
-          {documents.slice(0, 3).map((d, i) => {
-            const s = docStatus[d.status];
-            const ok = d.status === 'accepted';
-            return (
-              <View key={d.id}>
-                {i > 0 ? <Divider /> : null}
-                <ListItem
-                  icon={ok ? FileCheck : FilePlus}
-                  tone={s.tone}
-                  title={d.name}
-                  subtitle={s.label}
-                  right={ok ? <CircleCheck size={17} color={colors.success} /> : <Plus size={17} color={colors.primary} />}
-                  onPress={() => router.push('/eleve/documents')}
-                />
-              </View>
-            );
-          })}
-        </Card>
-      </Section>
-
-      <Section title="Réglages du compte">
-        <Card style={{ paddingVertical: 4 }}>
-          <ListItem icon={Bell} title="Notifications e-mail et SMS" right={<Toggle value={notif} onChange={setNotif} />} />
-          <Divider />
-          <ListItem icon={LockKeyhole} title="Mot de passe et sécurité" chevron onPress={() => {}} />
-          <Divider />
-          <ListItem icon={MessageCircle} title="Aide et contact" chevron onPress={() => router.push('/eleve/messages')} />
-        </Card>
-        <Pressable onPress={() => router.replace('/')}>
-          <Row gap={8} style={{ justifyContent: 'center', paddingVertical: 10 }}>
-            <LogOut size={16} color={colors.danger} />
-            <Text style={{ color: colors.danger, fontWeight: '600' }}>Se déconnecter</Text>
-          </Row>
+            <Text style={styles.email} numberOfLines={1}>
+              {student.email}
+            </Text>
+            <Text style={styles.link}>Voir mon profil</Text>
+          </View>
+          <ChevronRight size={20} color={colors.faint} />
         </Pressable>
-      </Section>
+      </Animated.View>
+
+      <MenuGroup title="Préférences" delay={80}>
+        <MenuRow icon={Bell} title="Notifications" subtitle="Rappels, messages, e-mails et SMS" onPress={go('/eleve/parametres/notifications')} />
+        <MenuRow icon={Accessibility} tone="violet" title="Accessibilité" subtitle="Taille du texte, contraste, animations" onPress={go('/eleve/parametres/accessibilite')} />
+      </MenuGroup>
+
+      <MenuGroup title="Sécurité" delay={120}>
+        <MenuRow icon={LockKeyhole} tone="success" title="Mot de passe & sécurité" subtitle="Mot de passe, Face ID, appareils" onPress={go('/eleve/parametres/securite')} />
+      </MenuGroup>
+
+      <MenuGroup title="Assistance" delay={160}>
+        <MenuRow icon={LifeBuoy} tone="warning" title="Aide et contact" subtitle="Questions fréquentes, nous joindre" onPress={go('/eleve/parametres/aide')} />
+      </MenuGroup>
+
+      <MenuGroup title="Informations légales" delay={200}>
+        <MenuRow icon={FileText} tone="neutral" title="Conditions générales de vente" onPress={go('/eleve/parametres/legal/cgv')} />
+        <MenuRow icon={ScrollText} tone="neutral" title="Conditions générales d’utilisation" onPress={go('/eleve/parametres/legal/cgu')} />
+        <MenuRow icon={Shield} tone="neutral" title="Politique de confidentialité" onPress={go('/eleve/parametres/legal/confidentialite')} />
+        <MenuRow icon={Landmark} tone="neutral" title="Mentions légales" onPress={go('/eleve/parametres/legal/mentions')} />
+      </MenuGroup>
+
+      <MenuGroup delay={240}>
+        <MenuRow icon={LogOut} danger title="Se déconnecter" onPress={() => setLogout(true)} right={<View />} />
+        <MenuRow icon={Trash2} danger title="Supprimer mon compte" onPress={go('/eleve/parametres/suppression')} />
+      </MenuGroup>
+
+      <Text style={styles.version}>Virage · version 1.0.0</Text>
+
+      <BottomSheet open={logout} onClose={() => setLogout(false)}>
+        <Text style={s.sheetTitle}>Se déconnecter ?</Text>
+        <Text style={s.sheetText}>Vous devrez saisir à nouveau votre e-mail et votre mot de passe pour retrouver votre espace.</Text>
+        <Pressable
+          onPress={() => {
+            setLogout(false);
+            router.replace('/');
+          }}
+          style={s.dangerBtn}>
+          <LogOut size={18} color="#fff" />
+          <Text style={s.dangerText}>Me déconnecter</Text>
+        </Pressable>
+        <Pressable onPress={() => setLogout(false)} style={s.secondary}>
+          <Text style={s.secondaryText}>Annuler</Text>
+        </Pressable>
+      </BottomSheet>
     </Screen>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ gap: 3 }}>
-      <Text style={font.tiny}>{label}</Text>
-      <Text style={[font.body, { fontWeight: '500' }]}>{value}</Text>
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  profile: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 22, backgroundColor: colors.card, ...shadow.card },
+  avatar: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', ...shadow.primary },
+  avatarText: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  name: { fontSize: 18, fontWeight: '800', color: colors.ink, letterSpacing: -0.3 },
+  email: { fontSize: 13.5, color: colors.muted },
+  link: { fontSize: 12.5, fontWeight: '600', color: colors.primary, marginTop: 2 },
+  version: { fontSize: 12, color: colors.faint, textAlign: 'center' },
+});

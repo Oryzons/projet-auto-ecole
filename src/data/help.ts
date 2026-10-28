@@ -11,6 +11,15 @@ type Entry = { match: RegExp } & HelpContent;
 const entries: Entry[] = [
   /* ---------- Connexion & inscription ---------- */
   {
+    match: /^\/connexion\/verification/,
+    title: 'Code de vérification',
+    intro: 'Une sécurité pour votre première connexion sur cet appareil.',
+    items: [
+      { q: 'Je n’ai pas reçu le code', a: 'Vérifiez vos courriers indésirables, puis touchez « Renvoyer le code » après 30 secondes.' },
+      { q: 'Pourquoi ce code ?', a: 'Il confirme que c’est bien vous qui vous connectez depuis un nouveau téléphone.' },
+    ],
+  },
+  {
     match: /^\/connexion\/mot-de-passe-oublie/,
     title: 'Mot de passe oublié',
     intro: 'Récupérez l’accès à votre espace en deux minutes.',
@@ -113,6 +122,43 @@ const entries: Entry[] = [
     items: [
       { q: 'Quand vais-je avoir une réponse ?', a: 'L’agence répond en général dans la journée, du lundi au samedi.' },
       { q: 'Je peux envoyer un document ?', a: 'Pour vos pièces de dossier, passez plutôt par Documents : elles seront vérifiées plus vite.' },
+    ],
+  },
+  {
+    match: /^\/eleve\/parametres\/securite/,
+    title: 'Sécurité du compte',
+    intro: 'Protégez l’accès à votre espace.',
+    items: [
+      { q: 'Face ID ou empreinte, c’est sûr ?', a: 'Oui : votre visage ou votre empreinte restent sur votre téléphone, Virage ne les reçoit jamais.' },
+      { q: 'J’ai oublié mon code à 4 chiffres', a: 'Connectez-vous avec votre mot de passe puis choisissez un nouveau code ici.' },
+      { q: 'Un appareil inconnu est connecté', a: 'Touchez « Retirer » puis changez votre mot de passe.' },
+    ],
+  },
+  {
+    match: /^\/eleve\/parametres\/notifications/,
+    title: 'Notifications',
+    intro: 'Choisissez ce que vous recevez et comment.',
+    items: [{ q: 'Je ne reçois rien sur mon téléphone', a: 'Vérifiez que les notifications de Virage sont autorisées dans les réglages de votre téléphone.' }],
+  },
+  {
+    match: /^\/eleve\/parametres\/accessibilite/,
+    title: 'Accessibilité',
+    intro: 'Adaptez l’affichage à vos besoins.',
+    items: [{ q: 'Les réglages de mon téléphone sont-ils pris en compte ?', a: 'Oui, la taille du texte et la réduction des animations du téléphone s’appliquent aussi à Virage.' }],
+  },
+  {
+    match: /^\/eleve\/parametres\/suppression/,
+    title: 'Supprimer mon compte',
+    intro: 'Ce qu’il faut savoir avant de partir.',
+    items: [{ q: 'Puis-je récupérer mon compte ensuite ?', a: 'Non, la suppression est définitive. Téléchargez vos données avant si vous en avez besoin.' }],
+  },
+  {
+    match: /^\/eleve\/profil/,
+    title: 'Mon profil',
+    intro: 'Vos informations et votre dossier.',
+    items: [
+      { q: 'Modifier mes informations', a: 'Touchez le crayon en haut à droite, modifiez puis validez avec la coche.' },
+      { q: 'Mon nom est mal orthographié', a: 'Il doit correspondre à votre pièce d’identité : corrigez-le ou prévenez l’agence.' },
     ],
   },
   {

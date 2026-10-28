@@ -8,6 +8,7 @@ import { AuthHero, AuthInput, AuthTitle } from '@/components/auth';
 import { Steps } from '@/components/choice';
 import { CtaButton, Screen, TopBar } from '@/components/ui';
 import { student } from '@/data/mock';
+import { isDeviceVerified } from '@/data/session';
 import { colors, shadow } from '@/theme';
 
 /** « camille.martin@… » → « Camille » */
@@ -85,7 +86,11 @@ export default function ConnexionMotDePasse() {
 
       <Animated.View entering={FadeInDown.delay(180).duration(380)} style={{ gap: 18 }}>
         <View style={{ opacity: password ? 1 : 0.5 }} pointerEvents={password ? 'auto' : 'none'}>
-          <CtaButton label="Me connecter" icon={LogIn} onPress={() => router.replace('/eleve')} />
+          <CtaButton
+            label="Me connecter"
+            icon={LogIn}
+            onPress={() => (isDeviceVerified() ? router.replace('/eleve') : router.push({ pathname: '/connexion/verification', params: { email } }))}
+          />
         </View>
         <View style={styles.next}>
           <Sparkles size={15} color={colors.muted} strokeWidth={1.8} />
