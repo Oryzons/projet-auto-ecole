@@ -5,6 +5,7 @@ import { adminKpis, instructors, planningGrid, school } from '@virage/shared/moc
 
 import { CountUp } from '@/components/dashboard/count-up';
 import { DocsReview } from '@/components/dashboard/docs-review';
+import { OpenPanel, PageTop } from '@/components/page-top';
 import { Avatar } from '@/components/ui';
 
 import s from './dashboard.module.css';
@@ -26,12 +27,7 @@ export default function Dashboard() {
 
   return (
     <div className={s.page}>
-      <header className={s.header} style={{ ['--i' as string]: 0 }}>
-        <div>
-          <p className={s.date}>{date}</p>
-          <h1 className={s.hello}>Ça roule, Sophie ?</h1>
-        </div>
-      </header>
+      <PageTop eyebrow={date} title="Ça roule, Sophie ?" />
 
       {/* Carte principale, comme sur l'app : la journée de l'auto-école */}
       <section className={s.hero} style={{ ['--i' as string]: 1 }}>
@@ -124,7 +120,10 @@ export default function Dashboard() {
       <section className={s.section} style={{ ['--i' as string]: 5 }}>
         <h2 className={s.sectionTitle}>À portée de main</h2>
         <div className={s.shortcuts}>
-          <Shortcut icon={UserPlus} label="Inscrire un élève" href="/eleves" primary />
+          <OpenPanel panel="inscription" className={`${s.shortcut} ${s.shortcutPrimary}`}>
+            <UserPlus size={22} strokeWidth={1.8} />
+            <span>Inscrire un élève</span>
+          </OpenPanel>
           <Shortcut icon={CalendarPlus} label="Planifier" href="/planning" />
           <Shortcut icon={FolderCheck} label="Documents" href="/documents" />
           <Shortcut icon={MessageCircle} label="Messages" href="/messages" />
@@ -185,9 +184,9 @@ function Stat({
   );
 }
 
-function Shortcut({ icon: Icon, label, href, primary }: { icon: LucideIcon; label: string; href: string; primary?: boolean }) {
+function Shortcut({ icon: Icon, label, href }: { icon: LucideIcon; label: string; href: string }) {
   return (
-    <Link href={href} className={`${s.shortcut} ${primary ? s.shortcutPrimary : ''}`}>
+    <Link href={href} className={s.shortcut}>
       <Icon size={22} strokeWidth={1.8} />
       <span>{label}</span>
     </Link>

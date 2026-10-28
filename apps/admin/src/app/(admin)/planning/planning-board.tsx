@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 
 import { instructors, planningGrid, planningHours } from '@virage/shared/mock';
 
+import { PageTop } from '@/components/page-top';
+import { RoundButton } from '@/components/side-panel';
 import { Avatar } from '@/components/ui';
 
 import s from './planning.module.css';
@@ -74,15 +76,11 @@ export function PlanningBoard() {
 
   return (
     <div className={s.page}>
-      <header className={s.header} style={{ ['--i' as string]: 0 }}>
-        <div>
-          <p className={s.eyebrow}>SEMAINE DU 26 OCTOBRE</p>
-          <h1 className={s.title}>Qui prend le volant ?</h1>
-        </div>
-        <button className="btn btn-primary">
-          <CalendarPlus size={16} /> Ajouter une leçon
-        </button>
-      </header>
+      <PageTop eyebrow="Semaine du 26 octobre" title="Qui prend le volant ?">
+        <RoundButton label="Ajouter une leçon">
+          <CalendarPlus size={19} />
+        </RoundButton>
+      </PageTop>
 
       <div className={s.controls} style={{ ['--i' as string]: 1 }}>
         <div className={s.week}>

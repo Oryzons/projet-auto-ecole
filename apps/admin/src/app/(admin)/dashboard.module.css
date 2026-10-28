@@ -8,7 +8,6 @@
 }
 
 /* apparition en cascade, pilotée par --i sur chaque bloc */
-.header,
 .hero,
 .section,
 .reveal,
@@ -30,26 +29,8 @@
 
 /* ---------- En-tête ---------- */
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
-.date {
-  margin: 0 0 4px;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-}
 
-.hello {
-  margin: 0;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
 
 /* ---------- Carte bleue avec la voiture ---------- */
 
@@ -487,8 +468,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .header,
-  .hero,
+    .hero,
   .section,
   .reveal,
   .team,

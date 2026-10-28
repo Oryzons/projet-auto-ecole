@@ -7,7 +7,6 @@
   max-width: 1180px;
 }
 
-.header,
 .controls,
 .summary,
 .board,
@@ -27,28 +26,8 @@
   }
 }
 
-.header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
 
-.eyebrow {
-  margin: 0 0 4px;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-}
 
-.title {
-  margin: 0;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
 
 /* ---------- Jours et moniteurs ---------- */
 
@@ -549,8 +528,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .header,
-  .controls,
+    .controls,
   .summary,
   .board,
   .legend,
@@ -558,4 +536,12 @@
   .lesson {
     animation: none;
   }
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--muted);
 }

@@ -1,96 +1,97 @@
 'use client';
 
-import { Bell, ChevronsUpDown, Plus, Search } from 'lucide-react';
+import { Ellipsis, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
-import { school } from '@virage/shared/mock';
-
-import { allItems, nav } from '@/lib/nav';
+import { InscriptionPanel } from '@/components/inscription/inscription-panel';
+import { NotificationsPanel } from '@/components/notifications-panel';
+import { SidePanel } from '@/components/side-panel';
+import { allItems, dock, settings, type NavItem } from '@/lib/nav';
 
 import s from './shell.module.css';
 
-/** Cadre du back-office : menu latéral, barre du haut et contenu */
+/** Cadre du back-office : menu flottant à gauche (barre d'onglets en bas sur téléphone) */
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [more, setMore] = useState(false);
   const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
-  const current = allItems.find((i) => active(i.href));
-  const search = useRef<HTMLInputElement>(null);
-
-  // ⌘K / Ctrl+K : recherche
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        search.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  const settingsOn = settings.some((i) => active(i.href));
+  const mobileItems = dock.filter((i) => i.mobile);
+  const moreOn = !mobileItems.some((i) => active(i.href));
 
   return (
     <div className={s.shell}>
-      <aside className={s.sidebar}>
-        <Link href="/" className={s.brand}>
-          <span className={s.logo}>V</span>
-          <span className={s.brandText}>
-            <strong>{school.name}</strong>
-            <span>Administration</span>
-          </span>
+      <nav className={s.dock} aria-label="Menu">
+        <Link href="/" className={s.logo} aria-label="Accueil">
+          V
         </Link>
-
-        <nav className={s.nav}>
-          {nav.map((group) => (
-            <div key={group.title} className={s.group}>
-              <p className={s.groupTitle}>{group.title}</p>
-              {group.items.map(({ href, label, icon: Icon, badge }) => (
-                <Link key={href} href={href} className={`${s.item} ${active(href) ? s.itemOn : ''}`} title={label}>
-                  <Icon size={18} strokeWidth={1.9} />
-                  <span className={s.itemLabel}>{label}</span>
-                  {badge ? <span className={s.count}>{badge}</span> : null}
-                </Link>
-              ))}
-            </div>
+        <div className={s.items}>
+          {dock.map((item) => (
+            <DockLink key={item.href} item={item} on={active(item.href)} />
           ))}
-        </nav>
+        </div>
+        <DockLink item={{ ...settings[0], icon: Settings }} on={settingsOn} />
+        <span className={s.me} title="Sophie Laurent · Virage Lyon 7e">
+          SL
+        </span>
+      </nav>
 
-        <button className={s.school}>
-          <span className="avatar tone-primary">SL</span>
-          <span className={s.schoolText}>
-            <strong>Sophie Laurent</strong>
-            <span>
-              {school.name} · {school.city}
-            </span>
-          </span>
-          <ChevronsUpDown size={16} className="muted" />
+      {/* Téléphone : la barre d'onglets de l'app */}
+      <nav className={s.tabbar} aria-label="Menu">
+        {mobileItems.map((item) => (
+          <TabLink key={item.href} item={item} on={active(item.href)} />
+        ))}
+        <button className={`${s.tab} ${moreOn ? s.tabOn : ''}`} onClick={() => setMore(true)} aria-label="Plus">
+          <Ellipsis size={20} />
+          {moreOn ? <span>Plus</span> : null}
         </button>
-      </aside>
+      </nav>
 
-      <div className={s.main}>
-        <header className={s.topbar}>
-          <div className={s.crumb}>
-            <span className="muted">{school.name}</span>
-            <span className="muted">/</span>
-            <strong>{current?.label ?? 'Tableau de bord'}</strong>
-          </div>
-          <label className={s.search}>
-            <Search size={16} className="muted" />
-            <input ref={search} placeholder="Rechercher un élève, une facture…" />
-            <kbd>⌘K</kbd>
-          </label>
-          <button className={s.icon} aria-label="Notifications">
-            <Bell size={18} />
-            <span className={s.dot} />
-          </button>
-          <button className="btn btn-primary">
-            <Plus size={16} />
-            <span className={s.hideSm}>Nouvelle inscription</span>
-          </button>
-        </header>
-        <main className={s.content}>{children}</main>
-      </div>
+      <main className={s.main}>
+        <div className={s.content}>{children}</div>
+      </main>
+
+      <SidePanel open={more} onClose={() => setMore(false)} label="Toutes les pages" width={420}>
+        <h2 className={s.moreTitle}>Toutes les pages</h2>
+        <div className={s.moreGrid}>
+          {allItems.map((i) => (
+            <Link key={i.href} href={i.href} onClick={() => setMore(false)} className={`${s.moreItem} ${active(i.href) ? s.moreOn : ''}`}>
+              <i.icon size={22} strokeWidth={1.8} />
+              <span>{i.label}</span>
+            </Link>
+          ))}
+        </div>
+      </SidePanel>
+      <InscriptionPanel />
+      <NotificationsPanel />
     </div>
+  );
+}
+
+function DockLink({ item, on }: { item: NavItem; on: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link href={item.href} className={`${s.item} ${on ? s.itemOn : ''}`} aria-current={on ? 'page' : undefined}>
+      <span className={s.iconWrap}>
+        <Icon size={21} strokeWidth={on ? 2.1 : 1.8} />
+        {item.badge ? <span className={s.badge}>{item.badge}</span> : null}
+      </span>
+      <span className={s.label}>{item.short}</span>
+    </Link>
+  );
+}
+
+function TabLink({ item, on }: { item: NavItem; on: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link href={item.href} className={`${s.tab} ${on ? s.tabOn : ''}`} aria-label={item.short}>
+      <span className={s.iconWrap}>
+        <Icon size={20} strokeWidth={on ? 2.1 : 1.8} />
+        {item.badge && !on ? <span className={s.badge}>{item.badge}</span> : null}
+      </span>
+      {on ? <span>{item.short}</span> : null}
+    </Link>
   );
 }
