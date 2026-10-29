@@ -46,6 +46,9 @@ const models: Record<string, ModelDef> = {
       payments: many("payment", "applicationId"),
       messages: many("message", "applicationId"),
       events: many("applicationEvent", "applicationId"),
+      instructor: one("user", "instructorId"),
+      lessons: many("drivingLesson", "applicationId"),
+      exams: many("exam", "applicationId"),
     },
     compound: { candidateId_organizationId: ["candidateId", "organizationId"] },
     defaults: () => ({
@@ -59,6 +62,8 @@ const models: Record<string, ModelDef> = {
       briefingSeenAt: null,
       totalAmount: null,
       archivedAt: null,
+      instructorId: null,
+      hoursPlanned: 20,
     }),
   },
   document: {
@@ -124,6 +129,37 @@ const models: Record<string, ModelDef> = {
       attendanceClosedAt: null,
     }),
   },
+  vehicle: {
+    relations: { lessons: many("drivingLesson", "vehicleId") },
+    defaults: () => ({ status: "AVAILABLE", notes: null }),
+  },
+  drivingLesson: {
+    relations: {
+      application: one("permitApplication", "applicationId"),
+      instructor: one("user", "instructorId"),
+      vehicle: one("vehicle", "vehicleId"),
+    },
+    defaults: () => ({ durationMinutes: 60, status: "PLANNED", vehicleId: null, notes: null }),
+  },
+  exam: {
+    relations: { application: one("permitApplication", "applicationId") },
+    defaults: () => ({ result: "PENDING", location: null }),
+  },
+  task: {
+    relations: { assignee: one("user", "assigneeId") },
+    defaults: () => ({
+      description: null,
+      assigneeId: null,
+      dueAt: null,
+      priority: "NORMAL",
+      status: "TODO",
+      entityType: null,
+      entityId: null,
+      entityLabel: null,
+      history: [],
+      completedAt: null,
+    }),
+  },
   sessionRegistration: {
     relations: {
       session: one("theorySession", "sessionId"),
@@ -181,6 +217,10 @@ type Models = {
   applicationEvent: Delegate;
   theorySession: Delegate;
   sessionRegistration: Delegate;
+  vehicle: Delegate;
+  drivingLesson: Delegate;
+  exam: Delegate;
+  task: Delegate;
 };
 type Client = Models & {
   $transaction<T>(fn: (tx: Models) => Promise<T>): Promise<T>;

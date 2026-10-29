@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import type { Store } from "./engine";
+import { seedCrm } from "./seed-crm";
 
 /**
  * Données de démonstration de l'auto-école Virage (Lyon 7e).
@@ -186,6 +187,8 @@ export function seed(store: Store) {
       briefingSeenAt: stage === "DRAFT" ? null : ago(days - 1),
       totalAmount: index === 13 ? total - 5000 : total,
       archivedAt: null,
+      instructorId: stage === "DRAFT" ? null : ["u-julie", "u-karim", "u-marc"][index % 3],
+      hoursPlanned: permitType === "permis-b-auto" ? 13 : 20,
       createdAt: ago(days, 2),
       updatedAt: ago(Math.min(days, finished ? 6 : 1 + (index % 4))),
     });
@@ -366,4 +369,6 @@ export function seed(store: Store) {
   });
 
   t.invoiceCounter.push({ organizationId: ORG, year: new Date().getFullYear(), value: invoice });
+
+  seedCrm(store, now);
 }

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, CalendarPlus, ChevronRight, History, MapPin, UsersRound } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { CapacityMeter, DateTile, MonthCalendar, dayKey, formatLongDay, formatTimeRange, isPast, placesLeft, startOfMonth } from "@/components/calendar/calendar-shared";
@@ -20,12 +21,14 @@ import { cn } from "@/lib/utils";
 type View = "upcoming" | "past";
 
 export default function StaffCalendarPage() {
+  const searchParams = useSearchParams();
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [view, setView] = useState<View>("upcoming");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<StaffSession | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  // ?session=… ouvre directement la fiche d'une séance (lien depuis le plan)
+  const [detailId, setDetailId] = useState<string | null>(() => searchParams.get("session"));
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
