@@ -70,6 +70,16 @@ export function PlanView({ initial }: { initial: PlanData }) {
   const navPath = useNavPath();
   const queryClient = useQueryClient();
   const rootRef = useRef<HTMLDivElement>(null);
+  // déconnexion : le plan revient à sa place de départ, seul, avant de passer à l'écran de connexion
+  useEffect(() => {
+    const onOutro = () => {
+      setSelected(null);
+      planRef.current?.reset();
+    };
+    window.addEventListener("virage:outro", onOutro);
+    return () => window.removeEventListener("virage:outro", onOutro);
+  }, []);
+
   // le panneau de zone se déplace comme les fenêtres ; il revient à droite à chaque ouverture
   const panelDrag = useDraggable<HTMLDivElement>(selected !== null);
 
@@ -155,7 +165,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
   );
 
   return (
-    <div ref={rootRef} className="relative h-full overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)]">
+    <div ref={rootRef} data-plan-root className="relative h-full overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)]">
       <IsoPlan
         ref={planRef}
         zones={data.zones}

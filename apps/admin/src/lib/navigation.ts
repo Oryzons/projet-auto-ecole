@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  Car,
   CreditCard,
   FileText,
   FolderOpen,
@@ -47,6 +48,7 @@ export const adminNav: NavConfig = {
     { label: "Messages", href: "/admin/messages", icon: MessagesSquare, badge: "unread" },
   ],
   secondary: [
+    { label: "Véhicules", href: "/admin/vehicles", icon: Car },
     { label: "Finances", href: "/admin/finances", icon: Wallet },
     { label: "Rapports", href: "/admin/reports", icon: BarChart3 },
     { label: "Membres", href: "/admin/members", icon: UsersRound },

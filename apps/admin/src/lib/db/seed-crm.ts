@@ -38,11 +38,11 @@ export function seedCrm(store: Store, now: number) {
 
   /* ---------- parc automobile ---------- */
   const vehicles = [
-    { id: "veh-208", name: "Peugeot 208", plate: "GH-208-VR", transmission: "MANUAL", status: "AVAILABLE", mileage: 41250, service: 38, inspection: 210, insurance: 160, notes: null },
-    { id: "veh-clio", name: "Renault Clio V", plate: "FT-512-VR", transmission: "MANUAL", status: "IN_USE", mileage: 68900, service: -4, inspection: 95, insurance: 160, notes: "Révision des 70 000 km dépassée." },
-    { id: "veh-yaris", name: "Toyota Yaris Hybride", plate: "GK-731-VR", transmission: "AUTO", status: "AVAILABLE", mileage: 22400, service: 120, inspection: 18, insurance: 160, notes: "Contrôle technique à programmer." },
-    { id: "veh-208a", name: "Peugeot 208 EAT8", plate: "GL-044-VR", transmission: "AUTO", status: "MAINTENANCE", mileage: 35120, service: 2, inspection: 300, insurance: 160, notes: "Plaquettes de frein en cours de remplacement au garage." },
-    { id: "veh-mt07", name: "Yamaha MT-07 A2", plate: "FZ-907-VR", transmission: "MOTO", status: "AVAILABLE", mileage: 15800, service: 64, inspection: 400, insurance: 25, notes: null },
+    { id: "veh-208", fuel: "PETROL", permitCategory: "B", color: "Blanc nacré", year: 2022, insurer: "MMA Pro", policy: "AE-208-4471", name: "Peugeot 208", plate: "GH-208-VR", transmission: "MANUAL", status: "AVAILABLE", mileage: 41250, service: 38, inspection: 210, insurance: 160, notes: null },
+    { id: "veh-clio", fuel: "DIESEL", permitCategory: "B", color: "Gris titanium", year: 2020, insurer: "MMA Pro", policy: "AE-512-4472", name: "Renault Clio V", plate: "FT-512-VR", transmission: "MANUAL", status: "IN_USE", mileage: 68900, service: -4, inspection: 95, insurance: 160, notes: "Révision des 70 000 km dépassée." },
+    { id: "veh-yaris", fuel: "HYBRID", permitCategory: "B_AUTO", color: "Rouge", year: 2023, insurer: "MMA Pro", policy: "AE-731-4473", name: "Toyota Yaris Hybride", plate: "GK-731-VR", transmission: "AUTO", status: "AVAILABLE", mileage: 22400, service: 120, inspection: 18, insurance: 160, notes: "Contrôle technique à programmer." },
+    { id: "veh-208a", fuel: "PETROL", permitCategory: "B_AUTO", color: "Bleu vertigo", year: 2022, insurer: "MMA Pro", policy: "AE-044-4474", name: "Peugeot 208 EAT8", plate: "GL-044-VR", transmission: "AUTO", status: "MAINTENANCE", mileage: 35120, service: 2, inspection: 300, insurance: 160, notes: "Plaquettes de frein en cours de remplacement au garage." },
+    { id: "veh-mt07", fuel: "PETROL", permitCategory: "A2", color: "Noir", year: 2021, insurer: "AXA Moto", policy: "MO-907-1180", name: "Yamaha MT-07 A2", plate: "FZ-907-VR", transmission: "MOTO", status: "AVAILABLE", mileage: 15800, service: 64, inspection: 400, insurance: 25, notes: null },
   ];
   vehicles.forEach((v) =>
     t.vehicle.push({
@@ -57,6 +57,15 @@ export function seedCrm(store: Store, now: number) {
       inspectionExpiresAt: dayAt(v.inspection, 9),
       insuranceExpiresAt: dayAt(v.insurance, 9),
       notes: v.notes,
+      fuel: v.fuel,
+      permitCategory: v.permitCategory,
+      dualControls: v.transmission !== "MOTO",
+      color: v.color,
+      vin: null,
+      firstRegistrationAt: new Date(`${v.year}-03-15T09:00:00`),
+      nextServiceMileage: Math.ceil((v.mileage + 1) / 10_000) * 10_000,
+      insurer: v.insurer,
+      insurancePolicy: v.policy,
       createdAt: ago(500),
       updatedAt: ago(3),
     }),
@@ -151,6 +160,9 @@ export function seedCrm(store: Store, now: number) {
     status: string;
     student?: string;
     vehicle?: string;
+    /** autres responsables et élèves, pour montrer les tâches partagées */
+    also?: string[];
+    more?: string[];
   }[] = [
     { title: "Relancer pour l'attestation JDC", description: "Pièce manquante depuis plus de 10 jours.", category: "ADMIN", assignee: "u-sophie", due: -2, priority: "HIGH", status: "TODO", student: "Hugo" },
     { title: "Vérifier le justificatif de domicile", category: "ADMIN", assignee: "u-thomas", due: 0, priority: "NORMAL", status: "IN_PROGRESS", student: "Sarah" },
@@ -160,9 +172,9 @@ export function seedCrm(store: Store, now: number) {
     { title: "Envoyer le contrat de formation", category: "INSCRIPTION", assignee: "u-thomas", due: 2, priority: "NORMAL", status: "TODO", student: "Camille" },
     { title: "Relancer le 2e versement", description: "Échéance du paiement en 3 fois dépassée.", category: "PAYMENT", assignee: "u-sophie", due: -3, priority: "HIGH", status: "TODO", student: "Chloé" },
     { title: "Confirmer la réception du virement", category: "PAYMENT", assignee: "u-thomas", due: 0, priority: "NORMAL", status: "IN_PROGRESS", student: "Louis" },
-    { title: "Préparer l'examen pratique", description: "Faire un examen blanc sur le parcours de Vénissieux.", category: "EXAM", assignee: "u-karim", due: 4, priority: "NORMAL", status: "TODO", student: "Léo" },
+    { title: "Préparer l'examen pratique", description: "Faire un examen blanc sur le parcours de Vénissieux.", category: "EXAM", assignee: "u-karim", due: 4, priority: "NORMAL", status: "TODO", student: "Léo", also: ["u-julie"], more: ["Zoé"] },
     { title: "Inscrire à l'examen du code", category: "EXAM", assignee: "u-sophie", due: -1, priority: "HIGH", status: "TODO", student: "Zoé" },
-    { title: "Programmer la révision des 70 000 km", category: "VEHICLE", assignee: "u-thomas", due: -4, priority: "URGENT", status: "TODO", vehicle: "veh-clio" },
+    { title: "Programmer la révision des 70 000 km", category: "VEHICLE", assignee: "u-thomas", due: -4, priority: "URGENT", status: "TODO", vehicle: "veh-clio", also: ["u-marc"] },
     { title: "Prendre rendez-vous au contrôle technique", category: "VEHICLE", assignee: "u-thomas", due: 7, priority: "NORMAL", status: "TODO", vehicle: "veh-yaris" },
     { title: "Récupérer la 208 EAT8 au garage", category: "VEHICLE", assignee: "u-marc", due: 2, priority: "NORMAL", status: "IN_PROGRESS", vehicle: "veh-208a" },
     { title: "Reprogrammer la leçon annulée", category: "PLANNING", assignee: "u-julie", due: 0, priority: "NORMAL", status: "TODO", student: "Emma" },
@@ -188,6 +200,12 @@ export function seedCrm(store: Store, now: number) {
       dueAt: task.due === null ? null : dayAt(task.due, 18),
       priority: task.priority,
       status: task.status,
+      assigneeIds: task.assignee ? [task.assignee, ...(task.also ?? [])] : [],
+      links: [
+        ...(app ? [{ type: "APPLICATION", id: app.id, label: nameOf(app) }] : []),
+        ...(task.more ?? []).map((first) => ({ type: "APPLICATION", id: byName(first).id, label: nameOf(byName(first)) })),
+        ...(vehicle ? [{ type: "VEHICLE", id: vehicle.id, label: `${vehicle.name} · ${vehicle.plate}` }] : []),
+      ],
       entityType: app ? "APPLICATION" : vehicle ? "VEHICLE" : null,
       entityId: app?.id ?? vehicle?.id ?? null,
       entityLabel: app ? nameOf(app) : vehicle ? `${vehicle.name} · ${vehicle.plate}` : null,

@@ -11,13 +11,13 @@ import { cn } from "@/lib/utils";
 const B = sceneBounds();
 
 /** Le plan de l'auto-école, en décor : même scène animée que la vue d'ensemble, sans données ni interaction. */
-export const PlanBackdrop = memo(function PlanBackdrop({ className }: { className?: string }) {
+export const PlanBackdrop = memo(function PlanBackdrop({ className, instant = false }: { className?: string; instant?: boolean }) {
   const reduce = useReducedMotion();
   return (
     <motion.div
       aria-hidden
       className={cn("pointer-events-none select-none", className)}
-      initial={{ opacity: 0, scale: reduce ? 1 : 0.96, y: reduce ? 0 : 16 }}
+      initial={instant ? false : { opacity: 0, scale: reduce ? 1 : 0.96, y: reduce ? 0 : 16 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.1 }}
     >

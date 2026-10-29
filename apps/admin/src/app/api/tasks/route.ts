@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { serializeTask, taskCreateSchema } from "@/lib/tasks";
+import { serializeTask, taskCreateSchema, taskRelationData, type TaskLink } from "@/lib/tasks";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +24,9 @@ export async function GET() {
     prisma.vehicle.findMany({ where: { organizationId }, orderBy: { name: "asc" } }),
   ]);
 
+  const names = new Map(staff.map((u) => [u.id, { firstName: u.firstName, lastName: u.lastName }]));
   return NextResponse.json({
-    tasks: tasks.map(serializeTask),
+    tasks: tasks.map((task) => serializeTask(task, names)),
     staff: staff.map((u) => ({ id: u.id, name: `${u.firstName} ${u.lastName}`, role: u.role })),
     applications: applications
       .map((a) => ({ id: a.id, name: `${a.candidate.firstName} ${a.candidate.lastName}` }))
@@ -45,21 +46,23 @@ export async function POST(req: Request) {
   }
   const input = parsed.data;
 
-  // l'entité liée doit appartenir à l'auto-école
-  let entity: { type: string; id: string; label: string } | null = null;
-  if (input.applicationId) {
-    const app = await prisma.permitApplication.findFirst({ where: { id: input.applicationId, organizationId }, include: { candidate: true } });
+  // élèves, véhicules et responsables doivent appartenir à l'auto-école
+  const unique = (ids: string[]) => [...new Set(ids)];
+  const links: TaskLink[] = [];
+  for (const id of unique(input.applicationIds)) {
+    const app = await prisma.permitApplication.findFirst({ where: { id, organizationId }, include: { candidate: true } });
     if (!app) return NextResponse.json({ error: "Élève introuvable" }, { status: 404 });
-    entity = { type: "APPLICATION", id: app.id, label: `${app.candidate.firstName} ${app.candidate.lastName}` };
-  } else if (input.vehicleId) {
-    const vehicle = await prisma.vehicle.findFirst({ where: { id: input.vehicleId, organizationId } });
+    links.push({ type: "APPLICATION", id: app.id, label: `${app.candidate.firstName} ${app.candidate.lastName}` });
+  }
+  for (const id of unique(input.vehicleIds)) {
+    const vehicle = await prisma.vehicle.findFirst({ where: { id, organizationId } });
     if (!vehicle) return NextResponse.json({ error: "Véhicule introuvable" }, { status: 404 });
-    entity = { type: "VEHICLE", id: vehicle.id, label: `${vehicle.name} · ${vehicle.plate}` };
+    links.push({ type: "VEHICLE", id: vehicle.id, label: `${vehicle.name} · ${vehicle.plate}` });
   }
-  if (input.assigneeId) {
-    const assignee = await prisma.user.findFirst({ where: { id: input.assigneeId, organizationId, role: { in: ["ADMIN", "SKIPPER"] } } });
-    if (!assignee) return NextResponse.json({ error: "Responsable introuvable" }, { status: 404 });
-  }
+  const assigneeIds = unique(input.assigneeIds);
+  const team = await prisma.user.findMany({ where: { organizationId, role: { in: ["ADMIN", "SKIPPER"] } } });
+  const names = new Map(team.map((u) => [u.id, { firstName: u.firstName, lastName: u.lastName }]));
+  if (assigneeIds.some((id) => !names.has(id))) return NextResponse.json({ error: "Responsable introuvable" }, { status: 404 });
 
   const task = await prisma.task.create({
     data: {
@@ -69,14 +72,11 @@ export async function POST(req: Request) {
       category: input.category,
       priority: input.priority,
       status: "TODO",
-      assigneeId: input.assigneeId ?? null,
+      ...taskRelationData(assigneeIds, links),
       dueAt: input.dueAt ? new Date(input.dueAt) : null,
-      entityType: entity?.type ?? null,
-      entityId: entity?.id ?? null,
-      entityLabel: entity?.label ?? null,
       history: [{ at: new Date().toISOString(), userId: session.user.id, action: "Tâche créée" }],
     },
     include: { assignee: true },
   });
-  return NextResponse.json({ task: serializeTask(task) }, { status: 201 });
+  return NextResponse.json({ task: serializeTask(task, names) }, { status: 201 });
 }

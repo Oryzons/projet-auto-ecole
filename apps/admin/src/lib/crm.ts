@@ -53,17 +53,19 @@ export function taskTone(task: DbRow, now = new Date()): Tone {
 /** Échéances d'un véhicule : dépassée en rouge, sous 30 jours en orange. */
 export function vehicleAlerts(vehicle: DbRow, now = new Date()) {
   const checks: [string, Date][] = [
-    ["Révision", new Date(vehicle.nextServiceAt)],
-    ["Contrôle technique", new Date(vehicle.inspectionExpiresAt)],
-    ["Assurance", new Date(vehicle.insuranceExpiresAt)],
+    ["Révision", new Date(vehicle.nextServiceAt ?? NaN)],
+    ["Contrôle technique", new Date(vehicle.inspectionExpiresAt ?? NaN)],
+    ["Assurance", new Date(vehicle.insuranceExpiresAt ?? NaN)],
   ];
   const alerts: { label: string; tone: Tone }[] = [];
   for (const [label, date] of checks) {
+    if (Number.isNaN(date.getTime()) || date.getTime() === 0) continue;
     const days = Math.ceil((date.getTime() - now.getTime()) / DAY);
     if (days < 0) alerts.push({ label: `${label} dépassée de ${-days} j`, tone: "danger" });
     else if (days <= 30) alerts.push({ label: `${label} dans ${days} j`, tone: "warning" });
   }
   if (vehicle.status === "MAINTENANCE") alerts.push({ label: "Au garage", tone: "warning" });
+  if (vehicle.status === "OUT_OF_SERVICE") alerts.push({ label: "Hors service", tone: "danger" });
   return alerts.sort((a, b) => (a.tone === "danger" ? -1 : 0) - (b.tone === "danger" ? -1 : 0));
 }
 

@@ -31,6 +31,8 @@ export type TaskRowData = {
   assignee: string | null;
   entityLabel: string | null;
   href: string | null;
+  /** tous les élèves et véhicules liés (sinon `entityLabel`) */
+  links?: { label: string; href: string | null }[];
   description?: string | null;
   category?: string;
 };
@@ -281,21 +283,23 @@ export function TaskRow({
                 </span>
               )}
               {task.assignee && <span>· {task.assignee}</span>}
-              {task.entityLabel &&
-                (task.href ? (
+              {(task.links?.length ? task.links : task.entityLabel ? [{ label: task.entityLabel, href: task.href }] : []).map((link) =>
+                link.href ? (
                   <Link
-                    href={task.href}
+                    key={link.label}
+                    href={link.href}
                     className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
                   >
                     <Link2 className="size-3" />
-                    {task.entityLabel}
+                    {link.label}
                   </Link>
                 ) : (
-                  <span className="inline-flex items-center gap-1">
+                  <span key={link.label} className="inline-flex items-center gap-1">
                     <Link2 className="size-3" />
-                    {task.entityLabel}
+                    {link.label}
                   </span>
-                ))}
+                ),
+              )}
             </div>
           </div>
 

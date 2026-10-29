@@ -131,7 +131,19 @@ const models: Record<string, ModelDef> = {
   },
   vehicle: {
     relations: { lessons: many("drivingLesson", "vehicleId") },
-    defaults: () => ({ status: "AVAILABLE", notes: null }),
+    defaults: () => ({
+      status: "AVAILABLE",
+      notes: null,
+      fuel: "PETROL",
+      permitCategory: "B",
+      dualControls: true,
+      color: null,
+      vin: null,
+      firstRegistrationAt: null,
+      nextServiceMileage: null,
+      insurer: null,
+      insurancePolicy: null,
+    }),
   },
   drivingLesson: {
     relations: {
@@ -150,6 +162,8 @@ const models: Record<string, ModelDef> = {
     defaults: () => ({
       description: null,
       assigneeId: null,
+      assigneeIds: [],
+      links: [],
       dueAt: null,
       priority: "NORMAL",
       status: "TODO",

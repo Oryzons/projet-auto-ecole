@@ -6,6 +6,8 @@ import { formatCurrency } from "@/lib/utils";
 
 import type { PlanData, PlanItem, PlanMetric, PlanTask, PlanZone, ZoneId } from "@/lib/plan-types";
 import { ZONE_TASK_CATEGORY } from "@/lib/plan-types";
+import { linkHref, staffNames, taskAssigneeIds, taskLinks } from "@/lib/tasks";
+import { VEHICLE_STATUS_LABELS } from "@/lib/vehicles";
 
 export * from "@/lib/plan-types";
 
@@ -57,6 +59,7 @@ export async function getPlanData(organizationId: string): Promise<PlanData> {
     prisma.user.findMany({ where: { organizationId, role: "SKIPPER" } }),
   ]);
 
+  const staffById = await staffNames(organizationId);
   const openTasks = tasks.filter((task: DbRow) => task.status !== "DONE");
   const overdueTasks = openTasks.filter((task: DbRow) => task.dueAt && new Date(task.dueAt) < today);
   const toPlanTask = (task: DbRow): PlanTask => ({
@@ -66,9 +69,10 @@ export async function getPlanData(organizationId: string): Promise<PlanData> {
     priority: task.priority,
     dueAt: task.dueAt ? new Date(task.dueAt).toISOString() : null,
     tone: taskTone(task, now),
-    assignee: task.assignee ? task.assignee.firstName : null,
+    assignee: taskAssigneeIds(task).map((id) => staffById.get(id)?.firstName).filter(Boolean).join(", ") || null,
     entityLabel: task.entityLabel,
     href: task.entityType === "APPLICATION" && task.entityId ? `/admin/applications/${task.entityId}` : null,
+    links: taskLinks(task).map((link) => ({ label: link.label, href: linkHref(link) })),
   });
   const tasksFor = (zone: ZoneId) => {
     const category = ZONE_TASK_CATEGORY[zone];
@@ -288,11 +292,11 @@ export async function getPlanData(organizationId: string): Promise<PlanData> {
         title: `${vehicle.name} · ${vehicle.plate}`,
         subtitle: alerts[0]?.label ?? `${vehicle.mileage.toLocaleString("fr-FR")} km · à jour`,
         tone: alerts[0]?.tone ?? (vehicle.status === "AVAILABLE" ? "success" : "neutral"),
-        badge: vehicle.status === "AVAILABLE" ? "Disponible" : vehicle.status === "IN_USE" ? "En leçon" : "Au garage",
+        badge: VEHICLE_STATUS_LABELS[vehicle.status] ?? "Au garage",
         detail: vehicleDetail(vehicle, alerts),
       })),
       tasks: tasksFor("parc"),
-      page: { label: "Tâches du parc", href: "/admin/tasks?category=VEHICLE" },
+      page: { label: "Gérer les véhicules", href: "/admin/vehicles" },
     },
     {
       id: "examens",

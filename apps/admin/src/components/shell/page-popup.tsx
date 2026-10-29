@@ -50,7 +50,7 @@ export function PagePopup({ children }: { children: ReactNode }) {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-40 flex items-stretch justify-center md:p-[3vh]">
+        <div data-page-popup className="fixed inset-0 z-40 flex items-stretch justify-center md:p-[3vh]">
           <motion.div
             key="backdrop"
             aria-hidden

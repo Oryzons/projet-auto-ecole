@@ -375,3 +375,28 @@ html.is-leaving body {
 @media (prefers-reduced-motion: reduce) {
   [data-intro] * { animation: none !important; }
 }
+
+/* Déconnexion depuis le plan : tout ce qui l'entoure s'en va, le plan reste seul */
+html[data-outro] .intro-top,
+html[data-outro] .intro-bottom,
+html[data-outro] .intro-left,
+html[data-outro] .intro-right {
+  animation: outro-out 0.45s cubic-bezier(0.55, 0, 0.75, 0) both;
+}
+html[data-outro] .intro-top { --intro-from: 0 -18px; }
+html[data-outro] .intro-bottom { --intro-from: 0 18px; }
+html[data-outro] .intro-left { --intro-from: -18px 0; }
+html[data-outro] .intro-right { --intro-from: 18px 0; }
+html[data-outro] .plan-badge,
+html[data-outro] [data-page-popup] {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+html[data-outro] [data-slot="dialog-content"],
+html[data-outro] [data-slot="popover-content"],
+html[data-outro] [data-slot="dropdown-menu-content"] {
+  display: none;
+}
+@keyframes outro-out {
+  to { opacity: 0; translate: var(--intro-from); }
+}

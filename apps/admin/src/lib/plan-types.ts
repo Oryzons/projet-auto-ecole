@@ -41,6 +41,8 @@ export type PlanTask = {
   assignee: string | null;
   entityLabel: string | null;
   href: string | null;
+  /** tous les élèves et véhicules liés */
+  links?: { label: string; href: string | null }[];
 };
 
 export type PlanZone = {

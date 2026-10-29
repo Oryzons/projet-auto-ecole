@@ -1,7 +1,9 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AuthScene } from "@/components/auth/auth-scene";
 import { auth } from "@/lib/auth";
+import { OUTRO_COOKIE } from "@/lib/intro";
 import { homeForRole } from "@/lib/navigation";
 
 export default async function AuthLayout({
@@ -14,5 +16,6 @@ export default async function AuthLayout({
     redirect(homeForRole(session.user.role));
   }
 
-  return <AuthScene>{children}</AuthScene>;
+  const outro = (await cookies()).get(OUTRO_COOKIE)?.value === "1";
+  return <AuthScene outro={outro}>{children}</AuthScene>;
 }

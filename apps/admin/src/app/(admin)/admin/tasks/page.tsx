@@ -33,6 +33,10 @@ function matches(task: TaskDto, view: View, now: number) {
 }
 
 /** Toutes les tâches de l'équipe, par statut, avec le détail et l'historique de chacune. */
+/** Un responsable : son nom complet ; plusieurs : leurs prénoms. */
+const assigneeText = (assignees: { name: string }[]) =>
+  assignees.length === 0 ? null : assignees.length === 1 ? assignees[0]!.name : assignees.map((a) => a.name.split(" ")[0]).join(", ");
+
 export default function TasksPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -55,7 +59,7 @@ export default function TasksPage() {
   const now = Date.now();
   const tasks = data?.tasks ?? [];
   const filtered = useMemo(
-    () => tasks.filter((t) => (category === "all" || t.category === category) && (assignee === "all" || (assignee === "none" ? !t.assignee : t.assignee?.id === assignee))),
+    () => tasks.filter((t) => (category === "all" || t.category === category) && (assignee === "all" || (assignee === "none" ? t.assignees.length === 0 : t.assignees.some((a) => a.id === assignee)))),
     [tasks, category, assignee],
   );
   const counts = Object.fromEntries(VIEWS.map((v) => [v, filtered.filter((t) => matches(t, v, now)).length])) as Record<View, number>;
@@ -142,7 +146,7 @@ export default function TasksPage() {
                 <TaskRow
                   key={task.id}
                   onOpen={() => setOpenId(task.id)}
-                  task={{ ...task, assignee: task.assignee?.name ?? null }}
+                  task={{ ...task, assignee: assigneeText(task.assignees) }}
                 />
               ))}
             </AnimatePresence>
@@ -171,8 +175,8 @@ export default function TasksPage() {
                     ["Statut", TASK_STATUS_LABELS[open.status]],
                     ["Priorité", TASK_PRIORITY_LABELS[open.priority]],
                     ["Échéance", dueLabel(open.dueAt, open.status === "DONE").text],
-                    ["Responsable", open.assignee?.name ?? "Personne"],
-                    ["Lié à", open.entityLabel ?? "Rien"],
+                    [open.assignees.length > 1 ? "Responsables" : "Responsable", open.assignees.map((a) => a.name).join(", ") || "Personne"],
+                    ["Lié à", open.links.map((l) => l.label).join(", ") || "Rien"],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between gap-3 px-3.5 py-2.5">
                       <dt className="text-muted-foreground">{label}</dt>
@@ -180,11 +184,13 @@ export default function TasksPage() {
                     </div>
                   ))}
                 </dl>
-                {open.href && (
-                  <Link href={open.href} className={buttonVariants({ variant: "secondary", className: "w-full" })}>
-                    Ouvrir le dossier de {open.entityLabel}
-                  </Link>
-                )}
+                {open.links
+                  .filter((l) => l.href)
+                  .map((l) => (
+                    <Link key={l.id} href={l.href!} className={buttonVariants({ variant: "secondary", className: "w-full" })}>
+                      Ouvrir le dossier de {l.label}
+                    </Link>
+                  ))}
                 <section>
                   <h3 className="text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">Historique</h3>
                   <ol className="mt-2 space-y-3 border-l border-border pl-4">
