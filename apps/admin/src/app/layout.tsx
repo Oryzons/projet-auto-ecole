@@ -1,23 +1,42 @@
-import type { Metadata } from 'next';
-import type { CSSProperties, ReactNode } from 'react';
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { Providers } from "@/components/providers";
+import { cn } from "@/lib/utils";
 
-import { colors } from '@virage/shared/theme';
-
-import './globals.css';
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: 'Virage · Administration', template: '%s · Virage' },
-  description: 'Back-office de l’auto-école Virage',
+  title: {
+    default: "Virage · Auto-école",
+    template: "%s · Virage",
+  },
+  description: "Gestion de l'auto-école Virage : élèves, planning, paiements",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Virage",
+  },
 };
 
-// mêmes couleurs que l'app mobile, exposées en variables CSS
-const kebab = (k: string) => k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
-const vars = Object.fromEntries(Object.entries(colors).map(([k, v]) => [`--${kebab(k)}`, v])) as CSSProperties;
+export const viewport: Viewport = {
+  themeColor: "#2d50f5",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="fr" style={vars}>
-      <body>{children}</body>
+    <html lang="fr" className={cn(geistSans.variable, geistMono.variable)}>
+      <body className="min-h-svh">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
