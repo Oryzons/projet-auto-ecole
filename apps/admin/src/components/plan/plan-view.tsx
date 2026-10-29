@@ -25,6 +25,8 @@ import { ZONE_ICONS } from "./zone-icons";
 import { ZonePanel } from "./zone-panel";
 
 const PANEL_WIDTH = 404;
+/** Place laissée à la légende, en bas à droite, à côté de la barre des zones. */
+const LEGEND_SPACE = 312;
 
 function useMediaQuery(query: string) {
   return useSyncExternalStore(
@@ -54,6 +56,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
   });
   const reduce = useReducedMotion() ?? false;
   const desktop = useMediaQuery("(min-width: 768px)");
+  const wide = useMediaQuery("(min-width: 1024px)");
   const planRef = useRef<IsoPlanHandle>(null);
   const [selected, setSelected] = useState<ZoneId | null>(null);
   const [taskDialog, setTaskDialog] = useState<TaskDefaults | null>(null);
@@ -184,7 +187,12 @@ export function PlanView({ initial }: { initial: PlanData }) {
       </div>
 
       {/* légende */}
-      <div className="pointer-events-none absolute right-4 bottom-[5.25rem] hidden items-center gap-3 rounded-full border border-white/70 bg-white/80 px-3 py-1.5 text-[11.5px] font-medium text-muted-foreground shadow-sm backdrop-blur-md lg:flex" style={{ right: desktop && zone ? PANEL_WIDTH + 28 : undefined }}>
+      <div
+        className={cn(
+          "pointer-events-none absolute right-3 bottom-3 hidden h-[46px] items-center gap-3.5 rounded-2xl border border-white/70 bg-white/85 px-4 text-[12px] font-medium text-muted-foreground shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md transition-opacity duration-200 lg:flex",
+          zone && "opacity-0",
+        )}
+      >
         {(
           [
             ["danger", "Alerte"],
@@ -205,7 +213,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
         data-plan-control
         aria-label="Zones du plan"
         className="no-scrollbar absolute bottom-3 left-3 flex gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/85 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md transition-[right] duration-300 max-md:right-3 md:left-[68px]"
-        style={{ right: desktop ? (zone ? PANEL_WIDTH + 28 : 16) : undefined, maxWidth: desktop ? "fit-content" : undefined }}
+        style={{ right: desktop ? (zone ? PANEL_WIDTH + 28 : wide ? LEGEND_SPACE : 12) : undefined, maxWidth: desktop ? "fit-content" : undefined }}
       >
         {data.zones.map((z) => {
           const Icon = ZONE_ICONS[z.id];

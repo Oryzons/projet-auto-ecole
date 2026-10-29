@@ -2,13 +2,33 @@
 
 import { animate } from "motion/react";
 import { Maximize2, Minus, Plus, ScanSearch } from "lucide-react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type { PlanZone, ZoneId } from "@/lib/plan-types";
 import { cn } from "@/lib/utils";
 
 import { EASE_OUT } from "@/components/motion/tokens";
-import { DRAW_ORDER, Ground, RoomFloor, ZoneArt, roomOutline, sceneBounds, zoneAnchor, zoneCenter } from "./scene";
+import { PlanMotion } from "./furniture";
+import {
+  AisleLife,
+  DRAW_ORDER,
+  Ground,
+  ROOMS,
+  RoomFloor,
+  ZoneArt,
+  roomOutline,
+  sceneBounds,
+  zoneAnchor,
+  zoneCenter,
+} from "./scene";
 import { TONE_HEX } from "./tones";
 
 type Camera = { cx: number; cy: number; zoom: number };
@@ -17,10 +37,16 @@ const MIN_ZOOM = 0.8;
 const MAX_ZOOM = 3;
 const FOCUS_ZOOM = 1.7;
 const BOUNDS = sceneBounds();
-const HOME: Camera = { cx: BOUNDS.x + BOUNDS.w / 2, cy: BOUNDS.y + BOUNDS.h / 2, zoom: 1 };
+const HOME: Camera = {
+  cx: BOUNDS.x + BOUNDS.w / 2,
+  cy: BOUNDS.y + BOUNDS.h / 2,
+  zoom: 1,
+};
 
-
-export type IsoPlanHandle = { focus: (id: ZoneId | null) => void; reset: () => void };
+export type IsoPlanHandle = {
+  focus: (id: ZoneId | null) => void;
+  reset: () => void;
+};
 
 /**
  * Plan isométrique de l'auto-école : zones cliquables, badges de statut,
@@ -42,7 +68,19 @@ export const IsoPlan = forwardRef<
     homeZoom?: number;
     reducedMotion: boolean;
   }
->(function IsoPlan({ zones, selected, onSelect, insetRight, insetTop = 0, insetBottom, homeZoom = 1, reducedMotion }, ref) {
+>(function IsoPlan(
+  {
+    zones,
+    selected,
+    onSelect,
+    insetRight,
+    insetTop = 0,
+    insetBottom,
+    homeZoom = 1,
+    reducedMotion,
+  },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const home = useMemo(() => ({ ...HOME, zoom: homeZoom }), [homeZoom]);
@@ -54,19 +92,30 @@ export const IsoPlan = forwardRef<
   const [dragging, setDragging] = useState(false);
   const stopAnim = useRef<(() => void) | null>(null);
 
-  const byId = useMemo(() => new Map((zones ?? []).map((z) => [z.id, z])), [zones]);
+  const byId = useMemo(
+    () => new Map((zones ?? []).map((z) => [z.id, z])),
+    [zones],
+  );
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(([entry]) => setSize({ w: entry!.contentRect.width, h: entry!.contentRect.height }));
+    const observer = new ResizeObserver(([entry]) =>
+      setSize({ w: entry!.contentRect.width, h: entry!.contentRect.height }),
+    );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
   // pixels écran par pixel du plan, à zoom 1 (le plan tient en entier)
   // le centre de la caméra tombe au milieu de la partie libre, au-dessus des barres du bas
-  const fit = size.w && size.h ? Math.min(size.w / BOUNDS.w, Math.max(size.h - insetTop - insetBottom, 120) / BOUNDS.h) : 1;
+  const fit =
+    size.w && size.h
+      ? Math.min(
+          size.w / BOUNDS.w,
+          Math.max(size.h - insetTop - insetBottom, 120) / BOUNDS.h,
+        )
+      : 1;
   const scale = fit * cam.zoom;
   const viewBox = size.w
     ? `${(cam.cx - size.w / 2 / scale).toFixed(1)} ${(cam.cy - (insetTop + (size.h - insetTop - insetBottom) / 2) / scale).toFixed(1)} ${(size.w / scale).toFixed(1)} ${(size.h / scale).toFixed(1)}`
@@ -96,7 +145,11 @@ export const IsoPlan = forwardRef<
         duration: 0.55,
         ease: EASE_OUT,
         onUpdate: (p) =>
-          setCam({ cx: from.cx + (to.cx - from.cx) * p, cy: from.cy + (to.cy - from.cy) * p, zoom: from.zoom + (to.zoom - from.zoom) * p }),
+          setCam({
+            cx: from.cx + (to.cx - from.cx) * p,
+            cy: from.cy + (to.cy - from.cy) * p,
+            zoom: from.zoom + (to.zoom - from.zoom) * p,
+          }),
       });
       stopAnim.current = () => controls.stop();
     },
@@ -115,7 +168,11 @@ export const IsoPlan = forwardRef<
     [fit, flyTo, insetRight, home],
   );
 
-  useImperativeHandle(ref, () => ({ focus, reset: () => flyTo(home) }), [focus, flyTo, home]);
+  useImperativeHandle(ref, () => ({ focus, reset: () => flyTo(home) }), [
+    focus,
+    flyTo,
+    home,
+  ]);
 
   useEffect(() => {
     if (!selected) setCam(home);
@@ -139,13 +196,34 @@ export const IsoPlan = forwardRef<
       const c = camRef.current;
       const s = fit * c.zoom;
       const px = event.clientX - rect.left - rect.width / 2;
-      const py = event.clientY - rect.top - insetTop - (rect.height - insetTop - insetBottom) / 2;
+      const py =
+        event.clientY -
+        rect.top -
+        insetTop -
+        (rect.height - insetTop - insetBottom) / 2;
       // pavé tactile : deux doigts = déplacement, pincement (ctrl) = zoom
-      if (!event.ctrlKey && Math.abs(event.deltaX) > Math.abs(event.deltaY) * 0.5 && event.deltaMode === 0 && Math.abs(event.deltaY) < 40) {
-        setCam(clamp({ ...c, cx: c.cx + event.deltaX / s, cy: c.cy + event.deltaY / s }));
+      if (
+        !event.ctrlKey &&
+        Math.abs(event.deltaX) > Math.abs(event.deltaY) * 0.5 &&
+        event.deltaMode === 0 &&
+        Math.abs(event.deltaY) < 40
+      ) {
+        setCam(
+          clamp({
+            ...c,
+            cx: c.cx + event.deltaX / s,
+            cy: c.cy + event.deltaY / s,
+          }),
+        );
         return;
       }
-      const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, c.zoom * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018))));
+      const zoom = Math.min(
+        MAX_ZOOM,
+        Math.max(
+          MIN_ZOOM,
+          c.zoom * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)),
+        ),
+      );
       const wx = c.cx + px / s;
       const wy = c.cy + py / s;
       const ns = fit * zoom;
@@ -163,11 +241,17 @@ export const IsoPlan = forwardRef<
   const onPointerDown = (event: React.PointerEvent) => {
     if ((event.target as HTMLElement).closest("[data-plan-control]")) return;
     stopAnim.current?.();
-    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    pointers.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
     moved.current = 0;
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
-      pinch.current = { dist: Math.hypot(a!.x - b!.x, a!.y - b!.y), zoom: camRef.current.zoom };
+      pinch.current = {
+        dist: Math.hypot(a!.x - b!.x, a!.y - b!.y),
+        zoom: camRef.current.zoom,
+      };
     }
   };
   const onPointerMove = (event: React.PointerEvent) => {
@@ -179,7 +263,9 @@ export const IsoPlan = forwardRef<
     if (pointers.current.size === 2 && pinch.current) {
       const [a, b] = [...pointers.current.values()];
       const dist = Math.hypot(a!.x - b!.x, a!.y - b!.y);
-      setCam(clamp({ ...c, zoom: (pinch.current.zoom * dist) / pinch.current.dist }));
+      setCam(
+        clamp({ ...c, zoom: (pinch.current.zoom * dist) / pinch.current.dist }),
+      );
       moved.current += 10;
       return;
     }
@@ -202,7 +288,8 @@ export const IsoPlan = forwardRef<
     if (pointers.current.size === 0) setDragging(false);
   };
 
-  const zoomBy = (factor: number) => flyTo({ ...camRef.current, zoom: camRef.current.zoom * factor });
+  const zoomBy = (factor: number) =>
+    flyTo({ ...camRef.current, zoom: camRef.current.zoom * factor });
 
   const choose = (id: ZoneId) => {
     if (moved.current > 6) return;
@@ -216,7 +303,10 @@ export const IsoPlan = forwardRef<
   return (
     <div
       ref={containerRef}
-      className={cn("relative size-full touch-none overflow-hidden select-none", dragging ? "cursor-grabbing" : "cursor-grab")}
+      className={cn(
+        "relative size-full touch-none overflow-hidden select-none",
+        dragging ? "cursor-grabbing" : "cursor-grab",
+      )}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endPointer}
@@ -225,55 +315,91 @@ export const IsoPlan = forwardRef<
         if (event.pointerType === "mouse") setHovered(null);
       }}
     >
-      <svg viewBox={viewBox} className="block size-full" role="group" aria-label="Plan de l'auto-école">
-        <Ground />
-        {DRAW_ORDER.map((id) => {
-          const zone = byId.get(id);
-          const isSelected = selected === id;
-          const isHot = highlight === id;
-          const tone = zone?.tone ?? "neutral";
-          const ring = tone === "danger" || tone === "warning" ? TONE_HEX[tone] : null;
-          return (
-            <g key={id}>
-              <g
-                role="button"
-                tabIndex={0}
-                aria-pressed={isSelected}
-                aria-label={zone ? `${zone.title} : ${zone.count} ${zone.countLabel}` : id}
-                className="plan-zone outline-none"
-                style={{ opacity: selected && !isSelected ? 0.55 : 1 }}
-                onClick={() => choose(id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onSelect(selected === id ? null : id);
+      <svg
+        viewBox={viewBox}
+        className="block size-full"
+        role="group"
+        aria-label="Plan de l'auto-école"
+      >
+        <PlanMotion.Provider value={!reducedMotion}>
+          <Ground />
+          {DRAW_ORDER.map((id) => {
+            const zone = byId.get(id);
+            const isSelected = selected === id;
+            const isHot = highlight === id;
+            const tone = zone?.tone ?? "neutral";
+            const ring =
+              tone === "danger" || tone === "warning" ? TONE_HEX[tone] : null;
+            return (
+              <g key={id}>
+                <g
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-label={
+                    zone
+                      ? `${zone.title} : ${zone.count} ${zone.countLabel}`
+                      : id
                   }
-                }}
-                onPointerEnter={(event) => event.pointerType === "mouse" && !dragging && setHovered(id)}
-                onPointerLeave={(event) => event.pointerType === "mouse" && setHovered((h) => (h === id ? null : h))}
-                onFocus={() => setFocused(id)}
-                onBlur={() => setFocused((f) => (f === id ? null : f))}
-              >
-                <g className="plan-lift" style={{ transform: isHot || isSelected ? "translateY(-8px)" : "none" }}>
-                  <RoomFloor id={id} />
-                  {ring && <polygon points={roomOutline(id, 0.3)} fill={ring} fillOpacity={0.07} stroke={ring} strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray={tone === "warning" ? "4 3" : undefined} />}
-                  {(isSelected || isHot) && (
-                    <polygon
-                      points={roomOutline(id, 0.1)}
-                      fill="#2d50f5"
-                      fillOpacity={isSelected ? 0.08 : 0.04}
-                      stroke="#2d50f5"
-                      strokeWidth={isSelected ? 2.2 : 1.4}
-                      strokeOpacity={isSelected ? 0.9 : 0.6}
-                      className={isSelected ? "plan-selected" : undefined}
-                    />
-                  )}
-                  <ZoneArt id={id} />
+                  className="plan-zone outline-none"
+                  style={{ opacity: selected && !isSelected ? 0.55 : 1 }}
+                  onClick={() => choose(id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(selected === id ? null : id);
+                    }
+                  }}
+                  onPointerEnter={(event) =>
+                    event.pointerType === "mouse" && !dragging && setHovered(id)
+                  }
+                  onPointerLeave={(event) =>
+                    event.pointerType === "mouse" &&
+                    setHovered((h) => (h === id ? null : h))
+                  }
+                  onFocus={() => setFocused(id)}
+                  onBlur={() => setFocused((f) => (f === id ? null : f))}
+                >
+                  <g
+                    className="plan-lift"
+                    style={{
+                      transform:
+                        isHot || isSelected ? "translateY(-8px)" : "none",
+                    }}
+                  >
+                    <RoomFloor id={id} />
+                    {ring && (
+                      <polygon
+                        points={roomOutline(id, 0.3)}
+                        fill={ring}
+                        fillOpacity={0.07}
+                        stroke={ring}
+                        strokeOpacity={0.55}
+                        strokeWidth={1.2}
+                        strokeDasharray={tone === "warning" ? "4 3" : undefined}
+                      />
+                    )}
+                    {(isSelected || isHot) && (
+                      <polygon
+                        points={roomOutline(id, 0.1)}
+                        fill="#2d50f5"
+                        fillOpacity={isSelected ? 0.08 : 0.04}
+                        stroke="#2d50f5"
+                        strokeWidth={isSelected ? 2.2 : 1.4}
+                        strokeOpacity={isSelected ? 0.9 : 0.6}
+                        className={isSelected ? "plan-selected" : undefined}
+                      />
+                    )}
+                    <ZoneArt id={id} />
+                  </g>
                 </g>
+                {ROOMS[id].col === 2 && (
+                  <AisleLife after={ROOMS[id].row as 0 | 1 | 2} />
+                )}
               </g>
-            </g>
-          );
-        })}
+            );
+          })}
+        </PlanMotion.Provider>
 
         {/* badges de statut, toujours au premier plan */}
         {DRAW_ORDER.map((id) => {
@@ -282,7 +408,14 @@ export const IsoPlan = forwardRef<
           const [ax, ay] = zoneAnchor(id);
           const lifted = highlight === id || selected === id;
           return (
-            <g key={`badge-${id}`} transform={`translate(${ax} ${ay - (lifted ? 5 : 0)}) scale(${ui})`} className="plan-badge" onClick={() => choose(id)} style={{ cursor: "pointer" }} aria-hidden>
+            <g
+              key={`badge-${id}`}
+              transform={`translate(${ax} ${ay - (lifted ? 5 : 0)}) scale(${ui})`}
+              className="plan-badge"
+              onClick={() => choose(id)}
+              style={{ cursor: "pointer" }}
+              aria-hidden
+            >
               <ZoneBadge zone={zone} />
             </g>
           );
@@ -290,7 +423,10 @@ export const IsoPlan = forwardRef<
 
         {/* étiquette de la zone survolée */}
         {highlight && byId.get(highlight) && !dragging && (
-          <g transform={`translate(${zoneAnchor(highlight)[0]} ${zoneAnchor(highlight)[1] - 5}) scale(${ui})`} style={{ pointerEvents: "none" }}>
+          <g
+            transform={`translate(${zoneAnchor(highlight)[0]} ${zoneAnchor(highlight)[1] - 5}) scale(${ui})`}
+            style={{ pointerEvents: "none" }}
+          >
             <ZoneTooltip zone={byId.get(highlight)!} />
           </g>
         )}
@@ -298,12 +434,17 @@ export const IsoPlan = forwardRef<
 
       {!zones && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <span className="rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">Chargement des données…</span>
+          <span className="rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
+            Chargement des données…
+          </span>
         </div>
       )}
 
       {/* commandes de caméra */}
-      <div data-plan-control className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/80 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md">
+      <div
+        data-plan-control
+        className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/80 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md"
+      >
         <ControlButton label="Zoomer" onClick={() => zoomBy(1.35)}>
           <Plus />
         </ControlButton>
@@ -311,7 +452,10 @@ export const IsoPlan = forwardRef<
           <Minus />
         </ControlButton>
         <span className="mx-1.5 h-px bg-border" />
-        <ControlButton label={selected ? "Recentrer sur la zone" : "Recentrer"} onClick={() => (selected ? focus(selected) : flyTo(home))}>
+        <ControlButton
+          label={selected ? "Recentrer sur la zone" : "Recentrer"}
+          onClick={() => (selected ? focus(selected) : flyTo(home))}
+        >
           <ScanSearch />
         </ControlButton>
         <ControlButton
@@ -328,7 +472,15 @@ export const IsoPlan = forwardRef<
   );
 });
 
-function ControlButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+function ControlButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -351,9 +503,36 @@ function ZoneBadge({ zone }: { zone: PlanZone }) {
     <g>
       <line x1={0} y1={0} x2={0} y2={-10} stroke={color} strokeWidth={1.5} />
       <circle r={2.4} fill={color} />
-      {zone.tone === "danger" && <rect x={-w / 2} y={-32} width={w} height={22} rx={11} fill={color} className="plan-pulse" />}
-      <rect x={-w / 2} y={-32} width={w} height={22} rx={11} fill={color} stroke="#ffffff" strokeWidth={2} />
-      <text x={0} y={-17} textAnchor="middle" fontSize={12} fontWeight={700} fill="#ffffff" style={{ fontVariantNumeric: "tabular-nums" }}>
+      {zone.tone === "danger" && (
+        <rect
+          x={-w / 2}
+          y={-32}
+          width={w}
+          height={22}
+          rx={11}
+          fill={color}
+          className="plan-pulse"
+        />
+      )}
+      <rect
+        x={-w / 2}
+        y={-32}
+        width={w}
+        height={22}
+        rx={11}
+        fill={color}
+        stroke="#ffffff"
+        strokeWidth={2}
+      />
+      <text
+        x={0}
+        y={-17}
+        textAnchor="middle"
+        fontSize={12}
+        fontWeight={700}
+        fill="#ffffff"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
         {text}
       </text>
     </g>
@@ -366,11 +545,34 @@ function ZoneTooltip({ zone }: { zone: PlanZone }) {
   const w = Math.max(zone.title.length * 7.4, line.length * 6.3) + 28;
   return (
     <g transform="translate(0 -42)">
-      <rect x={-w / 2} y={-46} width={w} height={44} rx={10} fill="#ffffff" stroke="rgba(20,32,60,0.08)" style={{ filter: "drop-shadow(0 8px 18px rgba(20,32,60,0.18))" }} />
-      <text x={0} y={-28} textAnchor="middle" fontSize={13} fontWeight={650} fill="#14203c">
+      <rect
+        x={-w / 2}
+        y={-46}
+        width={w}
+        height={44}
+        rx={10}
+        fill="#ffffff"
+        stroke="rgba(20,32,60,0.08)"
+        style={{ filter: "drop-shadow(0 8px 18px rgba(20,32,60,0.18))" }}
+      />
+      <text
+        x={0}
+        y={-28}
+        textAnchor="middle"
+        fontSize={13}
+        fontWeight={650}
+        fill="#14203c"
+      >
         {zone.title}
       </text>
-      <text x={0} y={-12} textAnchor="middle" fontSize={11.5} fontWeight={500} fill={TONE_HEX[zone.tone === "neutral" ? "active" : zone.tone]}>
+      <text
+        x={0}
+        y={-12}
+        textAnchor="middle"
+        fontSize={11.5}
+        fontWeight={500}
+        fill={TONE_HEX[zone.tone === "neutral" ? "active" : zone.tone]}
+      >
         {line}
       </text>
     </g>

@@ -3,7 +3,13 @@
  * Chaque pièce se dessine de l'arrière vers l'avant ; l'appelant respecte le même ordre.
  */
 
+import { createContext, useContext } from "react";
+
 import { BLUE, Box, GLASS, INK, ISO_Z, STONE, WHITE, points, project, type BoxColors } from "./iso";
+
+/** Le plan s'anime sauf si l'utilisateur a demandé moins d'animations. */
+export const PlanMotion = createContext(true);
+export const usePlanMotion = () => useContext(PlanMotion);
 
 export const WOOD: BoxColors = { top: "#f3ece2", left: "#e4d8c8", right: "#d6c7b3" };
 export const DESK: BoxColors = { top: "#ffffff", left: "#e9edf3", right: "#dbe1ea" };
@@ -57,6 +63,7 @@ export function Person({
   seated = false,
   look = 0,
   headset = false,
+  walking = false,
 }: {
   x: number;
   y: number;
@@ -65,6 +72,8 @@ export function Person({
   seated?: boolean;
   look?: number;
   headset?: boolean;
+  /** jambes qui alternent (personne qui se déplace) */
+  walking?: boolean;
 }) {
   const [px, py] = project(x, y, z);
   const u = ISO_Z;
@@ -79,10 +88,11 @@ export function Person({
       <ellipse cx={px + 1.5} cy={py} rx={6} ry={3} fill="rgba(20,32,60,0.12)" />
       {!seated && (
         <>
-          <rect x={px - 3.6} y={py - torsoBottom * u} width={3.1} height={torsoBottom * u} rx={1.4} fill="#2a344b" />
-          <rect x={px + 0.5} y={py - torsoBottom * u} width={3.1} height={torsoBottom * u} rx={1.4} fill="#222b3f" />
+          <rect x={px - 3.6} y={py - torsoBottom * u} width={3.1} height={torsoBottom * u} rx={1.4} fill="#2a344b" className={walking ? "plan-step" : undefined} />
+          <rect x={px + 0.5} y={py - torsoBottom * u} width={3.1} height={torsoBottom * u} rx={1.4} fill="#222b3f" className={walking ? "plan-step plan-step-b" : undefined} />
         </>
       )}
+      <g className={seated ? "plan-breathe" : undefined} style={seated ? { animationDelay: `${-((look * 0.7 + x * 0.37 + y * 0.53) % 3.2)}s` } : undefined}>
       <rect x={px - 4.8} y={py - torsoTop * u} width={9.6} height={(torsoTop - torsoBottom) * u + 2} rx={4} fill={shirt} />
       <rect x={px - 4.8} y={py - torsoTop * u} width={4.8} height={(torsoTop - torsoBottom) * u + 2} rx={4} fill="rgba(255,255,255,0.14)" />
       <circle cx={px} cy={py - head * u} r={r} fill={skin} />
@@ -93,6 +103,7 @@ export function Person({
           <circle cx={px + r + 0.2} cy={py - head * u + 0.8} r={1.1} fill="#14203c" />
         </>
       )}
+      </g>
     </g>
   );
 }
@@ -268,6 +279,103 @@ export function Partition({ axis, at, from, to, gap, h = 1.05, colors = PARTITIO
             <Box key={a} x={at - 0.06} y={a} w={0.12} d={b - a} h={h} colors={colors} stroke="rgba(120,140,190,0.45)" />
           ),
         )}
+    </g>
+  );
+}
+
+type Step = readonly [x: number, y: number, pause?: number];
+
+/**
+ * Personne qui suit un trajet en boucle (le dernier point rejoint le premier).
+ * `pause` : secondes d'arrêt à ce point. Vitesse de marche ≈ 1,2 m/s.
+ */
+export function Walker({ path, shirt, look = 0, offset = 0, speed = 1.2 }: { path: Step[]; shirt?: string; look?: number; offset?: number; speed?: number }) {
+  const animated = usePlanMotion();
+  const [x0, y0] = path[0]!;
+  if (!animated) return <Person x={x0} y={y0} shirt={shirt} look={look} />;
+  const loop = [...path, path[0]!];
+  const times = [0];
+  const values: string[] = [];
+  let t = 0;
+  const [ox, oy] = project(x0, y0);
+  loop.forEach(([x, y, pause = 0], i) => {
+    const [px, py] = project(x, y);
+    const v = `${(px - ox).toFixed(1)} ${(py - oy).toFixed(1)}`;
+    if (i > 0) {
+      const [lx, ly] = loop[i - 1]!;
+      t += Math.hypot(x - lx, y - ly) / speed;
+      times.push(t);
+    }
+    values.push(v);
+    if (pause && i < loop.length - 1) {
+      t += pause;
+      times.push(t);
+      values.push(v);
+    }
+  });
+  const dur = t;
+  return (
+    <g>
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        values={values.join(";")}
+        keyTimes={times.map((v) => (v / dur).toFixed(4)).join(";")}
+        dur={`${dur.toFixed(2)}s`}
+        begin={`${-offset}s`}
+        repeatCount="indefinite"
+      />
+      <Person x={x0} y={y0} shirt={shirt} look={look} walking />
+    </g>
+  );
+}
+
+/** Bulle de dialogue qui apparaît au-dessus d'une personne, de temps en temps. */
+export function Bubble({ x, y, z = 1.9, delay = 0, kind = "dots", color = "#2d50f5" }: { x: number; y: number; z?: number; delay?: number; kind?: "dots" | "check" | "euro" | "mail"; color?: string }) {
+  const [px, py] = project(x, y, z);
+  return (
+    <g className="plan-bubble" style={{ animationDelay: `${-delay}s`, pointerEvents: "none" }}>
+      <g transform={`translate(${px.toFixed(1)} ${py.toFixed(1)})`}>
+        <rect x={-9} y={-13} width={18} height={11} rx={5.5} fill={kind === "dots" ? "#ffffff" : color} stroke="rgba(20,32,60,0.12)" strokeWidth={0.6} />
+        <path d="M -3 -2.2 L 0 1.4 L 2 -2.2 Z" fill={kind === "dots" ? "#ffffff" : color} />
+        {kind === "dots" && [-4, 0, 4].map((dx) => <circle key={dx} cx={dx} cy={-7.5} r={1.2} fill="#7d8aa5" />)}
+        {kind === "check" && <path d="M -3.2 -7.6 L -0.8 -5.2 L 3.6 -9.8" fill="none" stroke="#ffffff" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />}
+        {kind === "euro" && (
+          <text x={0} y={-4.6} textAnchor="middle" fontSize={8} fontWeight={800} fill="#ffffff">
+            €
+          </text>
+        )}
+        {kind === "mail" && <path d="M -4.5 -10 h 9 v 6 h -9 z M -4.5 -10 l 4.5 3.4 l 4.5 -3.4" fill="none" stroke="#ffffff" strokeWidth={1} strokeLinejoin="round" />}
+      </g>
+    </g>
+  );
+}
+
+/** Voyant lumineux (imprimante, terminal, borne). */
+export function Led({ x, y, z, color = "#22c55e", delay = 0 }: { x: number; y: number; z: number; color?: string; delay?: number }) {
+  const [px, py] = project(x, y, z);
+  return <circle cx={px} cy={py} r={1.6} fill={color} className="plan-blink" style={{ animationDelay: `${-delay}s` }} />;
+}
+
+/** Monte et descend en boucle (pont élévateur, papier qui sort de l'imprimante…). */
+export function Rise({ by, dur, children, offset = 0 }: { by: number; dur: number; children: React.ReactNode; offset?: number }) {
+  const animated = usePlanMotion();
+  return (
+    <g>
+      {animated && (
+        <animateTransform
+          attributeName="transform"
+          type="translate"
+          values={`0 0;0 0;0 ${-by};0 ${-by};0 0`}
+          keyTimes="0;0.15;0.45;0.7;1"
+          calcMode="spline"
+          keySplines="0 0 1 1;0.4 0 0.2 1;0 0 1 1;0.4 0 0.2 1"
+          dur={`${dur}s`}
+          begin={`${-offset}s`}
+          repeatCount="indefinite"
+        />
+      )}
+      {children}
     </g>
   );
 }
