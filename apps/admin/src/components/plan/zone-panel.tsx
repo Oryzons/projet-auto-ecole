@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, ChevronRight, ListPlus, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { TaskRow } from "@/components/tasks/task-row";
 import { EASE_OUT } from "@/components/motion/tokens";
@@ -22,7 +22,18 @@ const VISIBLE_ITEMS = 6;
  * Panneau flottant d'une zone : indicateurs, éléments à traiter, tâches.
  * Une ligne ouvre la fiche liée, ou son détail dans le panneau sans quitter le plan.
  */
-export function ZonePanel({ zone, onClose, onCreateTask }: { zone: PlanZone; onClose: () => void; onCreateTask: (category: string) => void }) {
+export function ZonePanel({
+  zone,
+  onClose,
+  onCreateTask,
+  dragHandle,
+}: {
+  zone: PlanZone;
+  onClose: () => void;
+  onCreateTask: (category: string) => void;
+  /** poignée pour déplacer le panneau (ordinateur), placée à côté de la croix */
+  dragHandle?: ReactNode;
+}) {
   const [detail, setDetail] = useState<PlanItem | null>(null);
   const [showAll, setShowAll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,6 +60,7 @@ export function ZonePanel({ zone, onClose, onCreateTask }: { zone: PlanZone; onC
           <h2 className="truncate text-[17px] font-semibold tracking-[-0.01em] text-foreground">{zone.title}</h2>
           <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">{zone.subtitle}</p>
         </div>
+        {dragHandle}
         <button
           type="button"
           onClick={onClose}

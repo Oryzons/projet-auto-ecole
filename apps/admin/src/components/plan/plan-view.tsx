@@ -2,11 +2,12 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { FlaskConical, ListPlus, Search, UserPlus } from "lucide-react";
+import { FlaskConical, ListPlus, Move, Search, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import { useDraggable } from "@/hooks/use-draggable";
 import { INTRO_FLAG } from "@/lib/intro";
 import { Logo } from "@/components/brand/logo";
 import { EASE_OUT } from "@/components/motion/tokens";
@@ -69,6 +70,8 @@ export function PlanView({ initial }: { initial: PlanData }) {
   const navPath = useNavPath();
   const queryClient = useQueryClient();
   const rootRef = useRef<HTMLDivElement>(null);
+  // le panneau de zone se déplace comme les fenêtres ; il revient à droite à chaque ouverture
+  const panelDrag = useDraggable<HTMLDivElement>(selected !== null);
 
   // juste après la connexion : le plan est déjà en place, tout le reste arrive autour (avant la première image)
   useLayoutEffect(() => {
@@ -275,9 +278,28 @@ export function PlanView({ initial }: { initial: PlanData }) {
             exit={{ opacity: 0, x: reduce ? 0 : 24 }}
             transition={{ duration: 0.28, ease: EASE_OUT }}
             style={{ width: PANEL_WIDTH }}
-            className="absolute top-3 right-3 bottom-3 overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-[0_24px_60px_-24px_rgb(20_32_60/0.45)]"
+            className="pointer-events-none absolute top-3 right-3 bottom-3"
           >
-            <ZonePanel zone={zone} onClose={() => select(null)} onCreateTask={(category) => setTaskDialog({ category })} />
+            <div
+              ref={panelDrag.ref}
+              style={panelDrag.style}
+              className="pointer-events-auto size-full overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-[0_24px_60px_-24px_rgb(20_32_60/0.45)]"
+            >
+              <ZonePanel
+                zone={zone}
+                onClose={() => select(null)}
+                onCreateTask={(category) => setTaskDialog({ category })}
+                dragHandle={
+                  <button
+                    type="button"
+                    {...panelDrag.handleProps}
+                    className="-mt-1 grid size-9 shrink-0 cursor-grab touch-none place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:cursor-grabbing"
+                  >
+                    <Move className="size-[18px]" />
+                  </button>
+                }
+              />
+            </div>
           </motion.aside>
         )}
       </AnimatePresence>
