@@ -1,6 +1,7 @@
 import { Role } from "@/lib/db/client";
 
 import { auth } from "@/lib/auth";
+import { isDemoFile, renderDemoDocument } from "@/lib/demo-document";
 import { resolveFileUrl } from "@/lib/files";
 import { prisma } from "@/lib/prisma";
 import { resolveDbUser } from "@/lib/session";
@@ -35,6 +36,25 @@ export async function GET(
     },
   });
   if (!document) return new Response("Document introuvable", { status: 404 });
+
+  if (isDemoFile(document.fileUrl)) {
+    const application = await prisma.permitApplication.findUnique({ where: { id: document.applicationId }, include: { candidate: true } });
+    const bytes = await renderDemoDocument({
+      type: document.type,
+      fileName: document.fileName,
+      studentName: application ? `${application.candidate.firstName} ${application.candidate.lastName}` : "Élève",
+      uploadedAt: document.createdAt,
+    });
+    const download = new URL(req.url).searchParams.get("download") === "1";
+    return new Response(Buffer.from(bytes), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${document.fileName.replace(/["\\\r\n]/g, "_")}"`,
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  }
 
   const upstream = await fetch(await resolveFileUrl(document), {
     signal: AbortSignal.timeout(20_000),

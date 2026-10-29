@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { InviteLinkDialog, type InviteResult } from "@/components/admin/invite-link-dialog";
 import { TheoryCourseBadge } from "@/components/ui/theory-course-badge";
 import { CandidateFormDialog } from "@/components/admin/candidate-form-dialog";
+import { DocumentPreviewDialog } from "@/components/admin/document-preview-dialog";
 import { ACCEPTED_FILES } from "@/components/documents/file-drop";
 import { FadeIn, ProgressRing, Stagger, StaggerItem } from "@/components/motion";
 import { EASE_OUT } from "@/components/motion/tokens";
@@ -431,6 +432,7 @@ function DocumentRow({
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const [previewing, setPreviewing] = useState(false);
   const optional = OPTIONAL_DOCUMENTS.includes(type);
   const label = DOCUMENT_LABELS[type];
 
@@ -438,6 +440,7 @@ function DocumentRow({
     mutationFn: (input: { action: "approve" | "reject"; rejectionReason?: string }) =>
       postJson("/api/documents/review", { documentId: doc!.id, ...input }),
     onSuccess: (_data, input) => {
+      setPreviewing(false);
       if (input.action === "approve") toast.success("Document validé", { description: label });
       else toast("Document refusé", { description: "L'élève est invité à le renvoyer." });
       setRejecting(false);
@@ -476,14 +479,9 @@ function DocumentRow({
         <DocumentStatusBadge status={status} className="max-sm:hidden" />
         <div className="flex items-center gap-1.5 max-sm:basis-full max-sm:pl-14">
           {doc && (
-            <a
-              href={`/api/documents/${doc.id}/file`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "ghost", size: "sm" })}
-            >
+            <Button size="sm" variant="ghost" onClick={() => setPreviewing(true)}>
               <Eye /> Voir
-            </a>
+            </Button>
           )}
           {doc?.status === DocumentStatus.PENDING && !rejecting && (
             <>
@@ -500,6 +498,21 @@ function DocumentRow({
           )}
         </div>
       </div>
+
+      {doc && (
+        <DocumentPreviewDialog
+          label={label}
+          doc={doc}
+          open={previewing}
+          onOpenChange={setPreviewing}
+          approving={review.isPending}
+          onApprove={() => review.mutate({ action: "approve" })}
+          onReject={() => {
+            setPreviewing(false);
+            setRejecting(true);
+          }}
+        />
+      )}
 
       {doc?.status === DocumentStatus.REJECTED && doc.rejectionReason && (
         <p className="mt-3 rounded-lg border border-danger/15 bg-danger-soft px-3 py-2 text-[13px] text-danger sm:ml-14">

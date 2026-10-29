@@ -31,7 +31,17 @@ const config: NextConfig = {
     ],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // les pièces s'affichent dans la fenêtre d'aperçu du dossier (même site uniquement)
+      {
+        source: '/api/documents/:id/file',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+        ],
+      },
+    ];
   },
 };
 

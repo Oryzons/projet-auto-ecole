@@ -25,11 +25,11 @@ const REQUIRED = ["TRAINING_CONTRACT", "ID_CARD", "ID_PHOTO", "PROOF_OF_ADDRESS"
 const FILES: Record<string, string> = {
   TRAINING_CONTRACT: "contrat-formation-signe.pdf",
   ID_CARD: "carte-identite.pdf",
-  ID_PHOTO: "ephoto-ants.jpg",
+  ID_PHOTO: "ephoto-ants.pdf",
   PROOF_OF_ADDRESS: "facture-edf.pdf",
   ASSR: "assr2.pdf",
   JDC: "attestation-jdc.pdf",
-  PARTNER_BADGE: "carte-etudiant.jpg",
+  PARTNER_BADGE: "carte-etudiant.pdf",
 };
 
 type Stage = "DRAFT" | "DOCUMENTS_PENDING" | "DOCUMENTS_REVIEW" | "PAYMENT_PENDING" | "PAID" | "COMPLETED";
