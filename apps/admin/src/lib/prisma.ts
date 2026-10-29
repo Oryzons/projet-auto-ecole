@@ -230,13 +230,16 @@ type Client = Models & {
 };
 
 // une seule base pour tout le serveur, conservée entre deux rechargements à chaud
-const globalForDb = globalThis as unknown as { virageDb?: Store };
+// si les modèles changent pendant que le serveur tourne, la base de démo est recréée
+const globalForDb = globalThis as unknown as { virageDb?: Store; virageDbSchema?: string };
+const schema = JSON.stringify(Object.entries(models).map(([name, def]) => [name, Object.keys(def.relations ?? {}), Object.keys(def.defaults?.() ?? {})]));
 
 function getStore() {
-  if (!globalForDb.virageDb) {
+  if (!globalForDb.virageDb || globalForDb.virageDbSchema !== schema) {
     const store = new Store(models);
     seed(store);
     globalForDb.virageDb = store;
+    globalForDb.virageDbSchema = schema;
   }
   return globalForDb.virageDb;
 }
