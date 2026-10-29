@@ -1,7 +1,9 @@
 "use client";
 
 import { LayoutGrid } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useUnreadMessages } from "@/hooks/use-unread-messages";
@@ -10,21 +12,37 @@ import { adminNav } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import { PLAN_PATH } from "./page-popup";
+import { prefetchPageData } from "./route-warmup";
 
 /** Menu des rubriques : chacune s'ouvre en fenêtre au-dessus du plan. */
 export function Launcher({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const { data: unread = 0 } = useUnreadMessages();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const items = [...adminNav.primary, ...adminNav.secondary].filter((item) => item.href !== PLAN_PATH);
+  // dès l'ouverture du menu, chaque rubrique est préparée : la fenêtre s'ouvre déjà remplie
+  const warm = () => {
+    for (const item of items) {
+      router.prefetch(item.href);
+      prefetchPageData(queryClient, item.href);
+    }
+  };
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (next) warm();
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger
         render={
           <button
             type="button"
             aria-label="Toutes les rubriques"
             className={cn(
-              "relative inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-white/85 px-3 text-[13px] font-medium text-foreground shadow-xs backdrop-blur-md transition-colors hover:border-primary/30 hover:bg-white focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
+              "relative inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-white/95 px-3 text-[13px] font-medium text-foreground shadow-xs transition-colors hover:border-primary/30 hover:bg-white focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
               className,
             )}
           />

@@ -92,7 +92,7 @@ export function Person({
           <rect x={px + 0.5} y={py - torsoBottom * u} width={3.1} height={torsoBottom * u} rx={1.4} fill="#222b3f" className={walking ? "plan-step plan-step-b" : undefined} />
         </>
       )}
-      <g className={seated ? "plan-breathe" : undefined} style={seated ? { animationDelay: `${-((look * 0.7 + x * 0.37 + y * 0.53) % 3.2)}s` } : undefined}>
+      <g>
       <rect x={px - 4.8} y={py - torsoTop * u} width={9.6} height={(torsoTop - torsoBottom) * u + 2} rx={4} fill={shirt} />
       <rect x={px - 4.8} y={py - torsoTop * u} width={4.8} height={(torsoTop - torsoBottom) * u + 2} rx={4} fill="rgba(255,255,255,0.14)" />
       <circle cx={px} cy={py - head * u} r={r} fill={skin} />

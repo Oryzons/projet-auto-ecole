@@ -11,6 +11,7 @@ import { Logo } from "@/components/brand/logo";
 import { EASE_OUT } from "@/components/motion/tokens";
 import { CommandMenu } from "@/components/shell/command-menu";
 import { Launcher } from "@/components/shell/launcher";
+import { useNavPath } from "@/components/shell/navigation-progress";
 import { NotificationsMenu } from "@/components/shell/notifications-menu";
 import { PLAN_PATH } from "@/components/shell/page-popup";
 import { UserMenu } from "@/components/shell/user-menu";
@@ -63,6 +64,8 @@ export function PlanView({ initial }: { initial: PlanData }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
   const onPlan = pathname === PLAN_PATH;
+  // dès le clic vers une fenêtre, le plan se fige : le processeur sert à afficher la fenêtre
+  const navPath = useNavPath();
   const queryClient = useQueryClient();
 
   // en revenant d'une fenêtre, les chiffres du plan tiennent compte de ce qui vient d'être fait
@@ -118,7 +121,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
           </>
         );
         const className =
-          "flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 text-[12.5px] whitespace-nowrap shadow-[0_6px_18px_-12px_rgb(20_32_60/0.4)] backdrop-blur-md transition-colors";
+          "flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/80 bg-white/95 px-3 text-[12.5px] whitespace-nowrap shadow-[0_6px_18px_-12px_rgb(20_32_60/0.4)] transition-colors";
         return kpi.href ? (
           <Link key={kpi.label} href={kpi.href} data-plan-control className={cn(className, "hover:border-primary/30 hover:bg-white")}>
             {body}
@@ -144,6 +147,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
         insetBottom={desktop ? 64 : 60}
         homeZoom={desktop ? 1 : 1.45}
         reducedMotion={reduce}
+        paused={!onPlan || navPath !== PLAN_PATH}
       />
 
       {/* en-tête flottant : titre, actions et indicateurs clés */}
@@ -166,13 +170,13 @@ export function PlanView({ initial }: { initial: PlanData }) {
               type="button"
               onClick={() => setSearchOpen(true)}
               aria-label="Rechercher"
-              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-white/85 px-2.5 text-[13px] text-muted-foreground shadow-xs backdrop-blur-md transition-colors hover:border-primary/30 hover:bg-white lg:w-56"
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-white/95 px-2.5 text-[13px] text-muted-foreground shadow-xs transition-colors hover:border-primary/30 hover:bg-white lg:w-56"
             >
               <Search className="size-4" />
               <span className="flex-1 text-left max-lg:hidden">Rechercher un élève…</span>
               <kbd className="rounded-md border border-border bg-secondary px-1.5 text-[11px] font-medium max-lg:hidden">⌘K</kbd>
             </button>
-            <Button variant="outline" size="sm" className="h-9 bg-white/85 backdrop-blur-md max-md:hidden" onClick={() => setTaskDialog({ category: "ADMIN" })}>
+            <Button variant="outline" size="sm" className="h-9 bg-white/95 max-md:hidden" onClick={() => setTaskDialog({ category: "ADMIN" })}>
               <ListPlus /> <span className="max-xl:hidden">Nouvelle tâche</span>
             </Button>
             <Link href="/admin/applications?create=1" className={cn(buttonVariants({ size: "sm" }), "h-9")} aria-label="Nouveau dossier">
@@ -189,7 +193,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
       {/* légende */}
       <div
         className={cn(
-          "pointer-events-none absolute right-3 bottom-3 hidden h-[46px] items-center gap-3.5 rounded-2xl border border-white/70 bg-white/85 px-4 text-[12px] font-medium text-muted-foreground shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md transition-opacity duration-200 lg:flex",
+          "pointer-events-none absolute right-3 bottom-3 hidden h-[46px] items-center gap-3.5 rounded-2xl border border-white/70 bg-white/95 px-4 text-[12px] font-medium text-muted-foreground shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] transition-opacity duration-200 lg:flex",
           zone && "opacity-0",
         )}
       >
@@ -212,7 +216,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
       <nav
         data-plan-control
         aria-label="Zones du plan"
-        className="no-scrollbar absolute bottom-3 left-3 flex gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/85 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md transition-[right] duration-300 max-md:right-3 md:left-[68px]"
+        className="no-scrollbar absolute bottom-3 left-3 flex gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/95 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] transition-[right] duration-300 max-md:right-3 md:left-[68px]"
         style={{ right: desktop ? (zone ? PANEL_WIDTH + 28 : wide ? LEGEND_SPACE : 12) : undefined, maxWidth: desktop ? "fit-content" : undefined }}
       >
         {data.zones.map((z) => {
@@ -249,7 +253,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
             exit={{ opacity: 0, x: reduce ? 0 : 24 }}
             transition={{ duration: 0.28, ease: EASE_OUT }}
             style={{ width: PANEL_WIDTH }}
-            className="absolute top-3 right-3 bottom-3 overflow-hidden rounded-2xl border border-white/80 bg-white/92 shadow-[0_24px_60px_-24px_rgb(20_32_60/0.45)] backdrop-blur-xl"
+            className="absolute top-3 right-3 bottom-3 overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-[0_24px_60px_-24px_rgb(20_32_60/0.45)]"
           >
             <ZonePanel zone={zone} onClose={() => select(null)} onCreateTask={(category) => setTaskDialog({ category })} />
           </motion.aside>

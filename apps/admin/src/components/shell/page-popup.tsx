@@ -48,7 +48,7 @@ export function PagePopup({ children }: { children: ReactNode }) {
           <motion.div
             key="backdrop"
             aria-hidden
-            className="absolute inset-0 bg-ink/30 backdrop-blur-[3px]"
+            className="absolute inset-0 bg-ink/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -66,7 +66,7 @@ export function PagePopup({ children }: { children: ReactNode }) {
             transition={{ duration: 0.24, ease: EASE_OUT }}
             className="relative flex w-full max-w-[1240px] flex-col overflow-hidden bg-background shadow-[0_30px_80px_-30px_rgb(20_32_60/0.55)] md:rounded-3xl md:border md:border-white/70"
           >
-            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-card/80 px-3 backdrop-blur-xl sm:px-4">
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-card px-3 sm:px-4">
               {nested && (
                 <button
                   type="button"

@@ -28,7 +28,7 @@ function DialogContent({
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Backdrop
-        className="fixed inset-0 z-50 bg-ink/30 backdrop-blur-[2px] transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0"
+        className="fixed inset-0 z-50 bg-ink/35 transition-opacity duration-300 data-ending-style:opacity-0 data-starting-style:opacity-0"
       />
       <DialogPrimitive.Popup
         data-slot="dialog-content"

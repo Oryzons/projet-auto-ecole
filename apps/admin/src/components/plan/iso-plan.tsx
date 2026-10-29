@@ -4,6 +4,7 @@ import { animate } from "motion/react";
 import { Maximize2, Minus, Plus, ScanSearch } from "lucide-react";
 import {
   forwardRef,
+  memo,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -30,6 +31,12 @@ import {
   zoneCenter,
 } from "./scene";
 import { TONE_HEX } from "./tones";
+
+// le décor ne dépend que de la zone : il n'est pas redessiné quand la caméra bouge ou au survol
+const GroundLayer = memo(Ground);
+const RoomFloorLayer = memo(RoomFloor);
+const ZoneArtLayer = memo(ZoneArt);
+const AisleLayer = memo(AisleLife);
 
 type Camera = { cx: number; cy: number; zoom: number };
 
@@ -66,6 +73,8 @@ export const IsoPlan = forwardRef<
     insetTop?: number;
     /** Zoom de la vue générale (plus serré sur téléphone, où le plan est large et peu haut) */
     homeZoom?: number;
+    /** Fige les animations (plan caché par une fenêtre) pour libérer le processeur */
+    paused?: boolean;
     reducedMotion: boolean;
   }
 >(function IsoPlan(
@@ -76,12 +85,18 @@ export const IsoPlan = forwardRef<
     insetRight,
     insetTop = 0,
     insetBottom,
-    homeZoom = 1,
-    reducedMotion,
-  },
+    homeZoom = 1, reducedMotion, paused = false },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    if (paused) svg.pauseAnimations();
+    else svg.unpauseAnimations();
+  }, [paused]);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const home = useMemo(() => ({ ...HOME, zoom: homeZoom }), [homeZoom]);
   const [cam, setCam] = useState<Camera>(home);
@@ -315,14 +330,12 @@ export const IsoPlan = forwardRef<
         if (event.pointerType === "mouse") setHovered(null);
       }}
     >
-      <svg
-        viewBox={viewBox}
-        className="block size-full"
+      <svg ref={svgRef} viewBox={viewBox} className={cn("block size-full", paused && "plan-paused")}
         role="group"
         aria-label="Plan de l'auto-école"
       >
         <PlanMotion.Provider value={!reducedMotion}>
-          <Ground />
+          <GroundLayer />
           {DRAW_ORDER.map((id) => {
             const zone = byId.get(id);
             const isSelected = selected === id;
@@ -367,7 +380,7 @@ export const IsoPlan = forwardRef<
                         isHot || isSelected ? "translateY(-8px)" : "none",
                     }}
                   >
-                    <RoomFloor id={id} />
+                    <RoomFloorLayer id={id} />
                     {ring && (
                       <polygon
                         points={roomOutline(id, 0.3)}
@@ -390,11 +403,11 @@ export const IsoPlan = forwardRef<
                         className={isSelected ? "plan-selected" : undefined}
                       />
                     )}
-                    <ZoneArt id={id} />
+                    <ZoneArtLayer id={id} />
                   </g>
                 </g>
                 {ROOMS[id].col === 2 && (
-                  <AisleLife after={ROOMS[id].row as 0 | 1 | 2} />
+                  <AisleLayer after={ROOMS[id].row as 0 | 1 | 2} />
                 )}
               </g>
             );
@@ -434,7 +447,7 @@ export const IsoPlan = forwardRef<
 
       {!zones && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <span className="rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
+          <span className="rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
             Chargement des données…
           </span>
         </div>
@@ -443,7 +456,7 @@ export const IsoPlan = forwardRef<
       {/* commandes de caméra */}
       <div
         data-plan-control
-        className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/80 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md"
+        className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/95 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)]"
       >
         <ControlButton label="Zoomer" onClick={() => zoomBy(1.35)}>
           <Plus />

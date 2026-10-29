@@ -65,7 +65,7 @@ export function AppDialogView({
           <motion.button
             type="button"
             aria-label="Fermer"
-            className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-ink/35"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

@@ -145,7 +145,6 @@ export function ApplicationsTable({
               return (
                 <motion.tr
                   key={row.id}
-                  layout="position"
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -12 }}
