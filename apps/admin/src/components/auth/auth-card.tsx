@@ -29,13 +29,13 @@ export function AuthCard({
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } } }}
       className="w-full"
     >
-      <motion.div variants={item} className="mb-8 space-y-2">
-        <h1 className="text-[28px] leading-tight font-semibold tracking-[-0.025em] text-foreground">{title}</h1>
+      <motion.div variants={item} className="mb-6 space-y-1.5">
+        <h1 className="text-[24px] leading-tight font-semibold tracking-[-0.025em] text-foreground">{title}</h1>
         {description && <p className="text-[15px] leading-relaxed text-muted-foreground">{description}</p>}
       </motion.div>
       <motion.div variants={item}>{children}</motion.div>
       {footer && (
-        <motion.div variants={item} className="mt-8 text-sm text-muted-foreground">
+        <motion.div variants={item} className="mt-6 text-[13px] text-muted-foreground">
           {footer}
         </motion.div>
       )}
