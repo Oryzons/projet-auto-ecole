@@ -71,7 +71,7 @@ const staggerContainer = (stagger: number, delay: number) => ({
 export function Stagger({
   children,
   className,
-  stagger = 0.06,
+  stagger = 0.035,
   delay = 0,
   as = "div",
   ...props
@@ -97,7 +97,7 @@ export function Stagger({
 export function StaggerItem({
   children,
   className,
-  distance = 14,
+  distance = 8,
   as = "div",
   ...props
 }: HTMLMotionProps<"div"> & { distance?: number; as?: "div" | "li" | "section" | "article" }) {
@@ -125,7 +125,7 @@ export function StaggerItem({
 export function AnimatedNumber({
   value,
   format = (n) => Math.round(n).toLocaleString("fr-FR"),
-  duration = 1.1,
+  duration = 0.7,
   className,
 }: {
   value: number;
@@ -182,7 +182,7 @@ export function ProgressBar({
         className={cn("h-full rounded-full bg-primary", barClassName)}
         initial={{ width: 0 }}
         animate={{ width: `${clamped}%` }}
-        transition={{ duration: 0.9, ease: EASE_OUT, delay: 0.1 }}
+        transition={{ duration: 0.55, ease: EASE_OUT, delay: 0.05 }}
       />
     </div>
   );
@@ -229,7 +229,7 @@ export function ProgressRing({
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference * (1 - clamped / 100) }}
-          transition={{ duration: 1.2, ease: EASE_OUT, delay: 0.15 }}
+          transition={{ duration: 0.7, ease: EASE_OUT, delay: 0.05 }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>

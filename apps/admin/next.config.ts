@@ -19,6 +19,11 @@ const config: NextConfig = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  experimental: {
+    // garde les pages déjà ouvertes en mémoire côté navigateur : revenir sur
+    // une page est instantané, les données se mettent à jour en arrière-plan
+    staleTimes: { dynamic: 30, static: 300 },
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'utfs.io' },

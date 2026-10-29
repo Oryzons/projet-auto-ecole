@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 
 import { Logo } from "@/components/brand/logo";
@@ -10,14 +11,18 @@ import { isActivePath, type NavConfig, type NavItem } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 import { useNavPath } from "./navigation-progress";
+import { prefetchPageData } from "./route-warmup";
 
 function NavLink({ item, active, unread, onNavigate }: { item: NavItem; active: boolean; unread: number; onNavigate?: () => void }) {
   const Icon = item.icon;
   const count = item.badge === "unread" ? unread : 0;
+  const queryClient = useQueryClient();
   return (
     <Link
       href={item.href}
+      prefetch
       onClick={onNavigate}
+      onPointerEnter={() => prefetchPageData(queryClient, item.href)}
       aria-current={active ? "page" : undefined}
       className={cn(
         "group relative flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-colors duration-200",

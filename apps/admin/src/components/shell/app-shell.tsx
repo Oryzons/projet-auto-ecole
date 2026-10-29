@@ -10,6 +10,7 @@ import { findNavItem, navForRole, type NavConfig } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
 import { NavigationProgress } from "./navigation-progress";
+import { RouteWarmup } from "./route-warmup";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
 
@@ -43,7 +44,7 @@ function PageTransition({
       direction: directionBetween(config, nav.path, pathname),
     });
   }
-  const offset = reduce ? 0 : nav.direction * 22;
+  const offset = reduce ? 0 : nav.direction * 12;
 
   return (
     <motion.div
@@ -56,14 +57,9 @@ function PageTransition({
         minHeight: 0,
         width: "100%",
       }}
-      initial={{
-        opacity: 0,
-        x: offset,
-        y: reduce || offset ? 0 : 10,
-        filter: reduce ? "none" : "blur(2px)",
-      }}
-      animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.42, ease: EASE_OUT }}
+      initial={{ opacity: 0, x: offset, y: reduce || offset ? 0 : 6 }}
+      animate={{ opacity: 1, x: 0, y: 0 }}
+      transition={{ duration: 0.22, ease: EASE_OUT }}
     >
       {children}
     </motion.div>
@@ -87,6 +83,7 @@ export function AppShell({
   return (
     <TooltipProvider delay={300}>
       <NavigationProgress>
+        <RouteWarmup config={config} />
         <div
           className={cn(
             "min-h-svh bg-background",
@@ -94,9 +91,9 @@ export function AppShell({
           )}
         >
           <motion.div
-            initial={{ opacity: 0, x: reduce ? 0 : -16 }}
+            initial={{ opacity: 0, x: reduce ? 0 : -12 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: EASE_OUT }}
+            transition={{ duration: 0.3, ease: EASE_OUT }}
           >
             <Sidebar config={config} />
           </motion.div>

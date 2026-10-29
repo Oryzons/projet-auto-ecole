@@ -8,6 +8,7 @@
   "scripts": {
     "mobile": "npm run start --workspace @virage/mobile",
     "admin": "npm run dev --workspace @virage/admin",
+    "admin:rapide": "npm run build --workspace @virage/admin && npm run start --workspace @virage/admin",
     "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }
