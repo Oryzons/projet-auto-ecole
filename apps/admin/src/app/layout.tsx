@@ -4,8 +4,16 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
-const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+  display: "swap",
+});
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -33,8 +41,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={cn(geistSans.variable, geistMono.variable)}>
-      <body className="min-h-svh">
+    <html
+      lang="fr"
+      suppressHydrationWarning
+      className={cn(geistSans.variable, geistMono.variable)}
+    >
+      {/* des extensions du navigateur (ColorZilla, Grammarly…) ajoutent des attributs à <body> avant React */}
+      <body className="min-h-svh" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
