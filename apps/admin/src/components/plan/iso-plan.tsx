@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -112,9 +113,11 @@ export const IsoPlan = forwardRef<
     [zones],
   );
 
-  useEffect(() => {
+  // mesure avant la première image : le plan apparaît directement à sa taille, sans saut
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    setSize({ w: el.clientWidth, h: el.clientHeight });
     const observer = new ResizeObserver(([entry]) =>
       setSize({ w: entry!.contentRect.width, h: entry!.contentRect.height }),
     );

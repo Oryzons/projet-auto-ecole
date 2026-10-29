@@ -47,7 +47,7 @@ export function AuthScene({ children }: { children: ReactNode }) {
     const dy = top + (h - top - bottom) / 2 - (box.top + box.height / 2);
     await Promise.all([
       chrome.start({ opacity: 0, y: -8, transition: { duration: 0.3, ease: EASE_OUT } }),
-      plan.start({ x: dx, y: dy, scale: to / from, opacity: 1, transition: { duration: 0.9, ease: [0.65, 0, 0.35, 1] } }),
+      plan.start({ x: dx, y: dy, scale: to / from, opacity: 1, transition: { duration: 1.5, ease: [0.65, 0, 0.35, 1] } }),
     ]);
   }, [chrome, plan, reduce]);
 
