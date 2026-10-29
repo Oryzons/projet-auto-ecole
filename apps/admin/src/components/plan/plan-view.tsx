@@ -1,12 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { FlaskConical, ListPlus, UserPlus } from "lucide-react";
+import { FlaskConical, ListPlus, Search, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import { Logo } from "@/components/brand/logo";
 import { EASE_OUT } from "@/components/motion/tokens";
+import { CommandMenu } from "@/components/shell/command-menu";
+import { Launcher } from "@/components/shell/launcher";
+import { NotificationsMenu } from "@/components/shell/notifications-menu";
+import { PLAN_PATH } from "@/components/shell/page-popup";
+import { UserMenu } from "@/components/shell/user-menu";
 import { TaskFormDialog, type TaskDefaults } from "@/components/tasks/task-form-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ZONE_IDS, type PlanData, type ZoneId } from "@/lib/plan-types";
@@ -50,6 +57,26 @@ export function PlanView({ initial }: { initial: PlanData }) {
   const planRef = useRef<IsoPlanHandle>(null);
   const [selected, setSelected] = useState<ZoneId | null>(null);
   const [taskDialog, setTaskDialog] = useState<TaskDefaults | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const pathname = usePathname();
+  const onPlan = pathname === PLAN_PATH;
+  const queryClient = useQueryClient();
+
+  // en revenant d'une fenêtre, les chiffres du plan tiennent compte de ce qui vient d'être fait
+  useEffect(() => {
+    if (onPlan) void queryClient.invalidateQueries({ queryKey: ["plan"] });
+  }, [onPlan, queryClient]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // ?zone=… ouvre directement une zone (lien partageable, retour arrière)
   useEffect(() => {
@@ -59,6 +86,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
 
   const select = useCallback((id: ZoneId | null) => {
     setSelected(id);
+    if (window.location.pathname !== PLAN_PATH) return;
     const url = new URL(window.location.href);
     if (id) url.searchParams.set("zone", id);
     else url.searchParams.delete("zone");
@@ -102,7 +130,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
   );
 
   return (
-    <div className="relative h-[calc(100svh-4rem-4.5rem-env(safe-area-inset-bottom))] overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)] lg:h-[calc(100svh-4rem)]">
+    <div className="relative h-full overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)]">
       <IsoPlan
         ref={planRef}
         zones={data.zones}
@@ -120,22 +148,36 @@ export function PlanView({ initial }: { initial: PlanData }) {
         className="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2.5 bg-gradient-to-b from-[#f6f7fb] from-40% to-transparent p-3 pb-6 transition-[padding] duration-300 sm:p-4 sm:pb-8"
         style={{ paddingRight: desktop && zone ? PANEL_WIDTH + 28 : undefined }}
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-foreground sm:text-[26px]">Vue d&apos;ensemble</h1>
-          <span className="hidden text-[13px] font-medium text-muted-foreground first-letter:uppercase sm:inline">{today}</span>
+        <div className="flex items-center gap-2">
+          <Logo showText={false} className="pointer-events-auto mr-1 shrink-0" />
+          <h1 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-foreground sm:text-[24px]">Vue d&apos;ensemble</h1>
+          <span className="hidden text-[13px] font-medium text-muted-foreground first-letter:uppercase xl:inline">{today}</span>
           <span
             title="Les chiffres viennent d'une base de démonstration en mémoire, remise à zéro à chaque redémarrage du serveur."
             className="pointer-events-auto inline-flex h-6 items-center gap-1 rounded-full border border-amber-200 bg-amber-50/90 px-2.5 text-[11.5px] font-semibold text-amber-800"
           >
             <FlaskConical className="size-3" /> Démo
           </span>
-          <div className="pointer-events-auto ml-auto flex gap-2">
-            <Button variant="outline" size="sm" className="bg-white/85 backdrop-blur-md" onClick={() => setTaskDialog({ category: "ADMIN" })}>
-              <ListPlus /> <span className="max-sm:hidden">Nouvelle tâche</span>
+          <div className="pointer-events-auto ml-auto flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Rechercher"
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-white/85 px-2.5 text-[13px] text-muted-foreground shadow-xs backdrop-blur-md transition-colors hover:border-primary/30 hover:bg-white lg:w-56"
+            >
+              <Search className="size-4" />
+              <span className="flex-1 text-left max-lg:hidden">Rechercher un élève…</span>
+              <kbd className="rounded-md border border-border bg-secondary px-1.5 text-[11px] font-medium max-lg:hidden">⌘K</kbd>
+            </button>
+            <Button variant="outline" size="sm" className="h-9 bg-white/85 backdrop-blur-md max-md:hidden" onClick={() => setTaskDialog({ category: "ADMIN" })}>
+              <ListPlus /> <span className="max-xl:hidden">Nouvelle tâche</span>
             </Button>
-            <Link href="/admin/applications?create=1" className={buttonVariants({ size: "sm" })}>
-              <UserPlus /> <span className="max-sm:hidden">Nouveau dossier</span>
+            <Link href="/admin/applications?create=1" className={cn(buttonVariants({ size: "sm" }), "h-9")} aria-label="Nouveau dossier">
+              <UserPlus /> <span className="max-xl:hidden">Nouveau dossier</span>
             </Link>
+            <Launcher />
+            <NotificationsMenu className="max-sm:hidden" />
+            <UserMenu compact />
           </div>
         </div>
         <div className="pointer-events-auto -mx-3 px-3 sm:mx-0 sm:px-0">{kpiStrip}</div>
@@ -242,6 +284,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
         )}
       </AnimatePresence>
 
+      <CommandMenu open={searchOpen} onOpenChange={setSearchOpen} />
       <TaskFormDialog open={Boolean(taskDialog)} onOpenChange={(open) => !open && setTaskDialog(null)} defaults={taskDialog ?? undefined} />
     </div>
   );
