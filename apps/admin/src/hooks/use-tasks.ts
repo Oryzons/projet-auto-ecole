@@ -40,7 +40,9 @@ export function useTaskMutations() {
     mutationFn: ({ id, patch }: { id: string; patch: Record<string, unknown>; previous?: string; silent?: boolean }) =>
       send(`/api/tasks/${id}`, "PATCH", patch) as Promise<{ task: TaskDto }>,
     onSuccess: ({ task }, { id, patch, previous, silent }) => {
-      refresh();
+      // un changement de statut laisse le temps à l'animation de la ligne avant qu'elle change de liste
+      if (patch.status && !silent) window.setTimeout(refresh, 700);
+      else refresh();
       if (silent || !patch.status) return;
       toast.success(patch.status === "DONE" ? "Tâche terminée" : `Tâche : ${TASK_STATUS_LABELS[patch.status as string]?.toLowerCase()}`, {
         description: task.title,

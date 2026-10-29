@@ -3,6 +3,7 @@
 import { CheckCircle2, ListChecks, ListPlus, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
 
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
@@ -136,13 +137,15 @@ export default function TasksPage() {
           />
         ) : (
           <div className="divide-y divide-border/60">
-            {visible.map((task) => (
-              <TaskRow
-                key={task.id}
-                onOpen={() => setOpenId(task.id)}
-                task={{ ...task, assignee: task.assignee?.name ?? null }}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {visible.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  onOpen={() => setOpenId(task.id)}
+                  task={{ ...task, assignee: task.assignee?.name ?? null }}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

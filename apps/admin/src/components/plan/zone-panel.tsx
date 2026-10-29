@@ -212,9 +212,11 @@ function TaskList({
       </h3>
       {tasks.length === 0 && <p className="mx-2 mt-2 text-[13px] text-muted-foreground">{emptyText}</p>}
       <div className="mt-1">
-        {tasks.map((task) => (
-          <TaskRow key={task.id} task={task} dense />
-        ))}
+        <AnimatePresence initial={false}>
+          {tasks.map((task) => (
+            <TaskRow key={task.id} task={task} dense />
+          ))}
+        </AnimatePresence>
       </div>
       {category && <QuickAdd category={category} onMore={onMore} />}
     </section>
