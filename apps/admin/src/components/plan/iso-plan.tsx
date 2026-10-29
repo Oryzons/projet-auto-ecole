@@ -456,7 +456,7 @@ export const IsoPlan = forwardRef<
       {/* commandes de caméra */}
       <div
         data-plan-control
-        className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/95 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)]"
+        className="intro-left absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/95 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)]"
       >
         <ControlButton label="Zoomer" onClick={() => zoomBy(1.35)}>
           <Plus />

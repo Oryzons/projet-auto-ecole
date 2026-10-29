@@ -213,7 +213,7 @@ function layout({
         <!-- En-tête -->
         <tr><td bgcolor="${C.brand}" style="background: ${C.brand}; background-image: linear-gradient(135deg, ${C.brand} 0%, ${C.brandDark} 100%); border-radius: 20px 20px 0 0; padding: 20px 28px;">
           <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
-            <td style="vertical-align: middle;"><img src="cid:${LOGO_CID}" width="30" height="31" alt="" style="display: block; border: 0; width: 30px; height: 31px;"></td>
+            <td style="vertical-align: middle;"><img src="cid:${LOGO_CID}" width="30" height="30" alt="" style="display: block; border: 0; width: 30px; height: 30px;"></td>
             <td style="vertical-align: middle; padding-left: 10px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #ffffff;">Virage</td>
           </tr></table>
         </td></tr>

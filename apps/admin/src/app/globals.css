@@ -352,3 +352,26 @@ html.is-leaving body {
   .plan-bubble { animation: none; opacity: 0; }
   .plan-lift { transition: none; }
 }
+
+/* Arrivée après la connexion : le plan est en place, les éléments viennent se poser autour */
+[data-intro] .intro-top,
+[data-intro] .intro-bottom,
+[data-intro] .intro-left,
+[data-intro] .intro-right {
+  animation: intro-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--intro-delay, 0ms);
+}
+[data-intro] .intro-top { --intro-from: 0 -18px; }
+[data-intro] .intro-bottom { --intro-from: 0 18px; }
+[data-intro] .intro-left { --intro-from: -18px 0; --intro-delay: 420ms; }
+[data-intro] .intro-right { --intro-from: 18px 0; --intro-delay: 400ms; }
+[data-intro] .plan-badge { animation: intro-fade 0.5s ease-out 0.55s both; }
+@keyframes intro-in {
+  from { opacity: 0; translate: var(--intro-from); }
+}
+@keyframes intro-fade {
+  from { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-intro] * { animation: none !important; }
+}

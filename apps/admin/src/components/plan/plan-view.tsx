@@ -5,8 +5,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { FlaskConical, ListPlus, Search, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 
+import { INTRO_FLAG } from "@/lib/intro";
 import { Logo } from "@/components/brand/logo";
 import { EASE_OUT } from "@/components/motion/tokens";
 import { CommandMenu } from "@/components/shell/command-menu";
@@ -67,6 +68,21 @@ export function PlanView({ initial }: { initial: PlanData }) {
   // dès le clic vers une fenêtre, le plan se fige : le processeur sert à afficher la fenêtre
   const navPath = useNavPath();
   const queryClient = useQueryClient();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // juste après la connexion : le plan est déjà en place, tout le reste arrive autour (avant la première image)
+  useLayoutEffect(() => {
+    let intro = false;
+    try {
+      intro = sessionStorage.getItem(INTRO_FLAG) === "1";
+      sessionStorage.removeItem(INTRO_FLAG);
+    } catch {}
+    const root = rootRef.current;
+    if (!intro || !root) return;
+    root.dataset.intro = "";
+    const timer = window.setTimeout(() => delete root.dataset.intro, 1800);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // en revenant d'une fenêtre, les chiffres du plan tiennent compte de ce qui vient d'être fait
   useEffect(() => {
@@ -136,7 +152,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
   );
 
   return (
-    <div className="relative h-full overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)]">
+    <div ref={rootRef} className="relative h-full overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)]">
       <IsoPlan
         ref={planRef}
         zones={data.zones}
@@ -155,7 +171,7 @@ export function PlanView({ initial }: { initial: PlanData }) {
         className="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2.5 bg-gradient-to-b from-[#f6f7fb] from-40% to-transparent p-3 pb-6 transition-[padding] duration-300 sm:p-4 sm:pb-8"
         style={{ paddingRight: desktop && zone ? PANEL_WIDTH + 28 : undefined }}
       >
-        <div className="flex items-center gap-2">
+        <div className="intro-top flex items-center gap-2" style={{ "--intro-delay": "120ms" } as React.CSSProperties}>
           <Logo showText={false} className="pointer-events-auto mr-1 shrink-0" />
           <h1 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-foreground sm:text-[24px]">Vue d&apos;ensemble</h1>
           <span className="hidden text-[13px] font-medium text-muted-foreground first-letter:uppercase xl:inline">{today}</span>
@@ -187,13 +203,15 @@ export function PlanView({ initial }: { initial: PlanData }) {
             <UserMenu compact />
           </div>
         </div>
-        <div className="pointer-events-auto -mx-3 px-3 sm:mx-0 sm:px-0">{kpiStrip}</div>
+        <div className="intro-top pointer-events-auto -mx-3 px-3 sm:mx-0 sm:px-0" style={{ "--intro-delay": "240ms" } as React.CSSProperties}>
+          {kpiStrip}
+        </div>
       </div>
 
       {/* légende */}
       <div
         className={cn(
-          "pointer-events-none absolute right-3 bottom-3 hidden h-[46px] items-center gap-3.5 rounded-2xl border border-white/70 bg-white/95 px-4 text-[12px] font-medium text-muted-foreground shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] transition-opacity duration-200 lg:flex",
+          "intro-right pointer-events-none absolute right-3 bottom-3 hidden h-[46px] items-center gap-3.5 rounded-2xl border border-white/70 bg-white/95 px-4 text-[12px] font-medium text-muted-foreground shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] transition-opacity duration-200 lg:flex",
           zone && "opacity-0",
         )}
       >
@@ -216,8 +234,12 @@ export function PlanView({ initial }: { initial: PlanData }) {
       <nav
         data-plan-control
         aria-label="Zones du plan"
-        className="no-scrollbar absolute bottom-3 left-3 flex gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/95 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] transition-[right] duration-300 max-md:right-3 md:left-[68px]"
-        style={{ right: desktop ? (zone ? PANEL_WIDTH + 28 : wide ? LEGEND_SPACE : 12) : undefined, maxWidth: desktop ? "fit-content" : undefined }}
+        className="intro-bottom no-scrollbar absolute bottom-3 left-3 flex gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/95 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] transition-[right] duration-300 max-md:right-3 md:left-[68px]"
+        style={{
+          right: desktop ? (zone ? PANEL_WIDTH + 28 : wide ? LEGEND_SPACE : 12) : undefined,
+          maxWidth: desktop ? "fit-content" : undefined,
+          ["--intro-delay" as string]: "320ms",
+        }}
       >
         {data.zones.map((z) => {
           const Icon = ZONE_ICONS[z.id];
