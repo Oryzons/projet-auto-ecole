@@ -1,268 +1,380 @@
 import type { ZoneId } from "@/lib/plan-types";
 
-import { BLUE, Box, Car, GLASS, INK, SLATE, STONE, Shadow, SignLeft, Tree, WHITE, WindowsLeft, WindowsRight, points, project, quad, type BoxColors } from "./iso";
+import {
+  BLUE,
+  Cabinet,
+  Chair,
+  DESK,
+  Desk,
+  FloorLabel,
+  INK,
+  LiftPost,
+  Monitor,
+  PARTITION,
+  Partition,
+  Person,
+  Plant,
+  RED,
+  SOFA,
+  STONE,
+  TireStack,
+  Vehicle,
+  WHITE,
+  WOOD,
+  Workstation,
+  faceX,
+  faceY,
+  onWallX,
+  onWallY,
+} from "./furniture";
+import { Box, points, project, quad } from "./iso";
 
-/** Dimensions du plan : 3 × 3 parcelles de 8 cases, séparées par des routes de 3 cases. */
-export const PARCEL = 8;
-export const ROAD = 3;
-export const WORLD = 3 * PARCEL + 4 * ROAD;
+/**
+ * L'auto-école vue comme un open space d'un seul tenant (36 m × 28 m) :
+ * deux murs extérieurs au fond, des cloisons vitrées basses entre les espaces.
+ */
+export const FLOOR_W = 36;
+export const FLOOR_D = 28;
+const WALL_H = 3;
 
-/** Position de chaque zone : colonne (axe x) et rangée (axe y). La rangée 0 est au fond. */
-export const ZONE_LAYOUT: Record<ZoneId, { col: number; row: number; top: number }> = {
-  parc: { col: 0, row: 0, top: 1.4 },
-  planning: { col: 1, row: 0, top: 4.4 },
-  examens: { col: 2, row: 0, top: 3.6 },
-  code: { col: 0, row: 1, top: 3 },
-  accueil: { col: 1, row: 1, top: 4.6 },
-  inscriptions: { col: 2, row: 1, top: 2.6 },
-  communication: { col: 0, row: 2, top: 5.2 },
-  administratif: { col: 1, row: 2, top: 4.2 },
-  comptabilite: { col: 2, row: 2, top: 3.8 },
+type Room = { x: number; y: number; w: number; d: number; row: number; col: number; floor: string; label: string };
+
+export const ROOMS: Record<ZoneId, Room> = {
+  parc: { x: 0, y: 0, w: 13.5, d: 10, row: 0, col: 0, floor: "#e6e9ef", label: "GARAGE" },
+  planning: { x: 15, y: 0, w: 9, d: 10, row: 0, col: 1, floor: "#f1f3fa", label: "PLANNING" },
+  examens: { x: 25.5, y: 0, w: 10.5, d: 10, row: 0, col: 2, floor: "#f8f9fc", label: "SALLE D'EXAMEN" },
+  code: { x: 0, y: 11.5, w: 13.5, d: 7.5, row: 1, col: 0, floor: "#e9eefc", label: "SALLE DE CODE" },
+  administratif: { x: 15, y: 11.5, w: 9, d: 7.5, row: 1, col: 1, floor: "#f5f1eb", label: "BUREAU" },
+  inscriptions: { x: 25.5, y: 11.5, w: 10.5, d: 7.5, row: 1, col: 2, floor: "#edf6f1", label: "INSCRIPTIONS" },
+  communication: { x: 0, y: 20.5, w: 13.5, d: 7.5, row: 2, col: 0, floor: "#f1effa", label: "COMMUNICATION" },
+  accueil: { x: 15, y: 20.5, w: 9, d: 7.5, row: 2, col: 1, floor: "#f7f0e6", label: "ACCUEIL" },
+  comptabilite: { x: 25.5, y: 20.5, w: 10.5, d: 7.5, row: 2, col: 2, floor: "#eef3f7", label: "COMPTABILITÉ" },
 };
 
-export function parcelOrigin(id: ZoneId) {
-  const { col, row } = ZONE_LAYOUT[id];
-  return { ox: ROAD + col * (PARCEL + ROAD), oy: ROAD + row * (PARCEL + ROAD) };
+/** Ordre de dessin : du fond vers l'avant. */
+export const DRAW_ORDER = (Object.keys(ROOMS) as ZoneId[]).sort((a, b) => ROOMS[a].row - ROOMS[b].row || ROOMS[a].col - ROOMS[b].col);
+
+/** Point d'ancrage du badge d'une zone, au-dessus de son centre. */
+export function zoneAnchor(id: ZoneId) {
+  const r = ROOMS[id];
+  return project(r.x + r.w / 2, r.y + r.d / 2, 2.6);
 }
 
-/** Point d'ancrage du badge d'une zone, au-dessus de son bâtiment principal. */
-export function zoneAnchor(id: ZoneId, lift = 1.2) {
-  const { ox, oy } = parcelOrigin(id);
-  return project(ox + PARCEL / 2, oy + PARCEL / 2, ZONE_LAYOUT[id].top + lift);
-}
-
-/** Centre de la parcelle au sol (pour centrer la caméra). */
+/** Centre de l'espace (pour centrer la caméra). */
 export function zoneCenter(id: ZoneId) {
-  const { ox, oy } = parcelOrigin(id);
-  return project(ox + PARCEL / 2, oy + PARCEL / 2, 1.5);
+  const r = ROOMS[id];
+  return project(r.x + r.w / 2, r.y + r.d / 2, 0.8);
 }
 
-/** Bâtiment avec ombre, pour ne jamais oublier l'une ou l'autre. */
-function Building(props: { x: number; y: number; z?: number; w: number; d: number; h: number; colors?: BoxColors }) {
+export function roomOutline(id: ZoneId, inset = 0.15) {
+  const r = ROOMS[id];
+  return quad(r.x + inset, r.y + inset, r.w - 2 * inset, r.d - 2 * inset, 0.04);
+}
+
+/** Rectangle englobant de la scène, en pixels projetés. */
+export function sceneBounds() {
+  const [l] = project(0, FLOOR_D);
+  const [r] = project(FLOOR_W, 0);
+  const [, top] = project(0, 0, WALL_H + 0.6);
+  const [, bottom] = project(FLOOR_W, FLOOR_D, -0.6);
+  return { x: l - 24, y: top - 10, w: r - l + 48, h: bottom - top + 30 };
+}
+
+/** Dalle, murs extérieurs du fond et allées. */
+export function Ground() {
+  const windowsBack = [];
+  for (let x = 15.6; x < FLOOR_W - 1; x += 2.6) windowsBack.push(<polygon key={x} points={faceY(x, x + 1.8, 0, 1, 2.4)} fill="#d6e1f7" />);
+  const windowsLeft = [];
+  for (let y = 12.4; y < FLOOR_D - 1; y += 2.6) {
+    // les écrans de la salle de code et de la communication occupent une partie du mur
+    if ((y > 12.5 && y < 18.5) || (y > 21 && y < 26.5)) continue;
+    windowsLeft.push(<polygon key={y} points={faceX(0, y, y + 1.8, 1, 2.4)} fill="#ccd8f0" />);
+  }
   return (
-    <>
-      {!props.z && <Shadow x={props.x} y={props.y} w={props.w} d={props.d} h={props.h} />}
-      <Box {...props} />
-    </>
+    <g>
+      {/* épaisseur de la dalle */}
+      <polygon points={points([project(0, FLOOR_D, 0), project(FLOOR_W, FLOOR_D, 0), project(FLOOR_W, FLOOR_D, -0.6), project(0, FLOOR_D, -0.6)])} fill="#dfe4ec" />
+      <polygon points={points([project(FLOOR_W, 0, 0), project(FLOOR_W, FLOOR_D, 0), project(FLOOR_W, FLOOR_D, -0.6), project(FLOOR_W, 0, -0.6)])} fill="#cfd6e1" />
+      <polygon points={quad(0, 0, FLOOR_W, FLOOR_D)} fill="#fbfcfd" />
+      {/* murs du fond, vus de l'intérieur */}
+      <Box x={-0.35} y={-0.35} w={FLOOR_W + 0.35} d={0.35} h={WALL_H} colors={{ top: "#e3e8f0", left: "#f4f6fa", right: "#dfe4ec" }} />
+      <Box x={-0.35} y={0} w={0.35} d={FLOOR_D} h={WALL_H} colors={{ top: "#e3e8f0", left: "#dfe4ec", right: "#eef1f6" }} />
+      {windowsBack}
+      {windowsLeft}
+      {/* plinthes bleues */}
+      <polygon points={faceY(0, FLOOR_W, 0, 0, 0.12)} fill="#c9d3ef" />
+      <polygon points={faceX(0, 0, FLOOR_D, 0, 0.12)} fill="#c0cbea" />
+      {/* allées */}
+      <polygon points={quad(0, 10, FLOOR_W, 1.5, 0.01)} fill="#f1f3f7" />
+      <polygon points={quad(0, 19, FLOOR_W, 1.5, 0.01)} fill="#f1f3f7" />
+      <polygon points={quad(13.5, 0, 1.5, FLOOR_D, 0.01)} fill="#f1f3f7" />
+      <polygon points={quad(24, 0, 1.5, FLOOR_D, 0.01)} fill="#f1f3f7" />
+    </g>
   );
 }
 
-/** Décor propre à chaque zone, dessiné dans sa parcelle (de l'arrière vers l'avant). */
+/** Sol de l'espace, cloisons du fond et nom peint au sol. */
+export function RoomFloor({ id }: { id: ZoneId }) {
+  const r = ROOMS[id];
+  const closed = id === "examens";
+  return (
+    <g>
+      <polygon points={quad(r.x, r.y, r.w, r.d, 0.02)} fill={r.floor} />
+      {r.y > 0 && !closed && <Partition axis="x" at={r.y} from={r.x} to={r.x + r.w} gap={[r.x + r.w / 2 - 0.8, r.x + r.w / 2 + 0.8]} />}
+      {r.x > 0 && !closed && <Partition axis="y" at={r.x} from={r.y} to={r.y + r.d} gap={[r.y + r.d / 2 - 0.8, r.y + r.d / 2 + 0.8]} />}
+      {closed && <Partition axis="y" at={r.x + 0.3} from={r.y} to={r.y + r.d - 0.3} h={2.2} />}
+      <FloorLabel x={r.x + 0.5} y={r.y + r.d - 0.45} text={r.label} />
+    </g>
+  );
+}
+
+const SHIRTS = ["#2d50f5", "#14203c", "#16a34a", "#f59e0b", "#e11d48", "#64748b", "#0ea5e9", "#8b5cf6"];
+
+/** Mobilier propre à chaque espace, de l'arrière vers l'avant. */
 export function ZoneArt({ id }: { id: ZoneId }) {
-  const { ox: X, oy: Y } = parcelOrigin(id);
+  const { x: X, y: Y, w: W, d: D } = ROOMS[id];
   switch (id) {
     case "parc":
       return (
         <g>
-          <polygon points={quad(X + 0.6, Y + 0.6, 6.8, 6.8, 0.13)} fill="#e6eaf1" />
-          {[0, 1, 2, 3].map((i) => (
-            <polygon key={i} points={quad(X + 0.9, Y + 1 + i * 1.5, 3.6, 0.07, 0.14)} fill="#ffffff" />
+          {/* portes sectionnelles du garage */}
+          {[1.4, 7.6].map((x0) => (
+            <g key={x0}>
+              <polygon points={faceY(X + x0, X + x0 + 4.4, 0, 0, 2.6)} fill="#cdd4e0" />
+              {[0.4, 0.8, 1.2, 1.6, 2, 2.4].map((z) => (
+                <line key={z} x1={project(X + x0, 0, z)[0]} y1={project(X + x0, 0, z)[1]} x2={project(X + x0 + 4.4, 0, z)[0]} y2={project(X + x0 + 4.4, 0, z)[1]} stroke="#b4bdcc" strokeWidth={0.8} />
+              ))}
+            </g>
           ))}
-          <Car x={X + 1.6} y={Y + 1.25} color={BLUE} />
-          <Car x={X + 1.3} y={Y + 2.75} color={WHITE} />
-          <Car x={X + 1.5} y={Y + 5.75} color={INK} />
-          <Building x={X + 5} y={Y + 1} w={2.2} d={3} h={1.5} colors={STONE} />
-          <polygon points={points([project(X + 7.2, Y + 1.5, 0), project(X + 7.2, Y + 3.5, 0), project(X + 7.2, Y + 3.5, 1.1), project(X + 7.2, Y + 1.5, 1.1)])} fill="#c4ccd9" />
-          {[0, 1, 2, 3].map((i) => (
-            <line key={i} x1={project(X + 7.2, Y + 1.5, 0.25 + i * 0.25)[0]} y1={project(X + 7.2, Y + 1.5, 0.25 + i * 0.25)[1]} x2={project(X + 7.2, Y + 3.5, 0.25 + i * 0.25)[0]} y2={project(X + 7.2, Y + 3.5, 0.25 + i * 0.25)[1]} stroke="#aeb8c8" strokeWidth={0.8} />
-          ))}
-          <Tree x={X + 6.6} y={Y + 6.4} size={0.9} />
+          {/* marquages au sol des deux ponts */}
+          <polygon points={quad(X + 1.8, Y + 1.8, 3.6, 5.6, 0.03)} fill="none" stroke="#f5b400" strokeWidth={1.2} strokeDasharray="6 4" />
+          <polygon points={quad(X + 8, Y + 1.8, 3.6, 5.6, 0.03)} fill="none" stroke="#f5b400" strokeWidth={1.2} strokeDasharray="6 4" />
+          <TireStack x={X + 12.6} y={Y + 1.2} />
+          <TireStack x={X + 12.6} y={Y + 2.6} count={3} />
+          <LiftPost x={X + 1.9} y={Y + 4.2} />
+          <Vehicle x={X + 2.7} y={Y + 2.4} axis="y" color={BLUE} z={0.9} />
+          <LiftPost x={X + 4.9} y={Y + 4.2} />
+          <LiftPost x={X + 8.1} y={Y + 4.2} />
+          <Vehicle x={X + 8.9} y={Y + 2.4} axis="y" color={WHITE} />
+          <LiftPost x={X + 11.1} y={Y + 4.2} />
+          <Person x={X + 6.6} y={Y + 4.6} shirt="#1e3a8a" look={1} />
+          <Cabinet x={X + 0.2} y={Y + 6.6} w={0.7} d={2.6} h={0.95} colors={RED} drawers={4} />
+          <Person x={X + 1.6} y={Y + 8} shirt="#1e3a8a" look={2} />
+          <Vehicle x={X + 7.6} y={Y + 7.6} axis="x" color={{ top: "#3a4660", left: "#2a344b", right: "#1f283b" }} />
         </g>
       );
     case "planning":
       return (
         <g>
-          <Tree x={X + 1.2} y={Y + 1.2} size={0.85} />
-          <Building x={X + 1.8} y={Y + 1.8} w={4.4} d={4.2} h={3.2} colors={WHITE} />
-          <WindowsLeft x={X + 1.8} y={Y + 1.8} w={4.4} d={4.2} floors={3} cols={4} />
-          <WindowsRight x={X + 1.8} y={Y + 1.8} w={4.4} d={4.2} floors={3} cols={4} />
-          <Box x={X + 3.2} y={Y + 3} z={3.2} w={1.6} d={1.6} h={1.1} colors={STONE} />
-          {/* horloge du planning, peinte sur la façade */}
-          <g transform={`matrix(0.866 0.5 0 1 ${project(X + 4, Y + 4.6, 3.8)[0].toFixed(1)} ${project(X + 4, Y + 4.6, 3.8)[1].toFixed(1)})`}>
-            <circle r={6.5} fill="#ffffff" stroke="#2d50f5" strokeWidth={1.4} />
-            <line x1={0} y1={0} x2={0} y2={-4.2} stroke="#14203c" strokeWidth={1.1} strokeLinecap="round" />
-            <line x1={0} y1={0} x2={3.2} y2={0} stroke="#14203c" strokeWidth={1.1} strokeLinecap="round" />
+          {/* grand planning mural : moniteurs en lignes, créneaux en couleurs */}
+          <polygon points={faceY(X + 0.8, X + 7.2, 0.02, 0.8, 2.6)} fill="#ffffff" stroke="#d3daea" strokeWidth={0.8} />
+          <g transform={onWallY(X + 1, 0.02, 2.45)}>
+            {[0, 1, 2, 3, 4].map((row) =>
+              [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((col) => {
+                const busy = (row * 7 + col * 3) % 5;
+                if (busy > 2) return null;
+                const fill = busy === 0 ? "#2d50f5" : busy === 1 ? "#93a8ff" : "#f5b400";
+                return <rect key={`${row}-${col}`} x={10 + col * 9.6} y={4 + row * 6.4} width={8.4} height={5} rx={1.2} fill={fill} />;
+              }),
+            )}
+            {[0, 1, 2, 3, 4].map((row) => (
+              <circle key={row} cx={4} cy={6.5 + row * 6.4} r={2.2} fill="#c3cce0" />
+            ))}
           </g>
-          <SignLeft x={X + 2.1} y={Y + 6} z={0.25} text="PLANNING" size={7.5} />
-          <Tree x={X + 6.8} y={Y + 6.6} size={0.75} />
+          <Person x={X + 7.8} y={Y + 1.1} shirt={SHIRTS[2]} look={3} />
+          {/* table de réunion des moniteurs */}
+          <Chair x={X + 2.6} y={Y + 3.6} back="y" />
+          <Person x={X + 2.85} y={Y + 4} seated shirt={SHIRTS[0]} look={0} />
+          <Chair x={X + 4.4} y={Y + 3.6} back="y" />
+          <Person x={X + 4.65} y={Y + 4} seated shirt={SHIRTS[3]} look={4} />
+          <Desk x={X + 2.2} y={Y + 4.3} w={4.2} d={1.5} colors={WOOD} />
+          <Box x={X + 3} y={Y + 4.6} z={0.75} w={0.5} d={0.35} h={0.04} colors={WHITE} />
+          <Chair x={X + 3.5} y={Y + 6} back="-y" />
+          <Person x={X + 3.75} y={Y + 6.2} seated shirt={SHIRTS[6]} look={2} />
+          <Workstation x={X + 0.6} y={Y + 8.3} shirt={SHIRTS[1]} look={1} />
+          <Plant x={X + 8.2} y={Y + 8.8} />
         </g>
       );
     case "examens":
       return (
         <g>
-          {/* piste d'examen : boucle et plots */}
-          <polygon points={quad(X + 0.7, Y + 0.7, 6.6, 6.6, 0.13)} fill="#e3e7ee" />
-          <polygon points={quad(X + 1.9, Y + 1.9, 4.2, 4.2, 0.14)} fill="#f7f8fb" />
-          <polygon points={quad(X + 1.3, Y + 1.3, 5.4, 5.4, 0.14)} fill="none" stroke="#ffffff" strokeWidth={1} strokeDasharray="5 5" />
-          {[
-            [X + 2.6, Y + 2.4],
-            [X + 4, Y + 2.4],
-            [X + 5.4, Y + 2.4],
-          ].map(([cx, cy], i) => {
-            const [px, py] = project(cx, cy, 0.14);
-            return <polygon key={i} points={`${px},${py - 9} ${px - 3.5},${py} ${px + 3.5},${py}`} fill="#f08c00" stroke="#ffffff" strokeWidth={0.6} />;
-          })}
-          <Building x={X + 3} y={Y + 3.6} w={2.6} d={2.4} h={2} colors={WHITE} />
-          <Box x={X + 3.5} y={Y + 4.1} z={2} w={1.6} d={1.4} h={1.2} colors={GLASS} />
-          <Box x={X + 3.3} y={Y + 3.9} z={3.2} w={2} d={1.8} h={0.22} colors={SLATE} />
-          {/* drapeau à damier */}
-          <line x1={project(X + 6.6, Y + 6.4, 0)[0]} y1={project(X + 6.6, Y + 6.4, 0)[1]} x2={project(X + 6.6, Y + 6.4, 3)[0]} y2={project(X + 6.6, Y + 6.4, 3)[1]} stroke="#7a8599" strokeWidth={1.2} />
-          <polygon points={points([project(X + 6.6, Y + 6.4, 3), project(X + 7.6, Y + 6.4, 3), project(X + 7.6, Y + 6.4, 2.4), project(X + 6.6, Y + 6.4, 2.4)])} fill="#14203c" />
-          <SignLeft x={X + 3.1} y={Y + 6} z={0.35} text="EXAMENS" size={6.5} />
+          {/* horloge et consigne au mur */}
+          <g transform={onWallY(X + 5.2, 0.02, 2.4)}>
+            <circle cx={0} cy={0} r={7} fill="#ffffff" stroke="#14203c" strokeWidth={1.2} />
+            <line x1={0} y1={0} x2={0} y2={-4.5} stroke="#14203c" strokeWidth={1} />
+            <line x1={0} y1={0} x2={3.4} y2={0} stroke="#14203c" strokeWidth={1} />
+          </g>
+          <g transform={onWallY(X + 1.4, 0.02, 1.9)}>
+            <rect x={0} y={0} width={46} height={12} rx={2} fill="#14203c" />
+            <text x={23} y={8.4} textAnchor="middle" fontSize={6} fontWeight={700} fill="#ffffff" letterSpacing={0.8}>
+              SILENCE
+            </text>
+          </g>
+          {/* examinateur */}
+          <Person x={X + 5.3} y={Y + 0.9} shirt={SHIRTS[1]} look={4} />
+          <Desk x={X + 4.2} y={Y + 1.3} w={2.2} d={0.8} colors={WOOD} />
+          <Box x={X + 4.5} y={Y + 1.5} z={0.75} w={0.45} d={0.32} h={0.05} colors={WHITE} />
+          {/* pupitres des candidats, deux rangées de trois */}
+          {[3.6, 6.6].map((row, r) =>
+            [1.6, 4.6, 7.6].map((col, c) => (
+              <g key={`${row}-${col}`}>
+                <Chair x={X + col + 0.25} y={Y + row - 0.6} back="y" />
+                <Person x={X + col + 0.5} y={Y + row - 0.3} seated shirt={SHIRTS[(r * 3 + c + 2) % SHIRTS.length]} look={r * 3 + c} />
+                <Desk x={X + col} y={Y + row} w={1} d={0.6} />
+                <Box x={X + col + 0.3} y={Y + row + 0.1} z={0.75} w={0.42} d={0.3} h={0.03} colors={{ top: "#2d50f5", left: "#1f283b", right: "#1f283b" }} />
+              </g>
+            )),
+          )}
+          {/* salle fermée : vitrages avant */}
+          <Partition axis="x" at={Y + D - 0.3} from={X + 0.3} to={X + W - 0.3} gap={[X + 1, X + 2.2]} h={2.2} />
+          <Partition axis="y" at={X + W - 0.3} from={Y} to={Y + D - 0.3} h={2.2} />
         </g>
       );
     case "code":
       return (
         <g>
-          <Tree x={X + 1} y={Y + 6.8} size={0.8} />
-          <Building x={X + 1.2} y={Y + 1.5} w={5.8} d={3.8} h={2.4} colors={WHITE} />
-          {/* grand écran de la salle de code */}
-          <polygon points={points([project(X + 1.8, Y + 5.3, 0.6), project(X + 4.6, Y + 5.3, 0.6), project(X + 4.6, Y + 5.3, 2), project(X + 1.8, Y + 5.3, 2)])} fill="#1f2a44" />
-          <polygon points={points([project(X + 2.1, Y + 5.3, 1.25), project(X + 4.3, Y + 5.3, 1.25), project(X + 4.3, Y + 5.3, 1.75), project(X + 2.1, Y + 5.3, 1.75)])} fill="#5b78ff" opacity={0.85} />
-          <WindowsRight x={X + 1.2} y={Y + 1.5} w={5.8} d={3.8} floors={2} cols={3} />
-          <Box x={X + 1.2} y={Y + 1.5} z={2.4} w={5.8} d={3.8} h={0.18} colors={SLATE} />
-          <SignLeft x={X + 4.9} y={Y + 5.3} z={0.6} text="CODE" size={7.5} />
-        </g>
-      );
-    case "accueil":
-      return (
-        <g>
-          <polygon points={quad(X + 0.8, Y + 5.6, 6.4, 1.8, 0.13)} fill="#e6eaf1" />
-          <Building x={X + 1} y={Y + 1} w={6} d={4.6} h={3.4} colors={WHITE} />
-          <WindowsLeft x={X + 1} y={Y + 1} w={6} d={4.6} floors={3} cols={5} />
-          <WindowsRight x={X + 1} y={Y + 1} w={6} d={4.6} floors={3} cols={4} />
-          {/* bandeau bleu et enseigne principale */}
-          <Box x={X + 1} y={Y + 1} z={3.4} w={6} d={4.6} h={0.25} colors={BLUE} />
-          <Box x={X + 2.6} y={Y + 5.6} z={1.2} w={2.8} d={1.2} h={0.18} colors={STONE} />
-          <Box x={X + 2.7} y={Y + 6.6} w={0.15} d={0.15} h={1.2} colors={SLATE} />
-          <Box x={X + 5.15} y={Y + 6.6} w={0.15} d={0.15} h={1.2} colors={SLATE} />
-          <SignLeft x={X + 2.2} y={Y + 5.6} z={2.15} text="VIRAGE" size={10} color="#2d50f5" />
-          <Tree x={X + 0.8} y={Y + 7.2} size={0.8} />
-          <Tree x={X + 7.3} y={Y + 7.2} size={0.8} />
-        </g>
-      );
-    case "inscriptions":
-      return (
-        <g>
-          <Building x={X + 1.6} y={Y + 1.6} w={4.6} d={3.8} h={2.2} colors={GLASS} />
-          <Box x={X + 1.4} y={Y + 1.4} z={2.2} w={5} d={4.2} h={0.24} colors={WHITE} />
-          {/* auvent bleu au-dessus de l'entrée */}
-          <Box x={X + 2} y={Y + 5.4} z={1.45} w={3.8} d={0.9} h={0.16} colors={BLUE} />
-          <WindowsLeft x={X + 1.6} y={Y + 1.6} w={4.6} d={3.8} floors={2} cols={4} color="#b9c9fb" />
-          <SignLeft x={X + 1.9} y={Y + 5.4} z={0.95} text="INSCRIPTIONS" size={6} color="#ffffff" />
-          <Tree x={X + 7} y={Y + 2} size={0.8} />
-          <Tree x={X + 7.1} y={Y + 6.8} size={0.9} />
-        </g>
-      );
-    case "communication":
-      return (
-        <g>
-          <Tree x={X + 1} y={Y + 1} size={0.8} />
-          <Building x={X + 1.5} y={Y + 2} w={4.8} d={4} h={2.8} colors={WHITE} />
-          <WindowsLeft x={X + 1.5} y={Y + 2} w={4.8} d={4} floors={2} cols={4} />
-          <WindowsRight x={X + 1.5} y={Y + 2} w={4.8} d={4} floors={2} cols={3} />
-          <Box x={X + 1.5} y={Y + 2} z={2.8} w={4.8} d={4} h={0.18} colors={SLATE} />
-          {/* antenne et parabole */}
-          <Box x={X + 4.6} y={Y + 2.8} z={2.98} w={0.2} d={0.2} h={2.2} colors={SLATE} />
-          <ellipse cx={project(X + 3, Y + 3.4, 3.6)[0]} cy={project(X + 3, Y + 3.4, 3.6)[1]} rx={7} ry={4} fill="#ffffff" stroke="#b9c2d2" strokeWidth={0.8} />
-          <circle cx={project(X + 4.7, Y + 2.9, 5.2)[0]} cy={project(X + 4.7, Y + 2.9, 5.2)[1]} r={2.2} fill="#2d50f5" />
-          <SignLeft x={X + 1.9} y={Y + 6} z={0.3} text="MESSAGES" size={6.5} />
-          <Tree x={X + 7} y={Y + 7} size={0.9} />
+          {/* écran de projection sur le mur */}
+          <polygon points={faceX(0.02, Y + 1.2, Y + 6.2, 0.7, 2.7)} fill="#1f2a44" />
+          <g transform={onWallX(0.02, Y + 5.9, 2.5)}>
+            <rect x={0} y={0} width={80} height={34} rx={2} fill="#2d50f5" />
+            <rect x={6} y={6} width={30} height={22} rx={2} fill="#dfe7ff" />
+            <polygon points="12,23 30,23 21,10" fill="#e11d48" />
+            <polygon points="16,21 26,21 21,14" fill="#ffffff" />
+            <rect x={42} y={7} width={32} height={4} rx={2} fill="#ffffff" />
+            <rect x={42} y={15} width={26} height={4} rx={2} fill="#b9c8ff" />
+            <rect x={42} y={23} width={29} height={4} rx={2} fill="#b9c8ff" />
+          </g>
+          <Person x={X + 1.2} y={Y + 6.6} shirt={SHIRTS[0]} look={3} />
+          {/* rangées de chaises tournées vers l'écran */}
+          {[3.4, 5.6, 7.8, 10].map((col, c) =>
+            [1.3, 2.5, 3.7, 4.9, 6.1].map((row, r) => {
+              const seated = (c * 5 + r * 3) % 4 !== 0;
+              return (
+                <g key={`${col}-${row}`}>
+                  <Box x={X + col - 0.55} y={Y + row} z={0.68} w={0.35} d={0.5} h={0.04} colors={DESK} />
+                  <Chair x={X + col} y={Y + row} back="-x" colors={{ top: "#7f95f0", left: "#6178e0", right: "#4f65cc" }} />
+                  {seated && <Person x={X + col + 0.15} y={Y + row + 0.25} seated shirt={SHIRTS[(c + r * 2) % SHIRTS.length]} look={c + r} />}
+                </g>
+              );
+            }),
+          )}
+          <Plant x={X + 12.6} y={Y + 6.4} />
         </g>
       );
     case "administratif":
       return (
         <g>
-          <Building x={X + 1} y={Y + 1} w={4.2} d={5.2} h={4} colors={WHITE} />
-          <WindowsLeft x={X + 1} y={Y + 1} w={4.2} d={5.2} floors={4} cols={3} />
-          <WindowsRight x={X + 1} y={Y + 1} w={4.2} d={5.2} floors={4} cols={4} />
-          <Box x={X + 1} y={Y + 1} z={4} w={4.2} d={5.2} h={0.18} colors={SLATE} />
-          <Building x={X + 5.2} y={Y + 3} w={2.2} d={3.2} h={2} colors={STONE} />
-          <WindowsRight x={X + 5.2} y={Y + 3} w={2.2} d={3.2} floors={2} cols={2} />
-          <SignLeft x={X + 1.25} y={Y + 6.2} z={0.3} text="BUREAU" size={7} />
-          <Tree x={X + 7} y={Y + 1.6} size={0.8} />
+          {/* armoires à dossiers contre la cloison */}
+          <Cabinet x={X + 5.6} y={Y + 0.3} w={3} d={0.6} h={1.5} colors={STONE} drawers={4} />
+          <Workstation x={X + 0.8} y={Y + 2.4} shirt={SHIRTS[4]} look={0} papers />
+          <Workstation x={X + 2.7} y={Y + 2.4} shirt={SHIRTS[1]} look={2} papers />
+          <Cabinet x={X + 8} y={Y + 1.6} w={0.6} d={2.8} h={1.2} colors={WHITE} drawers={3} />
+          <Workstation x={X + 0.8} y={Y + 5.3} shirt={SHIRTS[6]} look={1} />
+          <Workstation x={X + 2.7} y={Y + 5.3} empty papers />
+          {/* imprimante et piles de dossiers */}
+          <Box x={X + 5.6} y={Y + 4.6} w={0.9} d={0.7} h={0.85} colors={STONE} />
+          <Box x={X + 5.7} y={Y + 4.7} z={0.85} w={0.7} d={0.5} h={0.18} colors={WHITE} />
+          <Plant x={X + 8.2} y={Y + 6.4} />
+        </g>
+      );
+    case "inscriptions":
+      return (
+        <g>
+          {/* présentoir à brochures */}
+          <Box x={X + 9.3} y={Y + 0.6} w={0.5} d={1.8} h={1.5} colors={WHITE} />
+          {[0.75, 1.05, 1.35].map((z, i) => (
+            <polygon key={z} points={faceX(X + 9.81, Y + 0.8, Y + 2.2, z - 0.22, z)} fill={["#2d50f5", "#16a34a", "#f59e0b"][i]} />
+          ))}
+          {[1.4, 5.4].map((col, i) => (
+            <g key={col}>
+              <Chair x={X + col + 0.45} y={Y + 1.6} back="y" />
+              <Person x={X + col + 0.7} y={Y + 1.95} seated shirt={i ? SHIRTS[2] : SHIRTS[0]} look={i + 1} />
+              <Desk x={X + col} y={Y + 2.4} w={1.6} d={0.8} />
+              <Monitor x={X + col + 0.2} y={Y + 2.5} w={0.5} />
+              <Box x={X + col + 0.95} y={Y + 2.7} z={0.75} w={0.4} d={0.3} h={0.02} colors={WHITE} />
+              <Chair x={X + col + 0.15} y={Y + 3.6} back="-y" />
+              <Person x={X + col + 0.4} y={Y + 3.85} seated shirt={SHIRTS[(i + 5) % SHIRTS.length]} look={i + 3} />
+              <Chair x={X + col + 0.95} y={Y + 3.6} back="-y" />
+              {i === 1 && <Person x={X + col + 1.2} y={Y + 3.85} seated shirt={SHIRTS[3]} look={0} />}
+            </g>
+          ))}
+          {/* borne de préinscription */}
+          <Box x={X + 8.8} y={Y + 4.6} w={0.4} d={0.4} h={1.1} colors={WHITE} />
+          <Box x={X + 8.7} y={Y + 4.5} z={1.1} w={0.6} d={0.6} h={0.06} colors={BLUE} />
+          <Person x={X + 8.6} y={Y + 5.5} shirt={SHIRTS[7]} look={2} />
+          <Plant x={X + 9.6} y={Y + 6.6} />
+        </g>
+      );
+    case "communication":
+      return (
+        <g>
+          {/* écran mural des conversations */}
+          <polygon points={faceX(0.02, Y + 1, Y + 5.8, 0.8, 2.6)} fill="#ffffff" stroke="#d3daea" strokeWidth={0.8} />
+          <g transform={onWallX(0.02, Y + 5.5, 2.4)}>
+            <rect x={0} y={0} width={30} height={9} rx={4.5} fill="#e8edfb" />
+            <rect x={36} y={12} width={38} height={9} rx={4.5} fill="#2d50f5" />
+            <rect x={0} y={24} width={44} height={9} rx={4.5} fill="#e8edfb" />
+          </g>
+          {/* casiers à courrier */}
+          <Cabinet x={X + 10.4} y={Y + 0.4} w={2.6} d={0.6} h={1.6} colors={WHITE} drawers={4} />
+          <Workstation x={X + 2.6} y={Y + 2.6} shirt={SHIRTS[7]} look={4} headset />
+          <Workstation x={X + 4.6} y={Y + 2.6} shirt={SHIRTS[0]} look={1} headset />
+          <Workstation x={X + 6.6} y={Y + 2.6} shirt={SHIRTS[5]} look={2} headset />
+          <Person x={X + 10.6} y={Y + 2.2} shirt={SHIRTS[3]} look={3} />
+          <Workstation x={X + 3.6} y={Y + 5.6} shirt={SHIRTS[2]} look={0} />
+          <Plant x={X + 12.6} y={Y + 6.4} />
+        </g>
+      );
+    case "accueil":
+      return (
+        <g>
+          <Plant x={X + 0.5} y={Y + 0.6} size={1.1} />
+          {/* banque d'accueil et secrétaire */}
+          <Chair x={X + 3.8} y={Y + 1.2} back="y" />
+          <Person x={X + 4.05} y={Y + 1.55} seated shirt={SHIRTS[4]} look={0} />
+          <Box x={X + 6.2} y={Y + 1} w={0.7} d={1.3} h={1.05} colors={WHITE} />
+          <Box x={X + 2.2} y={Y + 2.3} w={4.7} d={0.7} h={1.05} colors={WHITE} />
+          <polygon points={faceY(X + 2.2, X + 6.9, Y + 3, 0.2, 0.8)} fill="#2d50f5" />
+          <g transform={onWallY(X + 3.55, Y + 3, 0.36)}>
+            <text x={0} y={0} fontSize={10} fontWeight={800} fill="#ffffff" letterSpacing={2.5}>
+              VIRAGE
+            </text>
+          </g>
+          <Box x={X + 2.1} y={Y + 2.2} z={1.05} w={4.9} d={0.9} h={0.06} colors={WOOD} />
+          <Monitor x={X + 3.8} y={Y + 2.35} z={1.11} w={0.55} />
+          {/* coin d'attente */}
+          <Box x={X + 0.5} y={Y + 3.8} w={0.3} d={2.6} h={0.85} colors={SOFA} />
+          <Box x={X + 0.8} y={Y + 3.8} w={0.9} d={2.6} h={0.42} colors={SOFA} />
+          <Person x={X + 1.3} y={Y + 4.6} seated shirt={SHIRTS[6]} look={2} />
+          <Person x={X + 1.3} y={Y + 5.8} seated shirt={SHIRTS[3]} look={4} />
+          <Box x={X + 2.3} y={Y + 4.4} w={0.8} d={1.4} h={0.4} colors={WOOD} />
+          <Person x={X + 4.4} y={Y + 3.7} shirt={SHIRTS[2]} look={1} />
+          {/* entrée */}
+          <polygon points={quad(X + 3.6, Y + D - 1.3, 2.4, 1.2, 0.03)} fill="#d7dce6" />
+          <FloorLabel x={X + 3.9} y={Y + D - 0.5} text="ENTRÉE" size={6} color="#9aa5bb" />
+          <Plant x={X + 8.2} y={Y + 6.6} />
         </g>
       );
     case "comptabilite":
       return (
         <g>
-          <Tree x={X + 1} y={Y + 1.2} size={0.8} />
-          <Building x={X + 1.5} y={Y + 2} w={4.4} d={4} h={2.6} colors={WHITE} />
-          <WindowsLeft x={X + 1.5} y={Y + 2} w={4.4} d={4} floors={2} cols={4} />
-          <Building x={X + 4.4} y={Y + 1.2} w={2} d={2} h={3.6} colors={STONE} />
-          <WindowsRight x={X + 4.4} y={Y + 1.2} w={2} d={2} floors={3} cols={2} />
-          <Box x={X + 1.5} y={Y + 2} z={2.6} w={4.4} d={4} h={0.18} colors={SLATE} />
-          <SignLeft x={X + 1.8} y={Y + 6} z={0.3} text="COMPTA" size={7} />
-          <Tree x={X + 7} y={Y + 6.8} size={0.85} />
+          <Cabinet x={X + 0.6} y={Y + 0.4} w={3.2} d={0.6} h={1.3} colors={WHITE} drawers={3} />
+          {/* coffre-fort */}
+          <Box x={X + 8.8} y={Y + 0.6} w={1} d={1} h={1.1} colors={INK} />
+          <g transform={onWallY(X + 9.3, Y + 1.6, 0.6)}>
+            <circle r={3.4} fill="#9aa3b5" />
+            <circle r={1.3} fill="#2a344b" />
+          </g>
+          <Workstation x={X + 1.6} y={Y + 2.8} shirt={SHIRTS[5]} look={1} papers />
+          <Workstation x={X + 4.2} y={Y + 2.8} shirt={SHIRTS[0]} look={3} />
+          {/* terminal de paiement sur le comptoir */}
+          <Box x={X + 6.6} y={Y + 4.6} w={2.6} d={0.7} h={1} colors={WHITE} />
+          <Box x={X + 7.6} y={Y + 4.75} z={1} w={0.3} d={0.4} h={0.12} colors={INK} />
+          <Person x={X + 7.9} y={Y + 5.9} shirt={SHIRTS[6]} look={4} />
+          <Plant x={X + 9.6} y={Y + 6.6} />
         </g>
       );
   }
 }
 
-/** Socle, routes et marquages au sol. */
-export function Ground() {
-  const strips = [0, 1, 2, 3].map((i) => i * (PARCEL + ROAD));
-  const dashes = [];
-  for (const s of strips) {
-    for (let t = 0.6; t < WORLD; t += 1.6) {
-      dashes.push(<polygon key={`h${s}-${t}`} points={quad(t, s + ROAD / 2 - 0.05, 0.8, 0.1, 0.02)} fill="#ffffff" />);
-      dashes.push(<polygon key={`v${s}-${t}`} points={quad(s + ROAD / 2 - 0.05, t, 0.1, 0.8, 0.02)} fill="#ffffff" />);
-    }
-  }
-  return (
-    <g>
-      {/* socle */}
-      <polygon points={points([project(0, WORLD, 0), project(WORLD, WORLD, 0), project(WORLD, WORLD, -1.1), project(0, WORLD, -1.1)])} fill="#dfe4ec" />
-      <polygon points={points([project(WORLD, 0, 0), project(WORLD, WORLD, 0), project(WORLD, WORLD, -1.1), project(WORLD, 0, -1.1)])} fill="#cfd6e1" />
-      <polygon points={quad(0, 0, WORLD, WORLD)} fill="#d9dee7" />
-      {strips.map((s) => (
-        <g key={s}>
-          <polygon points={quad(0, s, WORLD, ROAD, 0.01)} fill="#d3d9e3" />
-          <polygon points={quad(s, 0, ROAD, WORLD, 0.01)} fill="#d3d9e3" />
-        </g>
-      ))}
-      {dashes}
-      {/* passages piétons devant l'accueil */}
-      {[0, 1, 2, 3, 4].map((i) => (
-        <polygon key={i} points={quad(ROAD + PARCEL + ROAD + 3 + i * 0.45, 2 * PARCEL + 2 * ROAD + 0.4, 0.25, 2.2, 0.02)} fill="#f4f6fa" />
-      ))}
-    </g>
-  );
-}
-
-/** Parcelle d'une zone : dalle légèrement surélevée. */
-export function Parcel({ id }: { id: ZoneId }) {
-  const { ox, oy } = parcelOrigin(id);
-  return (
-    <g>
-      <polygon points={points([project(ox, oy + PARCEL, 0), project(ox + PARCEL, oy + PARCEL, 0), project(ox + PARCEL, oy + PARCEL, 0.12), project(ox, oy + PARCEL, 0.12)])} fill="#e9edf3" />
-      <polygon points={points([project(ox + PARCEL, oy, 0), project(ox + PARCEL, oy + PARCEL, 0), project(ox + PARCEL, oy + PARCEL, 0.12), project(ox + PARCEL, oy, 0.12)])} fill="#dde2ea" />
-      <polygon points={quad(ox, oy, PARCEL, PARCEL, 0.12)} fill="#f6f7fa" />
-    </g>
-  );
-}
-
-export function parcelOutline(id: ZoneId, inset = -0.25) {
-  const { ox, oy } = parcelOrigin(id);
-  return quad(ox + inset, oy + inset, PARCEL - 2 * inset, PARCEL - 2 * inset, 0.13);
-}
-
-/** Voitures qui circulent sur les deux routes horizontales intérieures. */
-export function Traffic({ road }: { road: 1 | 2 }) {
-  const lane = road * (PARCEL + ROAD) + (road === 1 ? 2 : 0.25);
-  const [dx, dy] = project(WORLD + 4, 0);
-  return (
-    <g className="plan-traffic" style={{ ["--dx" as string]: `${road === 1 ? dx : -dx}px`, ["--dy" as string]: `${road === 1 ? dy : -dy}px`, animationDuration: road === 1 ? "26s" : "34s" }}>
-      {road === 1 ? <Car x={-2} y={lane} color={BLUE} /> : <Car x={WORLD + 1} y={lane} color={WHITE} />}
-    </g>
-  );
-}
-
-/** Rectangle englobant de la scène, en pixels projetés. */
-export function sceneBounds() {
-  const [l] = project(0, WORLD);
-  const [r] = project(WORLD, 0);
-  const [, top] = project(0, 0, 6.5);
-  const [, bottom] = project(WORLD, WORLD, -1.1);
-  return { x: l - 30, y: top, w: r - l + 60, h: bottom - top + 20 };
-}
+export { PARTITION };

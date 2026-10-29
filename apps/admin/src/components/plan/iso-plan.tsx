@@ -8,7 +8,7 @@ import type { PlanZone, ZoneId } from "@/lib/plan-types";
 import { cn } from "@/lib/utils";
 
 import { EASE_OUT } from "@/components/motion/tokens";
-import { Ground, Parcel, Traffic, ZONE_LAYOUT, ZoneArt, parcelOutline, sceneBounds, zoneAnchor, zoneCenter } from "./scene";
+import { DRAW_ORDER, Ground, RoomFloor, ZoneArt, roomOutline, sceneBounds, zoneAnchor, zoneCenter } from "./scene";
 import { TONE_HEX } from "./tones";
 
 type Camera = { cx: number; cy: number; zoom: number };
@@ -19,10 +19,6 @@ const FOCUS_ZOOM = 1.7;
 const BOUNDS = sceneBounds();
 const HOME: Camera = { cx: BOUNDS.x + BOUNDS.w / 2, cy: BOUNDS.y + BOUNDS.h / 2, zoom: 1 };
 
-/** Ordre de dessin : du fond vers l'avant, rangée par rangée. */
-const DRAW_ORDER: ZoneId[] = (Object.keys(ZONE_LAYOUT) as ZoneId[]).sort(
-  (a, b) => ZONE_LAYOUT[a].row - ZONE_LAYOUT[b].row || ZONE_LAYOUT[a].col - ZONE_LAYOUT[b].col,
-);
 
 export type IsoPlanHandle = { focus: (id: ZoneId | null) => void; reset: () => void };
 
@@ -40,12 +36,17 @@ export const IsoPlan = forwardRef<
     insetRight: number;
     /** Hauteur masquée en bas (panneau mobile) */
     insetBottom: number;
+    /** Hauteur masquée en haut par l'en-tête flottant (px) */
+    insetTop?: number;
+    /** Zoom de la vue générale (plus serré sur téléphone, où le plan est large et peu haut) */
+    homeZoom?: number;
     reducedMotion: boolean;
   }
->(function IsoPlan({ zones, selected, onSelect, insetRight, insetBottom, reducedMotion }, ref) {
+>(function IsoPlan({ zones, selected, onSelect, insetRight, insetTop = 0, insetBottom, homeZoom = 1, reducedMotion }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [cam, setCam] = useState<Camera>(HOME);
+  const home = useMemo(() => ({ ...HOME, zoom: homeZoom }), [homeZoom]);
+  const [cam, setCam] = useState<Camera>(home);
   const camRef = useRef(cam);
   camRef.current = cam;
   const [hovered, setHovered] = useState<ZoneId | null>(null);
@@ -65,10 +66,10 @@ export const IsoPlan = forwardRef<
 
   // pixels écran par pixel du plan, à zoom 1 (le plan tient en entier)
   // le centre de la caméra tombe au milieu de la partie libre, au-dessus des barres du bas
-  const fit = size.w && size.h ? Math.min(size.w / BOUNDS.w, Math.max(size.h - insetBottom, 120) / BOUNDS.h) : 1;
+  const fit = size.w && size.h ? Math.min(size.w / BOUNDS.w, Math.max(size.h - insetTop - insetBottom, 120) / BOUNDS.h) : 1;
   const scale = fit * cam.zoom;
   const viewBox = size.w
-    ? `${(cam.cx - size.w / 2 / scale).toFixed(1)} ${(cam.cy - (size.h - insetBottom) / 2 / scale).toFixed(1)} ${(size.w / scale).toFixed(1)} ${(size.h / scale).toFixed(1)}`
+    ? `${(cam.cx - size.w / 2 / scale).toFixed(1)} ${(cam.cy - (insetTop + (size.h - insetTop - insetBottom) / 2) / scale).toFixed(1)} ${(size.w / scale).toFixed(1)} ${(size.h / scale).toFixed(1)}`
     : `${BOUNDS.x} ${BOUNDS.y} ${BOUNDS.w} ${BOUNDS.h}`;
 
   const clamp = useCallback((c: Camera): Camera => {
@@ -104,23 +105,28 @@ export const IsoPlan = forwardRef<
 
   const focus = useCallback(
     (id: ZoneId | null) => {
-      if (!id) return flyTo(HOME);
+      if (!id) return flyTo(home);
       const [x, y] = zoneCenter(id);
       const zoom = Math.max(camRef.current.zoom, FOCUS_ZOOM);
       const s = fit * zoom;
       // décale le centre pour que la zone tombe au milieu de la partie visible
       flyTo({ cx: x + insetRight / 2 / s, cy: y, zoom });
     },
-    [fit, flyTo, insetRight],
+    [fit, flyTo, insetRight, home],
   );
 
-  useImperativeHandle(ref, () => ({ focus, reset: () => flyTo(HOME) }), [focus, flyTo]);
+  useImperativeHandle(ref, () => ({ focus, reset: () => flyTo(home) }), [focus, flyTo, home]);
+
+  useEffect(() => {
+    if (!selected) setCam(home);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [home]);
 
   // recentre sur la zone choisie (clic, liste des zones ou lien)
   useEffect(() => {
     if (selected && size.w) focus(selected);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, size.w, insetRight, insetBottom]);
+  }, [selected, size.w, insetRight, insetTop, insetBottom]);
 
   /* ---------- molette : zoom autour du curseur ---------- */
   useEffect(() => {
@@ -133,7 +139,7 @@ export const IsoPlan = forwardRef<
       const c = camRef.current;
       const s = fit * c.zoom;
       const px = event.clientX - rect.left - rect.width / 2;
-      const py = event.clientY - rect.top - (rect.height - insetBottom) / 2;
+      const py = event.clientY - rect.top - insetTop - (rect.height - insetTop - insetBottom) / 2;
       // pavé tactile : deux doigts = déplacement, pincement (ctrl) = zoom
       if (!event.ctrlKey && Math.abs(event.deltaX) > Math.abs(event.deltaY) * 0.5 && event.deltaMode === 0 && Math.abs(event.deltaY) < 40) {
         setCam(clamp({ ...c, cx: c.cx + event.deltaX / s, cy: c.cy + event.deltaY / s }));
@@ -147,7 +153,7 @@ export const IsoPlan = forwardRef<
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [fit, clamp, insetBottom]);
+  }, [fit, clamp, insetTop, insetBottom]);
 
   /* ---------- glisser et pincer ---------- */
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -249,11 +255,11 @@ export const IsoPlan = forwardRef<
                 onBlur={() => setFocused((f) => (f === id ? null : f))}
               >
                 <g className="plan-lift" style={{ transform: isHot || isSelected ? "translateY(-8px)" : "none" }}>
-                  <Parcel id={id} />
-                  {ring && <polygon points={parcelOutline(id, 0.15)} fill={ring} fillOpacity={0.07} stroke={ring} strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray={tone === "warning" ? "4 3" : undefined} />}
+                  <RoomFloor id={id} />
+                  {ring && <polygon points={roomOutline(id, 0.3)} fill={ring} fillOpacity={0.07} stroke={ring} strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray={tone === "warning" ? "4 3" : undefined} />}
                   {(isSelected || isHot) && (
                     <polygon
-                      points={parcelOutline(id)}
+                      points={roomOutline(id, 0.1)}
                       fill="#2d50f5"
                       fillOpacity={isSelected ? 0.08 : 0.04}
                       stroke="#2d50f5"
@@ -265,8 +271,6 @@ export const IsoPlan = forwardRef<
                   <ZoneArt id={id} />
                 </g>
               </g>
-              {ZONE_LAYOUT[id].col === 2 && ZONE_LAYOUT[id].row === 0 && !reducedMotion && <Traffic road={1} />}
-              {ZONE_LAYOUT[id].col === 2 && ZONE_LAYOUT[id].row === 1 && !reducedMotion && <Traffic road={2} />}
             </g>
           );
         })}
@@ -299,7 +303,7 @@ export const IsoPlan = forwardRef<
       )}
 
       {/* commandes de caméra */}
-      <div data-plan-control className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:flex-row rounded-xl border border-white/70 bg-white/80 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md">
+      <div data-plan-control className="absolute bottom-3 left-3 flex flex-col gap-1 max-md:right-3 max-md:bottom-[4.25rem] max-md:left-auto rounded-xl border border-white/70 bg-white/80 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md">
         <ControlButton label="Zoomer" onClick={() => zoomBy(1.35)}>
           <Plus />
         </ControlButton>
@@ -307,14 +311,14 @@ export const IsoPlan = forwardRef<
           <Minus />
         </ControlButton>
         <span className="mx-1.5 h-px bg-border" />
-        <ControlButton label={selected ? "Recentrer sur la zone" : "Recentrer"} onClick={() => (selected ? focus(selected) : flyTo(HOME))}>
+        <ControlButton label={selected ? "Recentrer sur la zone" : "Recentrer"} onClick={() => (selected ? focus(selected) : flyTo(home))}>
           <ScanSearch />
         </ControlButton>
         <ControlButton
           label="Vue générale"
           onClick={() => {
             onSelect(null);
-            flyTo(HOME);
+            flyTo(home);
           }}
         >
           <Maximize2 />

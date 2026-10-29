@@ -76,163 +76,135 @@ export function PlanView({ initial }: { initial: PlanData }) {
   const zone = data.zones.find((z) => z.id === selected) ?? null;
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* en-tête */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.08em] text-primary uppercase">{today}</p>
-          <h1 className="mt-1 flex flex-wrap items-center gap-2.5 text-[26px] font-semibold tracking-[-0.03em] text-foreground sm:text-[30px]">
-            Vue d&apos;ensemble
-            <span
-              title="Les chiffres viennent d'une base de démonstration en mémoire, remise à zéro à chaque redémarrage du serveur."
-              className="inline-flex h-6 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 text-[11.5px] font-semibold tracking-normal text-amber-800"
-            >
-              <FlaskConical className="size-3" /> Données de démonstration
-            </span>
-          </h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setTaskDialog({ category: "ADMIN" })}>
-            <ListPlus /> Nouvelle tâche
-          </Button>
-          <Link href="/admin/applications?create=1" className={buttonVariants()}>
-            <UserPlus /> Nouveau dossier
+  const kpiStrip = (
+    <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
+      {data.kpis.map((kpi) => {
+        const body = (
+          <>
+            <span className={cn("size-1.5 shrink-0 rounded-full", TONE_CLASS[kpi.tone].dot)} />
+            <span className="text-muted-foreground">{kpi.label}</span>
+            <span className={cn("font-semibold tabular-nums", kpi.tone === "danger" || kpi.tone === "warning" ? TONE_CLASS[kpi.tone].text : "text-foreground")}>{kpi.value}</span>
+          </>
+        );
+        const className =
+          "flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 text-[12.5px] whitespace-nowrap shadow-[0_6px_18px_-12px_rgb(20_32_60/0.4)] backdrop-blur-md transition-colors";
+        return kpi.href ? (
+          <Link key={kpi.label} href={kpi.href} data-plan-control className={cn(className, "hover:border-primary/30 hover:bg-white")}>
+            {body}
           </Link>
-        </div>
-      </div>
+        ) : (
+          <div key={kpi.label} className={className}>
+            {body}
+          </div>
+        );
+      })}
+    </div>
+  );
 
-      {/* indicateurs clés, reliés aux zones du plan */}
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        {data.kpis.map((kpi) => {
-          const body = (
-            <>
-              <span className="flex items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
-                <span className={cn("size-1.5 shrink-0 rounded-full", TONE_CLASS[kpi.tone].dot)} />
-                {kpi.label}
-              </span>
-              <span className={cn("mt-0.5 block text-[22px] font-semibold tracking-[-0.02em] tabular-nums", kpi.tone === "danger" || kpi.tone === "warning" ? TONE_CLASS[kpi.tone].text : "text-foreground")}>
-                {kpi.value}
-              </span>
-            </>
-          );
-          const className = "min-w-[132px] flex-1 rounded-2xl border border-border bg-card px-3.5 py-2.5 transition-colors";
-          return kpi.href ? (
-            <Link key={kpi.label} href={kpi.href} className={cn(className, "hover:border-primary/30 hover:bg-primary-soft/30")}>
-              {body}
+  return (
+    <div className="relative h-[calc(100svh-4rem-4.5rem-env(safe-area-inset-bottom))] overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#ffffff_0%,#eceff5_75%)] lg:h-[calc(100svh-4rem)]">
+      <IsoPlan
+        ref={planRef}
+        zones={data.zones}
+        selected={selected}
+        onSelect={select}
+        insetRight={desktop && zone ? PANEL_WIDTH + 24 : 0}
+        insetTop={desktop ? 112 : 96}
+        insetBottom={desktop ? 64 : 60}
+        homeZoom={desktop ? 1 : 1.45}
+        reducedMotion={reduce}
+      />
+
+      {/* en-tête flottant : titre, actions et indicateurs clés */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2.5 bg-gradient-to-b from-[#f6f7fb] from-40% to-transparent p-3 pb-6 transition-[padding] duration-300 sm:p-4 sm:pb-8"
+        style={{ paddingRight: desktop && zone ? PANEL_WIDTH + 28 : undefined }}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-[22px] font-semibold tracking-[-0.03em] text-foreground sm:text-[26px]">Vue d&apos;ensemble</h1>
+          <span className="hidden text-[13px] font-medium text-muted-foreground first-letter:uppercase sm:inline">{today}</span>
+          <span
+            title="Les chiffres viennent d'une base de démonstration en mémoire, remise à zéro à chaque redémarrage du serveur."
+            className="pointer-events-auto inline-flex h-6 items-center gap-1 rounded-full border border-amber-200 bg-amber-50/90 px-2.5 text-[11.5px] font-semibold text-amber-800"
+          >
+            <FlaskConical className="size-3" /> Démo
+          </span>
+          <div className="pointer-events-auto ml-auto flex gap-2">
+            <Button variant="outline" size="sm" className="bg-white/85 backdrop-blur-md" onClick={() => setTaskDialog({ category: "ADMIN" })}>
+              <ListPlus /> <span className="max-sm:hidden">Nouvelle tâche</span>
+            </Button>
+            <Link href="/admin/applications?create=1" className={buttonVariants({ size: "sm" })}>
+              <UserPlus /> <span className="max-sm:hidden">Nouveau dossier</span>
             </Link>
-          ) : (
-            <div key={kpi.label} className={className}>
-              {body}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* plan */}
-      <div className="relative h-[clamp(420px,calc(100svh-19rem),900px)] overflow-hidden rounded-3xl border border-border bg-[radial-gradient(120%_90%_at_50%_20%,#ffffff_0%,#eef1f6_70%)] max-md:h-[min(52svh,380px)]">
-        <IsoPlan
-          ref={planRef}
-          zones={data.zones}
-          selected={selected}
-          onSelect={select}
-          insetRight={desktop && zone ? PANEL_WIDTH + 12 : 0}
-          insetBottom={desktop ? 60 : 0}
-          reducedMotion={reduce}
-        />
-
-        {/* légende */}
-        <div className="pointer-events-none absolute top-3 left-3 hidden items-center gap-3 rounded-full border border-white/70 bg-white/75 px-3 py-1.5 text-[11.5px] font-medium text-muted-foreground shadow-sm backdrop-blur-md sm:flex">
-          {(
-            [
-              ["danger", "Alerte"],
-              ["warning", "En attente"],
-              ["active", "Actif"],
-              ["success", "À jour"],
-            ] as const
-          ).map(([tone, label]) => (
-            <span key={tone} className="flex items-center gap-1.5">
-              <span className={cn("size-2 rounded-full", TONE_CLASS[tone].dot)} />
-              {label}
-            </span>
-          ))}
+          </div>
         </div>
-
-        {/* navigation par zones (ordinateur) */}
-        <nav
-          data-plan-control
-          aria-label="Zones du plan"
-          className={cn(
-            "absolute bottom-3 left-[68px] hidden max-w-[calc(100%-84px)] gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/80 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md transition-[max-width] duration-300 md:flex no-scrollbar",
-            zone && "max-w-[calc(100%-84px-416px)]",
-          )}
-        >
-          {data.zones.map((z) => {
-            const Icon = ZONE_ICONS[z.id];
-            const active = z.id === selected;
-            return (
-              <button
-                key={z.id}
-                type="button"
-                onClick={() => select(active ? null : z.id)}
-                aria-pressed={active}
-                className={cn(
-                  "relative flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
-                  active ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-                {z.title}
-                {(z.tone === "danger" || z.tone === "warning") && !active && <span className={cn("size-1.5 rounded-full", TONE_CLASS[z.tone].dot)} />}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* panneau de la zone (ordinateur) */}
-        <AnimatePresence>
-          {zone && desktop && (
-            <motion.aside
-              key="panel"
-              data-plan-control
-              aria-label={`Zone ${zone.title}`}
-              initial={{ opacity: 0, x: reduce ? 0 : 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: reduce ? 0 : 24 }}
-              transition={{ duration: 0.28, ease: EASE_OUT }}
-              style={{ width: PANEL_WIDTH }}
-              className="absolute top-3 right-3 bottom-3 overflow-hidden rounded-2xl border border-white/80 bg-white/90 shadow-[0_24px_60px_-24px_rgb(20_32_60/0.45)] backdrop-blur-xl"
-            >
-              <ZonePanel zone={zone} onClose={() => select(null)} onCreateTask={(category) => setTaskDialog({ category })} />
-            </motion.aside>
-          )}
-        </AnimatePresence>
+        <div className="pointer-events-auto -mx-3 px-3 sm:mx-0 sm:px-0">{kpiStrip}</div>
       </div>
 
-      {/* navigation par zones (téléphone) : liste interactive sous le plan */}
-      <div className="grid grid-cols-2 gap-2 md:hidden">
+      {/* légende */}
+      <div className="pointer-events-none absolute right-4 bottom-[5.25rem] hidden items-center gap-3 rounded-full border border-white/70 bg-white/80 px-3 py-1.5 text-[11.5px] font-medium text-muted-foreground shadow-sm backdrop-blur-md lg:flex" style={{ right: desktop && zone ? PANEL_WIDTH + 28 : undefined }}>
+        {(
+          [
+            ["danger", "Alerte"],
+            ["warning", "En attente"],
+            ["active", "Actif"],
+            ["success", "À jour"],
+          ] as const
+        ).map(([tone, label]) => (
+          <span key={tone} className="flex items-center gap-1.5">
+            <span className={cn("size-2 rounded-full", TONE_CLASS[tone].dot)} />
+            {label}
+          </span>
+        ))}
+      </div>
+
+      {/* navigation par zones */}
+      <nav
+        data-plan-control
+        aria-label="Zones du plan"
+        className="no-scrollbar absolute bottom-3 left-3 flex gap-1 overflow-x-auto rounded-2xl border border-white/70 bg-white/85 p-1 shadow-[0_8px_24px_-12px_rgb(20_32_60/0.35)] backdrop-blur-md transition-[right] duration-300 max-md:right-3 md:left-[68px]"
+        style={{ right: desktop ? (zone ? PANEL_WIDTH + 28 : 16) : undefined, maxWidth: desktop ? "fit-content" : undefined }}
+      >
         {data.zones.map((z) => {
           const Icon = ZONE_ICONS[z.id];
+          const active = z.id === selected;
           return (
             <button
               key={z.id}
               type="button"
-              onClick={() => select(z.id)}
-              className="flex items-center gap-2.5 rounded-2xl border border-border bg-card px-3 py-2.5 text-left active:scale-[0.98]"
+              onClick={() => select(active ? null : z.id)}
+              aria-pressed={active}
+              className={cn(
+                "relative flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none",
+                active ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+              )}
             >
-              <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", TONE_CLASS[z.tone === "neutral" ? "active" : z.tone].soft)}>
-                <Icon className="size-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-[13px] font-semibold text-foreground">{z.title}</span>
-                <span className={cn("block truncate text-xs", z.tone === "danger" || z.tone === "warning" ? TONE_CLASS[z.tone].text : "text-muted-foreground")}>
-                  {z.count} {z.countLabel}
-                </span>
-              </span>
+              <Icon className="size-4" />
+              {z.title}
+              {(z.tone === "danger" || z.tone === "warning") && !active && <span className={cn("size-1.5 rounded-full", TONE_CLASS[z.tone].dot)} />}
             </button>
           );
         })}
-      </div>
+      </nav>
+
+      {/* panneau de la zone (ordinateur) */}
+      <AnimatePresence>
+        {zone && desktop && (
+          <motion.aside
+            key="panel"
+            data-plan-control
+            aria-label={`Zone ${zone.title}`}
+            initial={{ opacity: 0, x: reduce ? 0 : 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: reduce ? 0 : 24 }}
+            transition={{ duration: 0.28, ease: EASE_OUT }}
+            style={{ width: PANEL_WIDTH }}
+            className="absolute top-3 right-3 bottom-3 overflow-hidden rounded-2xl border border-white/80 bg-white/92 shadow-[0_24px_60px_-24px_rgb(20_32_60/0.45)] backdrop-blur-xl"
+          >
+            <ZonePanel zone={zone} onClose={() => select(null)} onCreateTask={(category) => setTaskDialog({ category })} />
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
       {/* panneau de la zone (téléphone) : feuille qui monte du bas */}
       <AnimatePresence>

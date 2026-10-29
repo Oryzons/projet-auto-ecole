@@ -79,6 +79,8 @@ export function AppShell({
   const candidate = role === "CANDIDATE";
   const chat = candidate && pathname.startsWith("/messages");
   const profile = candidate && pathname.startsWith("/profile");
+  // le plan de l'auto-école occupe tout l'espace sous la barre du haut
+  const immersive = pathname === "/admin/dashboard";
 
   return (
     <TooltipProvider delay={300}>
@@ -109,7 +111,9 @@ export function AppShell({
             <main
               className={cn(
                 "mx-auto w-full max-w-[1400px] flex-1",
-                candidate
+                immersive
+                  ? "max-w-none p-0"
+                  : candidate
                   ? chat
                     ? "flex min-h-0 flex-col px-0 pb-[calc(5.35rem+env(safe-area-inset-bottom))] lg:block lg:px-8 lg:pt-8 lg:pb-12"
                     : cn(
