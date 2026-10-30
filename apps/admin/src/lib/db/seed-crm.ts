@@ -120,7 +120,24 @@ export function seedCrm(store: Store, now: number) {
   });
 
   // une leçon en cours sur la Clio, pour la barre de temps restant de la fiche véhicule
-  const driving = apps.find((app) => app.status === "PAID" && app.instructorId && app.permitType !== "a2" && app.permitType !== "permis-b-auto");
+  // élève et moniteur libres sur ce créneau : le planning ne montre aucun conflit
+  const liveStart = now - 20 * 60_000;
+  const liveEnd = liveStart + 90 * 60_000;
+  const free = (key: string, id: unknown) =>
+    !(t.drivingLesson as Row[]).some((l) => {
+      const s = (l.startsAt as Date).getTime();
+      return l[key] === id && l.status !== "CANCELLED" && s < liveEnd && s + Number(l.durationMinutes ?? 60) * 60_000 > liveStart;
+    });
+  const driving = apps.find(
+    (app) =>
+      app.status === "PAID" &&
+      app.instructorId &&
+      app.permitType !== "a2" &&
+      app.permitType !== "permis-b-auto" &&
+      free("applicationId", app.id) &&
+      free("instructorId", app.instructorId) &&
+      free("vehicleId", "veh-clio"),
+  );
   if (driving) {
     lessonCount += 1;
     t.drivingLesson.push({
@@ -129,7 +146,7 @@ export function seedCrm(store: Store, now: number) {
       applicationId: driving.id,
       instructorId: driving.instructorId,
       vehicleId: "veh-clio",
-      startsAt: new Date(now - 20 * 60_000),
+      startsAt: new Date(liveStart),
       durationMinutes: 90,
       status: "PLANNED",
       notes: "Leçon de conduite en ville.",

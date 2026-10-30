@@ -58,22 +58,24 @@ export function SessionFormDialog({
   onOpenChange,
   session,
   defaultDay,
+  defaultTime,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session?: StaffSession | null;
   defaultDay?: string | null;
+  defaultTime?: string | null;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100svh-2rem)] max-w-xl overflow-y-auto">
-        {open && <SessionForm key={session?.id ?? defaultDay ?? "new"} session={session} defaultDay={defaultDay} onDone={() => onOpenChange(false)} />}
+        {open && <SessionForm key={session?.id ?? `${defaultDay}-${defaultTime}`} session={session} defaultDay={defaultDay} defaultTime={defaultTime} onDone={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-function SessionForm({ session, defaultDay, onDone }: { session?: StaffSession | null; defaultDay?: string | null; onDone: () => void }) {
+function SessionForm({ session, defaultDay, defaultTime, onDone }: { session?: StaffSession | null; defaultDay?: string | null; defaultTime?: string | null; onDone: () => void }) {
   const queryClient = useQueryClient();
   const editing = Boolean(session);
   const start = session ? new Date(session.startsAt) : null;
@@ -83,7 +85,7 @@ function SessionForm({ session, defaultDay, onDone }: { session?: StaffSession |
   const [form, setForm] = useState({
     title: session?.title ?? "Séance de code",
     date: start ? dayKey(start) : defaultDay && defaultDay >= dayKey(new Date()) ? defaultDay : tomorrow,
-    time: start ? toTimeInput(start) : "09:00",
+    time: start ? toTimeInput(start) : (defaultTime ?? "09:00"),
     durationMinutes: session?.durationMinutes ?? 240,
     location: session?.location ?? "",
     capacity: String(session?.capacity ?? 12),

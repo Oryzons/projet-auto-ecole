@@ -44,7 +44,7 @@ export const adminNav: NavConfig = {
     { label: "Vue d'ensemble", shortLabel: "Plan", href: "/admin/dashboard", icon: MapIcon },
     { label: "Dossiers", href: "/admin/applications", icon: FolderOpen },
     { label: "Tâches", href: "/admin/tasks", icon: ListChecks },
-    { label: "Calendrier", href: "/admin/calendar", icon: CalendarDays },
+    { label: "Planning", href: "/admin/calendar", icon: CalendarDays },
     { label: "Messages", href: "/admin/messages", icon: MessagesSquare, badge: "unread" },
   ],
   secondary: [
@@ -80,7 +80,7 @@ export const skipperNav: NavConfig = {
   role: "SKIPPER",
   home: "/admin/calendar",
   primary: [
-    { label: "Calendrier", href: "/admin/calendar", icon: CalendarDays },
+    { label: "Planning", href: "/admin/calendar", icon: CalendarDays },
     { label: "Mon profil", shortLabel: "Profil", href: "/admin/profile", icon: UserRound },
   ],
   secondary: [],
