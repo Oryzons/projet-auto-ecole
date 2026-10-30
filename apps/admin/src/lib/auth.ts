@@ -6,6 +6,7 @@ import { passwordVersion, verifyPassword } from "./password";
 import { clientIp, rateLimit, resetRateLimit } from "./rate-limit";
 import { getCurrentOrganization } from "./org";
 import { authConfig } from "./auth.config";
+import { INACTIVITY_LIMIT_MS } from "./activity";
 
 declare module "next-auth" {
   interface Session {
@@ -85,6 +86,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (!dbUser || (token.pwdv && token.pwdv !== passwordVersion(dbUser.passwordHash))) {
         return null;
       }
+      // Plus de 8 h sans activité : déconnexion automatique.
+      if (dbUser.lastSeenAt && Date.now() - new Date(dbUser.lastSeenAt).getTime() > INACTIVITY_LIMIT_MS) {
+        return null;
+      }
 
       token.id = dbUser.id;
       token.role = dbUser.role;
@@ -137,6 +142,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!valid) return null;
 
         resetRateLimit(`login:account-ip:${email}:${ip}`);
+
+        // la visite précédente sert de point de départ au récap affiché après la connexion
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { previousSeenAt: user.lastSeenAt ?? null, lastSeenAt: new Date() },
+        });
 
         return {
           id: user.id,

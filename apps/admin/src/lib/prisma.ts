@@ -36,6 +36,8 @@ const models: Record<string, ModelDef> = {
       city: null,
       dateOfBirth: null,
       oedippNumber: null,
+      lastSeenAt: null,
+      previousSeenAt: null,
     }),
   },
   permitApplication: {

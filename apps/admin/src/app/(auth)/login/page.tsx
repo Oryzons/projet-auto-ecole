@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight, Clock, Mail } from "lucide-react";
 
 import { AuthCard, FormAlert } from "@/components/auth/auth-card";
 import { useAuthExit } from "@/components/auth/auth-scene";
@@ -13,6 +13,7 @@ import { PasswordInput } from "@/components/auth/password-input";
 import { EASE_OUT } from "@/components/motion/tokens";
 import { Button } from "@/components/ui/button";
 import { Field, InputWithIcon } from "@/components/ui/input";
+import { LAST_ACTIVE_KEY, RECAP_FLAG } from "@/lib/activity";
 import { adminNav, homeForRole } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,9 @@ export default function LoginPage() {
 /** Deux étapes, comme sur les grands services : d'abord l'email, ensuite le mot de passe. */
 function LoginForm() {
   const router = useRouter();
-  const next = safeNext(useSearchParams().get("next"));
+  const params = useSearchParams();
+  const next = safeNext(params.get("next"));
+  const inactive = params.get("inactive") === "1";
   const leave = useAuthExit();
   const reduce = useReducedMotion();
   const [step, setStep] = useState<"email" | "password">("email");
@@ -73,6 +76,11 @@ function LoginForm() {
     }
 
     setStatus("success");
+    try {
+      // le récap « depuis votre dernière visite » s'ouvrira une fois sur le plan
+      sessionStorage.setItem(RECAP_FLAG, "1");
+      localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
+    } catch {}
     const session = await getSession();
     const target = next ?? homeForRole(session?.user?.role);
     router.prefetch(target);
@@ -111,6 +119,12 @@ function LoginForm() {
             >
               <form onSubmit={submitEmail} className="space-y-4" noValidate>
                 <AnimatePresence initial={false}>{error && <FormAlert key="error">{error}</FormAlert>}</AnimatePresence>
+                {inactive && !error && (
+                  <p className="flex items-start gap-2 rounded-xl border border-primary/15 bg-primary-soft/60 px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground">
+                    <Clock className="mt-0.5 size-4 shrink-0 text-primary" />
+                    Vous avez été déconnecté après 8 h sans activité. Reconnectez-vous pour reprendre là où vous en étiez.
+                  </p>
+                )}
                 <Field label="Email" htmlFor="email">
                   <InputWithIcon
                     id="email"

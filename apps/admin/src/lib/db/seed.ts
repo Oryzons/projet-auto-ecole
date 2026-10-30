@@ -144,7 +144,8 @@ export function seed(store: Store) {
   };
 
   // équipe
-  user("u-sophie", "ADMIN", "Sophie", "Laurent", { email: DEMO_LOGIN.email, phone: "06 11 22 33 44" });
+  // dernière visite la veille au soir : le récap de connexion a de quoi montrer
+  user("u-sophie", "ADMIN", "Sophie", "Laurent", { email: DEMO_LOGIN.email, phone: "06 11 22 33 44", lastSeenAt: ago(0, 15) });
   user("u-thomas", "ADMIN", "Thomas", "Girard", { email: "thomas@virage.fr" });
   const instructors = [
     user("u-julie", "SKIPPER", "Julie", "Bernard", { email: "julie@virage.fr" }),
