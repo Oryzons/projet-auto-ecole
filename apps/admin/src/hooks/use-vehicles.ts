@@ -17,7 +17,8 @@ async function send(url: string, method: string, body?: unknown) {
 }
 
 export function useVehicles() {
-  return useQuery({ queryKey: ["vehicles"], queryFn: () => send("/api/vehicles", "GET") as Promise<{ vehicles: VehicleDto[] }> });
+  // rechargée chaque minute : une leçon qui commence fait apparaître sa barre de progression
+  return useQuery({ queryKey: ["vehicles"], queryFn: () => send("/api/vehicles", "GET") as Promise<{ vehicles: VehicleDto[] }>, refetchInterval: 60_000 });
 }
 
 /** Création, modification et suppression : la liste, le plan et les tâches se mettent à jour ensemble. */

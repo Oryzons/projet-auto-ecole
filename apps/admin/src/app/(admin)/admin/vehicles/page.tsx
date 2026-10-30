@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LessonProgress } from "@/components/vehicles/lesson-progress";
 import { VehicleFormDialog } from "@/components/vehicles/vehicle-form-dialog";
 import { VehicleVisual } from "@/components/vehicles/vehicle-photos";
 import { useAppDialog } from "@/hooks/use-app-dialog";
@@ -134,7 +135,9 @@ export default function VehiclesPage() {
 }
 
 function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: VehicleDto; onEdit: () => void; onDelete: () => void }) {
-  const tone = STATUS_TONE[vehicle.status as keyof typeof STATUS_TONE] ?? "neutral";
+  // une leçon en cours prime sur le statut saisi à la main
+  const status = vehicle.currentLesson ? "IN_USE" : vehicle.status;
+  const tone = STATUS_TONE[status as keyof typeof STATUS_TONE] ?? "neutral";
   const today = new Date().toISOString().slice(0, 10);
   const dueTone = (day: string | null) => {
     if (!day) return "text-muted-foreground";
@@ -161,8 +164,10 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: VehicleDto; onEdi
             {vehicle.plate}
           </span>
         </span>
-        <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONE_CLASS[tone].soft)}>{VEHICLE_STATUS_LABELS[vehicle.status]}</span>
+        <span className={cn("shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-semibold", TONE_CLASS[tone].soft)}>{VEHICLE_STATUS_LABELS[status]}</span>
       </button>
+
+      {vehicle.currentLesson && <LessonProgress lesson={vehicle.currentLesson} />}
 
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">

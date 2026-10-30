@@ -54,6 +54,18 @@ export function colorHex(color: string | null | undefined) {
 
 export const MAX_VEHICLE_PHOTOS = 6;
 
+/**
+ * Met les tirets d'une immatriculation pendant la saisie : AB123CD → AB-123-CD (format SIV).
+ * Les anciens numéros (123 ABC 75) et les saisies atypiques restent tels quels.
+ */
+export function formatPlate(raw: string) {
+  const value = raw.toUpperCase().replace(/[^A-Z0-9 -]/g, "");
+  const compact = value.replace(/[ -]/g, "");
+  if (!/^[A-Z]{0,2}$|^[A-Z]{2}\d{1,3}$|^[A-Z]{2}\d{3}[A-Z]{1,2}$/.test(compact)) return value;
+  // le tiret se place dès que le caractère suivant est tapé, ce qui laisse l'effacement naturel
+  return [compact.slice(0, 2), compact.slice(2, 5), compact.slice(5, 7)].filter(Boolean).join("-");
+}
+
 const keys = (labels: Record<string, string>) => Object.keys(labels) as [string, ...string[]];
 /** Date du formulaire (AAAA-MM-JJ), ou vide. */
 const day = z.preprocess(
@@ -107,7 +119,10 @@ const toDay = (value: unknown) => (value ? new Date(value as string).toISOString
 export const fromDay = (value: string | null) => (value ? new Date(`${value}T09:00:00`) : null);
 
 /** Forme envoyée au navigateur, avec les alertes d'échéance déjà calculées. */
-export function serializeVehicle(vehicle: DbRow, usage?: { lessons: number; tasks: number }) {
+export function serializeVehicle(
+  vehicle: DbRow,
+  usage?: { lessons: number; tasks: number; current?: { startsAt: string; endsAt: string; student: string | null; instructor: string | null } | null },
+) {
   return {
     id: vehicle.id as string,
     name: vehicle.name as string,
@@ -133,6 +148,8 @@ export function serializeVehicle(vehicle: DbRow, usage?: { lessons: number; task
     alerts: vehicleAlerts(vehicle),
     lessons: usage?.lessons ?? 0,
     openTasks: usage?.tasks ?? 0,
+    /** Leçon en cours sur ce véhicule, s'il y en a une. */
+    currentLesson: usage?.current ?? null,
   };
 }
 export type VehicleDto = ReturnType<typeof serializeVehicle>;

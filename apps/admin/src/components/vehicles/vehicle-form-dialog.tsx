@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useVehicleMutations } from "@/hooks/use-vehicles";
 import {
+  formatPlate,
   guessBody,
   VEHICLE_BODY_LABELS,
   VEHICLE_FUEL_LABELS,
@@ -132,7 +133,7 @@ function VehicleForm({ vehicle, onDone }: { vehicle: VehicleDto | null; onDone: 
                 maxLength={15}
                 placeholder="AB-123-CD"
                 className="uppercase"
-                onChange={(e) => set("plate", e.target.value.toUpperCase())}
+                onChange={(e) => set("plate", formatPlate(e.target.value))}
               />
             </Field>
             <Field label="Couleur" htmlFor="veh-color" hint="Facultatif">

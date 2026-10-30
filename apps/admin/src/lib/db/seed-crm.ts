@@ -119,6 +119,25 @@ export function seedCrm(store: Store, now: number) {
     if (app.status === "PAYMENT_PENDING" && index % 2 === 0) lesson(app, 1 + (index % 4), SLOTS[(index + 2) % SLOTS.length]!, "PLANNED");
   });
 
+  // une leçon en cours sur la Clio, pour la barre de temps restant de la fiche véhicule
+  const driving = apps.find((app) => app.status === "PAID" && app.instructorId && app.permitType !== "a2" && app.permitType !== "permis-b-auto");
+  if (driving) {
+    lessonCount += 1;
+    t.drivingLesson.push({
+      id: `les-${lessonCount}`,
+      organizationId: ORG,
+      applicationId: driving.id,
+      instructorId: driving.instructorId,
+      vehicleId: "veh-clio",
+      startsAt: new Date(now - 20 * 60_000),
+      durationMinutes: 90,
+      status: "PLANNED",
+      notes: "Leçon de conduite en ville.",
+      createdAt: ago(3),
+      updatedAt: ago(0),
+    });
+  }
+
   /* ---------- examens ---------- */
   let examCount = 0;
   const exam = (app: Row, kind: string, offset: number, result: string) => {
