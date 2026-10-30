@@ -68,13 +68,13 @@ function layoutLanes(lessons: LessonDto[]) {
   return out;
 }
 
-export function DrivingPlanner() {
+export function DrivingPlanner({ initialLessonId }: { initialLessonId?: string | null }) {
   const [mode, setMode] = useState<Mode>("day");
   const [groupBy, setGroupBy] = useState<GroupBy>("instructor");
   const [anchor, setAnchor] = useState(() => new Date());
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState<LessonDraft | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(initialLessonId ?? null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {

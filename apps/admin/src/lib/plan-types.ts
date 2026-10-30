@@ -45,6 +45,23 @@ export type PlanTask = {
   links?: { label: string; href: string | null }[];
 };
 
+/** Journée de conduite affichée dans le panneau Planning du plan. */
+export type PlanSchedule = {
+  instructors: { id: string; firstName: string; lastName: string }[];
+  lessons: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    status: string;
+    student: string;
+    instructorId: string | null;
+    vehicle: string | null;
+  }[];
+  /** leçons annulées ces 7 derniers jours */
+  cancelled: number;
+  week: number;
+};
+
 export type PlanZone = {
   id: ZoneId;
   title: string;
@@ -58,6 +75,7 @@ export type PlanZone = {
   items: PlanItem[];
   tasks: PlanTask[];
   page: { label: string; href: string };
+  schedule?: PlanSchedule;
 };
 
 export type PlanData = {

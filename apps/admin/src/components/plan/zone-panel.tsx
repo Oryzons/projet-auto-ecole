@@ -13,6 +13,7 @@ import type { PlanItem, PlanZone } from "@/lib/plan-types";
 import { ZONE_TASK_CATEGORY } from "@/lib/plan-types";
 import { cn } from "@/lib/utils";
 
+import { PlanningPanel } from "./planning-panel";
 import { TONE_CLASS } from "./tones";
 import { ZONE_ICONS } from "./zone-icons";
 
@@ -92,6 +93,10 @@ export function ZonePanel({
             </motion.div>
           ) : (
             <motion.div key="main" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2, ease: EASE_OUT }}>
+              {zone.schedule ? (
+                <PlanningPanel schedule={zone.schedule} />
+              ) : (
+              <>
               {/* indicateurs */}
               <div className="grid grid-cols-2 gap-2 px-5 pt-4">
                 {zone.metrics.map((metric) => {
@@ -141,6 +146,8 @@ export function ZonePanel({
                   </button>
                 )}
               </section>
+              </>
+              )}
 
               <TaskList
                 tasks={zone.tasks}

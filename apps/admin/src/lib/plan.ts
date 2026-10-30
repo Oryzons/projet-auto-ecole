@@ -271,7 +271,25 @@ export async function getPlanData(organizationId: string): Promise<PlanData> {
       itemsTitle: "Leçons du jour",
       items: lessonsToday.map(lessonItem),
       tasks: tasksFor("planning"),
-      page: { label: "Ouvrir le calendrier", href: "/admin/calendar" },
+      page: { label: "Ouvrir le planning", href: "/admin/calendar" },
+      schedule: {
+        instructors: [...staff]
+          .sort((a: DbRow, b: DbRow) => a.firstName.localeCompare(b.firstName, "fr"))
+          .map((u: DbRow) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName })),
+        lessons: lessonsToday
+          .sort((a: DbRow, b: DbRow) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
+          .map((l: DbRow) => ({
+            id: l.id,
+            startsAt: new Date(l.startsAt).toISOString(),
+            endsAt: new Date(new Date(l.startsAt).getTime() + Number(l.durationMinutes ?? 60) * 60_000).toISOString(),
+            status: l.status,
+            student: fullName(l.application?.candidate),
+            instructorId: l.instructorId ?? null,
+            vehicle: l.vehicle?.name ?? null,
+          })),
+        cancelled: cancelledRecent.length,
+        week: lessonsWeek.length,
+      },
     },
     {
       id: "parc",

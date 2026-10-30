@@ -22,6 +22,7 @@ export default function StaffPlanningPage() {
     setTab(next);
     const url = new URL(window.location.href);
     url.searchParams.delete("session");
+    url.searchParams.delete("lesson");
     if (next === "theory") url.searchParams.set("tab", "code");
     else url.searchParams.delete("tab");
     window.history.replaceState(null, "", url);
@@ -50,7 +51,7 @@ export default function StaffPlanningPage() {
           />
         }
       />
-      {tab === "driving" ? <DrivingPlanner /> : <TheoryCalendar initialSessionId={sessionId} />}
+      {tab === "driving" ? <DrivingPlanner initialLessonId={searchParams.get("lesson")} /> : <TheoryCalendar initialSessionId={sessionId} />}
     </div>
   );
 }
