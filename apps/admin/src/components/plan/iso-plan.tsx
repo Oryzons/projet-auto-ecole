@@ -107,6 +107,7 @@ export const IsoPlan = forwardRef<
   const [focused, setFocused] = useState<ZoneId | null>(null);
   const [dragging, setDragging] = useState(false);
   const stopAnim = useRef<(() => void) | null>(null);
+  const stopWheelRef = useRef<(() => void) | null>(null);
 
   const byId = useMemo(
     () => new Map((zones ?? []).map((z) => [z.id, z])),
@@ -153,6 +154,7 @@ export const IsoPlan = forwardRef<
   const flyTo = useCallback(
     (target: Camera) => {
       stopAnim.current?.();
+      stopWheelRef.current?.();
       const from = camRef.current;
       const to = clamp(target);
       if (reducedMotion) {
@@ -204,9 +206,31 @@ export const IsoPlan = forwardRef<
   }, [selected, size.w, insetRight, insetTop, insetBottom]);
 
   /* ---------- molette : zoom autour du curseur ---------- */
+  // La molette fixe un zoom cible ; la caméra le rejoint en douceur à chaque image,
+  // en gardant sous le curseur le point visé. Les crans successifs s'additionnent.
+  const wheelZoom = useRef<{ target: number; px: number; py: number; wx: number; wy: number; frame: number; last: number } | null>(null);
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const stopWheel = () => {
+      if (wheelZoom.current) cancelAnimationFrame(wheelZoom.current.frame);
+      wheelZoom.current = null;
+    };
+    const step = (time: number) => {
+      const w = wheelZoom.current;
+      if (!w) return;
+      const dt = Math.min(64, time - w.last);
+      w.last = time;
+      const c = camRef.current;
+      // lissage exponentiel : ~90 % du chemin en 200 ms, quelle que soit la fréquence d'affichage
+      const k = 1 - Math.exp(-dt / 90);
+      const done = Math.abs(w.target - c.zoom) < 0.0015;
+      const zoom = done ? w.target : c.zoom + (w.target - c.zoom) * k;
+      const ns = fit * zoom;
+      setCam(clamp({ zoom, cx: w.wx - w.px / ns, cy: w.wy - w.py / ns }));
+      if (done) wheelZoom.current = null;
+      else w.frame = requestAnimationFrame(step);
+    };
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
       stopAnim.current?.();
@@ -226,6 +250,7 @@ export const IsoPlan = forwardRef<
         event.deltaMode === 0 &&
         Math.abs(event.deltaY) < 40
       ) {
+        stopWheel();
         setCam(
           clamp({
             ...c,
@@ -235,21 +260,33 @@ export const IsoPlan = forwardRef<
         );
         return;
       }
-      const zoom = Math.min(
-        MAX_ZOOM,
-        Math.max(
-          MIN_ZOOM,
-          c.zoom * Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0018)),
-        ),
-      );
+      if (reducedMotion) stopWheel();
+      // un cran de souris (≈ 100 px, ou 3 lignes) = 12 % de zoom ; le pincement reste proportionnel
+      const delta = event.deltaMode === 1 ? event.deltaY * 33 : event.deltaMode === 2 ? event.deltaY * 100 : event.deltaY;
+      const factor = event.ctrlKey ? Math.exp(-delta * 0.01) : Math.exp(-Math.max(-150, Math.min(150, delta)) * 0.0012);
+      const from = wheelZoom.current?.target ?? c.zoom;
+      const target = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, from * factor));
       const wx = c.cx + px / s;
       const wy = c.cy + py / s;
-      const ns = fit * zoom;
-      setCam(clamp({ zoom, cx: wx - px / ns, cy: wy - py / ns }));
+      if (reducedMotion) {
+        const ns = fit * target;
+        setCam(clamp({ zoom: target, cx: wx - px / ns, cy: wy - py / ns }));
+        return;
+      }
+      const running = wheelZoom.current;
+      if (running) Object.assign(running, { target, px, py, wx, wy });
+      else {
+        wheelZoom.current = { target, px, py, wx, wy, last: performance.now(), frame: 0 };
+        wheelZoom.current.frame = requestAnimationFrame(step);
+      }
     };
+    stopWheelRef.current = stopWheel;
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [fit, clamp, insetTop, insetBottom]);
+    return () => {
+      stopWheel();
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [fit, clamp, insetTop, insetBottom, reducedMotion]);
 
   /* ---------- glisser et pincer ---------- */
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -259,6 +296,7 @@ export const IsoPlan = forwardRef<
   const onPointerDown = (event: React.PointerEvent) => {
     if ((event.target as HTMLElement).closest("[data-plan-control]")) return;
     stopAnim.current?.();
+    stopWheelRef.current?.();
     pointers.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY,
