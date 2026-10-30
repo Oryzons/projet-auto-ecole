@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import type { VehicleHistoryDto } from "@/lib/vehicle-history";
 import type { VehicleDto } from "@/lib/vehicles";
 
 async function send(url: string, method: string, body?: unknown) {
@@ -25,7 +26,7 @@ export function useVehicles() {
 export function useVehicleMutations() {
   const queryClient = useQueryClient();
   const refresh = () => {
-    for (const key of ["vehicles", "plan", "tasks"]) void queryClient.invalidateQueries({ queryKey: [key] });
+    for (const key of ["vehicles", "plan", "tasks", "vehicle-history"]) void queryClient.invalidateQueries({ queryKey: [key] });
   };
 
   const save = useMutation({
@@ -47,4 +48,44 @@ export function useVehicleMutations() {
   });
 
   return { save, remove };
+}
+
+/** Historique d'un véhicule : leçons avec compte rendu, documents et journal. */
+export function useVehicleHistory(id: string | null) {
+  return useQuery({
+    queryKey: ["vehicle-history", id],
+    queryFn: () => send(`/api/vehicles/${id}/history`, "GET") as Promise<VehicleHistoryDto>,
+    enabled: Boolean(id),
+  });
+}
+
+export function useVehicleHistoryMutations(id: string) {
+  const queryClient = useQueryClient();
+  const url = `/api/vehicles/${id}/history`;
+  const done = (data: VehicleHistoryDto) => {
+    queryClient.setQueryData(["vehicle-history", id], data);
+    // un document peut changer une échéance de la fiche
+    void queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+  };
+
+  const addDocument = useMutation({
+    mutationFn: (data: Record<string, unknown>) => send(url, "POST", { entry: "document", ...data }) as Promise<VehicleHistoryDto>,
+    onSuccess: (data) => {
+      done(data);
+      toast.success("Document ajouté");
+    },
+  });
+  const removeDocument = useMutation({
+    mutationFn: (docId: string) => send(`${url}?document=${docId}`, "DELETE") as Promise<VehicleHistoryDto>,
+    onSuccess: (data) => {
+      done(data);
+      toast.success("Document retiré");
+    },
+    onError: (error) => toast.error("Retrait impossible", { description: error.message }),
+  });
+  const addJournal = useMutation({
+    mutationFn: (data: { kind: string; comment: string }) => send(url, "POST", { entry: "journal", ...data }) as Promise<VehicleHistoryDto>,
+    onSuccess: done,
+  });
+  return { addDocument, removeDocument, addJournal };
 }

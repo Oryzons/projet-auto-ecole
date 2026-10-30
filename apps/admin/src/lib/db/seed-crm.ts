@@ -138,6 +138,88 @@ export function seedCrm(store: Store, now: number) {
     });
   }
 
+  /* ---------- comptes rendus des leçons, documents et journal des véhicules ---------- */
+  const CAR_ISSUES = [
+    { label: "Bruit au freinage", severity: "WARNING", detail: "Grincement à l'avant gauche en fin de freinage." },
+    { label: "Voyant pression des pneus", severity: "INFO", detail: "Allumé au démarrage, pression à vérifier." },
+    { label: "Rétroviseur droit desserré", severity: "INFO", detail: null },
+    { label: "Embrayage qui patine", severity: "URGENT", detail: "Patine en côte en 2e, à faire contrôler rapidement." },
+    { label: "Rayure pare-chocs arrière", severity: "INFO", detail: "Manœuvre de créneau, rayure légère." },
+    { label: "Essuie-glace avant usé", severity: "INFO", detail: "Traces sur le pare-brise." },
+  ];
+  const MOTO_ISSUES = [
+    { label: "Chaîne détendue", severity: "WARNING", detail: "À retendre et graisser." },
+    { label: "Levier d'embrayage tordu", severity: "INFO", detail: "Chute à l'arrêt sur le plateau." },
+  ];
+  const CAR_SKILLS = ["Démarrage en côte", "Insertion sur voie rapide", "Créneau", "Ronds-points", "Conduite en ville", "Freinage d'urgence", "Rangement en bataille"];
+  const MOTO_SKILLS = ["Slalom", "Freinage d'urgence", "Évitement", "Circulation en ville", "Plateau lent"];
+  const COMMENTS = [
+    "Bonne leçon, l'élève gagne en assurance.",
+    "Regards encore trop courts, à retravailler.",
+    "Très bonne gestion des intersections.",
+    "Stress sur voie rapide, à reprendre la prochaine fois.",
+    null,
+  ];
+  const FUELS = ["FULL", "THREE_QUARTERS", "HALF", "QUARTER"];
+  const staffName = (id: string) => {
+    const u = users.get(id);
+    return u ? `${u.firstName} ${u.lastName}` : null;
+  };
+  for (const v of vehicles) {
+    const moto = v.transmission === "MOTO";
+    const done = (t.drivingLesson as Row[])
+      .filter((l) => l.vehicleId === v.id && l.status === "DONE")
+      .sort((a, b) => (b.startsAt as Date).getTime() - (a.startsAt as Date).getTime());
+    let km = v.mileage - 30;
+    done.forEach((l, i) => {
+      const driven = 14 + Math.round(rand() * 28);
+      const issues = rand() < 0.12 ? [(moto ? MOTO_ISSUES : CAR_ISSUES)[Math.floor(rand() * (moto ? MOTO_ISSUES : CAR_ISSUES).length)]!] : [];
+      const skills = moto ? MOTO_SKILLS : CAR_SKILLS;
+      const end = new Date((l.startsAt as Date).getTime() + Number(l.durationMinutes ?? 60) * 60_000 + 5 * 60_000);
+      l.report = {
+        kmStart: km - driven,
+        kmEnd: km,
+        fuelLevel: FUELS[(i + driven) % FUELS.length],
+        issues,
+        skills: [skills[i % skills.length]!, skills[(i + 3) % skills.length]!],
+        comment: COMMENTS[(i + driven) % COMMENTS.length] ?? null,
+        submittedAt: end.toISOString(),
+      };
+      km -= driven + Math.round(rand() * 12);
+    });
+
+    const year = new Date(`${v.year}-03-15T09:00:00`);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    const insuranceEnd = dayAt(v.insurance, 9);
+    const inspectionEnd = dayAt(v.inspection, 9);
+    const doc = (id: string, type: string, issued: Date, expires: Date | null, comment: string | null, addedDaysAgo: number) => ({
+      id: `${v.id}-${id}`,
+      type,
+      title: null,
+      issuedAt: iso(issued),
+      expiresAt: expires ? iso(expires) : null,
+      comment,
+      file: null,
+      addedAt: ago(addedDaysAgo).toISOString(),
+      addedBy: "Sophie Laurent",
+    });
+    const vehicle = (t.vehicle as Row[]).find((row) => row.id === v.id)!;
+    vehicle.documents = [
+      doc("cg", "REGISTRATION", year, null, `Certificat d'immatriculation ${v.plate}, original rangé dans le coffre de l'accueil.`, 480),
+      doc("ins", "INSURANCE", new Date(insuranceEnd.getTime() - 365 * DAY), insuranceEnd, `Contrat ${v.policy} chez ${v.insurer}, flotte auto-école.`, 200),
+      doc("ct", "INSPECTION", new Date(inspectionEnd.getTime() - 730 * DAY), inspectionEnd, moto ? "Favorable, aucune défaillance." : "Favorable, défaillance mineure : usure des balais d'essuie-glace.", 300),
+      ...(v.id === "veh-208a" ? [doc("rep", "REPAIR", ago(2), null, "Devis plaquettes et disques avant : 286 € TTC, garage Martin.", 2)] : []),
+    ];
+    const entry = (id: string, kind: string, daysAgo: number, text: string, author = "Sophie Laurent") => ({ id: `${v.id}-j${id}`, at: ago(daysAgo).toISOString(), kind, text, author });
+    vehicle.journal = [
+      entry("1", "UPDATE", 500, "Véhicule ajouté au parc"),
+      entry("2", "REPAIR", 140, moto ? "Pneu arrière remplacé (Michelin Road 6)." : "Pneus avant remplacés, parallélisme refait.", "Thomas Girard"),
+      ...(v.id === "veh-clio" ? [entry("3", "ISSUE", 4, "Révision des 70 000 km dépassée, rendez-vous à prendre au garage.", "Thomas Girard")] : []),
+      ...(v.id === "veh-208a" ? [entry("3", "ISSUE", 3, "Plaquettes de frein avant usées, véhicule immobilisé.", staffName("u-marc") ?? "Marc Dubois")] : []),
+      ...(v.id === "veh-yaris" ? [entry("3", "NOTE", 6, "Contrôle technique à programmer avant la fin du mois.")] : []),
+    ];
+  }
+
   /* ---------- examens ---------- */
   let examCount = 0;
   const exam = (app: Row, kind: string, offset: number, result: string) => {

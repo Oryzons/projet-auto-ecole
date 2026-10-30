@@ -145,6 +145,8 @@ const models: Record<string, ModelDef> = {
       insurancePolicy: null,
       bodyType: null,
       photos: [],
+      documents: [],
+      journal: [],
     }),
   },
   drivingLesson: {
@@ -153,7 +155,7 @@ const models: Record<string, ModelDef> = {
       instructor: one("user", "instructorId"),
       vehicle: one("vehicle", "vehicleId"),
     },
-    defaults: () => ({ durationMinutes: 60, status: "PLANNED", vehicleId: null, notes: null }),
+    defaults: () => ({ durationMinutes: 60, status: "PLANNED", vehicleId: null, notes: null, report: null }),
   },
   exam: {
     relations: { application: one("permitApplication", "applicationId") },

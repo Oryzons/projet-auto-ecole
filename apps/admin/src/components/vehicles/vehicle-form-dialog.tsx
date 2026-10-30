@@ -2,7 +2,7 @@
 
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarClock, ClipboardCheck, Gauge, Images, Info, NotebookPen, ShieldCheck, Trash2, Wrench, XIcon, type LucideIcon } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileText, History, Gauge, Images, Info, NotebookPen, ShieldCheck, Trash2, Wrench, XIcon, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { EASE_OUT } from "@/components/motion/tokens";
@@ -27,6 +27,7 @@ import {
 } from "@/lib/vehicles";
 
 import { LessonProgress } from "./lesson-progress";
+import { DueChip, LessonHistory, VehicleDocuments, VehicleJournal } from "./vehicle-history";
 import { VehiclePhotosField, VehicleVisual } from "./vehicle-photos";
 
 const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
@@ -35,6 +36,7 @@ const STATUS_TONE = { AVAILABLE: "success", IN_USE: "active", MAINTENANCE: "warn
 const TABS = [
   { value: "general", label: "Général", icon: Info },
   { value: "dues", label: "Échéances", icon: CalendarClock },
+  { value: "history", label: "Leçons", icon: History },
   { value: "photos", label: "Photos", icon: Images },
   { value: "notes", label: "Notes", icon: NotebookPen },
 ] as const;
@@ -107,15 +109,6 @@ function Group({ title, icon: Icon, children }: { title: string; icon?: LucideIc
       {children}
     </section>
   );
-}
-
-/** Pastille « dans 12 j » / « dépassée » à côté d'une échéance. */
-function DueChip({ day }: { day: string }) {
-  if (!day) return <span className="text-[11.5px] text-muted-foreground">Non renseignée</span>;
-  const days = Math.round((new Date(`${day}T12:00:00`).getTime() - Date.now()) / 86_400_000);
-  const tone = days < 0 ? "danger" : days <= 30 ? "warning" : "success";
-  const label = days < 0 ? `Dépassée de ${-days} j` : days === 0 ? "Aujourd'hui" : days <= 60 ? `Dans ${days} j` : `Dans ${Math.round(days / 30)} mois`;
-  return <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", TONE_CLASS[tone].soft)}>{label}</span>;
 }
 
 function DueRow({ icon: Icon, label, value, onChange, children }: { icon: LucideIcon; label: string; value: string; onChange: (v: string) => void; children?: ReactNode }) {
@@ -375,6 +368,36 @@ function VehicleForm({ vehicle, onDone, onDelete }: { vehicle: VehicleDto | null
                   </Group>
                 </Reveal>
               </>
+            )}
+
+            {tab === "dues" &&
+              (vehicle ? (
+                <>
+                  <Reveal index={3}>
+                    <VehicleDocuments vehicleId={vehicle.id} />
+                  </Reveal>
+                  <Reveal index={4}>
+                    <VehicleJournal vehicleId={vehicle.id} />
+                  </Reveal>
+                </>
+              ) : (
+                <Reveal index={3}>
+                  <p className="flex items-center gap-2 rounded-2xl border border-dashed border-border bg-card px-4 py-3.5 text-[12.5px] text-muted-foreground">
+                    <FileText className="size-4 shrink-0" /> Les documents et le journal seront disponibles une fois le véhicule ajouté.
+                  </p>
+                </Reveal>
+              ))}
+
+            {tab === "history" && (
+              <Reveal index={1}>
+                {vehicle ? (
+                  <LessonHistory vehicleId={vehicle.id} />
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+                    Les leçons apparaîtront ici dès que le véhicule sera réservé.
+                  </p>
+                )}
+              </Reveal>
             )}
 
             {tab === "photos" && (

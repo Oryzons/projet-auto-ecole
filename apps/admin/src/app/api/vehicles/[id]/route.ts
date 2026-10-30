@@ -4,7 +4,7 @@ import { prisma, type DbRow } from "@/lib/prisma";
 import { taskLinks, taskRelationData, taskAssigneeIds } from "@/lib/tasks";
 import { serializeVehicle, vehicleData, vehicleSchema } from "@/lib/vehicles";
 
-import { adminSession as admin, vehicleUsage } from "@/lib/vehicles-server";
+import { adminSession as admin, describeChanges, journalEntry, vehicleUsage } from "@/lib/vehicles-server";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,7 +23,13 @@ export async function PATCH(req: Request, { params }: Params) {
   const duplicate = await prisma.vehicle.findFirst({ where: { organizationId, plate: parsed.data.plate, id: { not: id } } });
   if (duplicate) return NextResponse.json({ error: "Un véhicule porte déjà cette immatriculation" }, { status: 409 });
 
-  const updated = await prisma.vehicle.update({ where: { id }, data: vehicleData(parsed.data) });
+  const data = vehicleData(parsed.data);
+  // chaque modification de la fiche est consignée dans le journal du véhicule
+  const changes = describeChanges(vehicle, data);
+  const journal = changes.length
+    ? [...(vehicle.journal ?? []), journalEntry("UPDATE", changes.join("\n"), `${session.user.firstName} ${session.user.lastName}`)]
+    : (vehicle.journal ?? []);
+  const updated = await prisma.vehicle.update({ where: { id }, data: { ...data, journal } });
 
   // le nom affiché dans les tâches liées suit la modification
   const label = `${updated.name} · ${updated.plate}`;
