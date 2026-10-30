@@ -2,7 +2,7 @@
 
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { AnimatePresence, motion } from "motion/react";
-import { CalendarClock, ClipboardCheck, FileText, History, Gauge, Images, Info, NotebookPen, ShieldCheck, Trash2, Wrench, XIcon, type LucideIcon } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, ClipboardCheck, FileText, History, Gauge, Images, Info, NotebookPen, ShieldCheck, Trash2, Wrench, XIcon, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { EASE_OUT } from "@/components/motion/tokens";
@@ -51,11 +51,14 @@ export function VehicleFormDialog({
   onOpenChange,
   vehicle,
   onDelete,
+  nav,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vehicle?: VehicleDto | null;
   onDelete?: (vehicle: VehicleDto) => void;
+  /** Passage au véhicule précédent ou suivant de la liste, sans fermer le panneau. */
+  nav?: Nav | null;
 }) {
   // garde la fiche affichée pendant l'animation de sortie, même si le véhicule n'est plus sélectionné
   const [shown, setShown] = useState(vehicle ?? null);
@@ -63,18 +66,18 @@ export function VehicleFormDialog({
   const current = open ? (vehicle ?? null) : shown;
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    // non modale : la liste des véhicules reste visible et cliquable à gauche du panneau
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={false} disablePointerDismissal>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-ink/30 transition-opacity duration-400 data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <DialogPrimitive.Popup
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex w-full flex-col overflow-hidden bg-popover text-popover-foreground shadow-float outline-none sm:inset-y-3 sm:right-3 sm:w-[min(540px,calc(100vw-24px))] sm:rounded-2xl sm:border sm:border-border",
+            "fixed inset-y-0 right-0 z-50 flex w-full flex-col overflow-hidden bg-popover text-popover-foreground shadow-float outline-none sm:inset-y-3 sm:right-3 sm:w-[min(540px,calc(100vw-24px))] sm:rounded-2xl sm:border sm:border-border md:w-[min(540px,45vw)]",
             "transition-[translate,opacity,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
             "data-starting-style:translate-x-[calc(100%+24px)] data-starting-style:opacity-60",
             "data-ending-style:translate-x-[calc(100%+24px)] data-ending-style:opacity-60 data-ending-style:duration-300 data-ending-style:ease-[cubic-bezier(0.4,0,1,1)]",
           )}
         >
-          <VehicleForm key={current?.id ?? "new"} vehicle={current} onDone={() => onOpenChange(false)} onDelete={onDelete} />
+          <VehicleForm key={current?.id ?? "new"} vehicle={current} onDone={() => onOpenChange(false)} onDelete={onDelete} nav={open ? nav : null} />
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -128,9 +131,21 @@ function DueRow({ icon: Icon, label, value, onChange, children }: { icon: Lucide
   );
 }
 
+type Nav = { index: number; total: number; go: (delta: number) => void };
+
 const FIELD_TAB: Record<string, Tab> = { name: "general", plate: "general" };
 
-function VehicleForm({ vehicle, onDone, onDelete }: { vehicle: VehicleDto | null; onDone: () => void; onDelete?: (vehicle: VehicleDto) => void }) {
+function VehicleForm({
+  vehicle,
+  onDone,
+  onDelete,
+  nav,
+}: {
+  vehicle: VehicleDto | null;
+  onDone: () => void;
+  onDelete?: (vehicle: VehicleDto) => void;
+  nav?: Nav | null;
+}) {
   const { save } = useVehicleMutations();
   const [tab, setTab] = useState<Tab>("general");
   const [direction, setDirection] = useState(1);
@@ -201,12 +216,27 @@ function VehicleForm({ vehicle, onDone, onDelete }: { vehicle: VehicleDto | null
           <VehicleVisual vehicle={look} className="h-[190px] rounded-none sm:h-[210px]" />
         </motion.div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink/55 to-transparent" />
-        <DialogPrimitive.Close
-          aria-label="Fermer"
-          className="absolute top-3 right-3 grid size-9 place-items-center rounded-xl bg-white/90 text-foreground shadow-sm transition-colors hover:bg-white"
-        >
-          <XIcon className="size-4" />
-        </DialogPrimitive.Close>
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          {nav && nav.total > 1 && (
+            <div className="flex items-center rounded-xl bg-white/90 shadow-sm">
+              <button type="button" aria-label="Véhicule précédent" onClick={() => nav.go(-1)} className="grid size-9 place-items-center rounded-l-xl text-foreground transition-colors hover:bg-white">
+                <ChevronLeft className="size-4" />
+              </button>
+              <span className="px-0.5 text-[12px] font-medium text-muted-foreground tabular">
+                {nav.index + 1}/{nav.total}
+              </span>
+              <button type="button" aria-label="Véhicule suivant" onClick={() => nav.go(1)} className="grid size-9 place-items-center rounded-r-xl text-foreground transition-colors hover:bg-white">
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+          )}
+          <DialogPrimitive.Close
+            aria-label="Fermer"
+            className="grid size-9 place-items-center rounded-xl bg-white/90 text-foreground shadow-sm transition-colors hover:bg-white"
+          >
+            <XIcon className="size-4" />
+          </DialogPrimitive.Close>
+        </div>
         <span className={cn("absolute top-3 left-3 rounded-full px-2.5 py-1 text-[11.5px] font-semibold shadow-sm", TONE_CLASS[tone].soft)}>
           {VEHICLE_STATUS_LABELS[status]}
         </span>

@@ -3,13 +3,29 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Move, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { EASE_OUT } from "@/components/motion/tokens";
 import { useDraggable } from "@/hooks/use-draggable";
 import { adminNav, findNavItem } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 
 export const PLAN_PATH = "/admin/dashboard";
+
+/** Largeur réservée à droite quand une page ouvre un panneau latéral (fiche véhicule…). */
+const SplitContext = createContext<(open: boolean) => void>(() => {});
+
+/**
+ * Une page qui ouvre un panneau à droite appelle ce hook : la fenêtre glisse vers la gauche
+ * pour laisser la place au panneau, et reste visible et cliquable à côté de lui.
+ */
+export function usePageSplit(open: boolean) {
+  const setSplit = useContext(SplitContext);
+  useEffect(() => {
+    setSplit(open);
+    return () => setSplit(false);
+  }, [open, setSplit]);
+}
 
 /**
  * Toutes les pages de l'administration s'ouvrent dans cette fenêtre, au-dessus du plan.
@@ -25,6 +41,7 @@ export function PagePopup({ children }: { children: ReactNode }) {
   // fiche d'un élève, d'une séance… : un cran sous la page de la rubrique
   const nested = Boolean(item && pathname !== item.href);
   const drag = useDraggable<HTMLDivElement>(open);
+  const [split, setSplit] = useState(false);
 
   const close = () => router.push(PLAN_PATH, { scroll: false });
 
@@ -48,6 +65,7 @@ export function PagePopup({ children }: { children: ReactNode }) {
   }, [open]);
 
   return (
+    <SplitContext.Provider value={setSplit}>
     <AnimatePresence>
       {open && (
         <div data-page-popup className="fixed inset-0 z-40 flex items-stretch justify-center md:p-[3vh]">
@@ -64,7 +82,12 @@ export function PagePopup({ children }: { children: ReactNode }) {
           <div
             ref={drag.ref}
             style={drag.style}
-            className="relative flex w-full max-w-[1240px]"
+            data-split={split || undefined}
+            className={cn(
+              "relative flex w-full max-w-[1240px] transition-[margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              // place laissée au panneau latéral (540 px + marges), sur grand écran seulement
+              split && "md:mr-[calc(min(540px,45vw)+24px-3vh)]",
+            )}
           >
             <motion.section
               key="popup"
@@ -137,5 +160,6 @@ export function PagePopup({ children }: { children: ReactNode }) {
         </div>
       )}
     </AnimatePresence>
+    </SplitContext.Provider>
   );
 }
