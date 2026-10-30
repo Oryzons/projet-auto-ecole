@@ -9,3 +9,6 @@ export const RECAP_FLAG = "virage:recap";
 
 /** Dernière interaction dans ce navigateur (partagée entre les onglets). */
 export const LAST_ACTIVE_KEY = "virage:last-active";
+
+/** Événement qui rouvre le récap (menu du compte). */
+export const RECAP_EVENT = "virage:recap";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, LifeBuoy, LogOut, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { ChevronDown, LifeBuoy, LogOut, Settings, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RECAP_EVENT } from "@/lib/activity";
 import { cn } from "@/lib/utils";
 import { signOutWithTransition } from "./sign-out";
 
@@ -78,6 +79,10 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         </DropdownMenuItem>
         {isAdmin && (
           <>
+            <DropdownMenuItem onClick={() => window.dispatchEvent(new Event(RECAP_EVENT))}>
+              <Sparkles className="text-muted-foreground" />
+              Voir le récap
+            </DropdownMenuItem>
             <DropdownMenuItem render={<Link href="/admin/settings" />}>
               <Settings className="text-muted-foreground" />
               Paramètres

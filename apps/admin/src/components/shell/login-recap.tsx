@@ -26,7 +26,7 @@ import { useEffect, useState } from "react";
 import { EASE_OUT } from "@/components/motion/tokens";
 import { TONE_CLASS } from "@/components/plan/tones";
 import { Button } from "@/components/ui/button";
-import { RECAP_FLAG } from "@/lib/activity";
+import { RECAP_EVENT, RECAP_FLAG } from "@/lib/activity";
 import { cn } from "@/lib/utils";
 import type { RecapGroup } from "@/app/api/me/recap/route";
 
@@ -92,17 +92,32 @@ export function LoginRecap() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
+    // le drapeau n'est retiré qu'à l'ouverture : en développement, React lance cet effet deux fois
+    let flagged = false;
     try {
-      if (sessionStorage.getItem(RECAP_FLAG) !== "1") return;
-      sessionStorage.removeItem(RECAP_FLAG);
-    } catch {
-      return;
-    }
+      flagged = sessionStorage.getItem(RECAP_FLAG) === "1";
+    } catch {}
+    if (!flagged) return;
     setArmed(true);
     // laisse la caméra finir sa plongée et la vue d'ensemble s'installer
-    const timer = window.setTimeout(() => setOpen(true), reduce ? 300 : 1900);
+    const timer = window.setTimeout(() => {
+      try {
+        sessionStorage.removeItem(RECAP_FLAG);
+      } catch {}
+      setOpen(true);
+    }, reduce ? 300 : 1900);
     return () => window.clearTimeout(timer);
   }, [reduce]);
+
+  // « Voir le récap » dans le menu du compte le rouvre à tout moment
+  useEffect(() => {
+    const reopen = () => {
+      setArmed(true);
+      setOpen(true);
+    };
+    window.addEventListener(RECAP_EVENT, reopen);
+    return () => window.removeEventListener(RECAP_EVENT, reopen);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
