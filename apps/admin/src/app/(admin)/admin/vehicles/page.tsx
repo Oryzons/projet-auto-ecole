@@ -129,7 +129,7 @@ export default function VehiclesPage() {
       )}
 
       <VehicleFormDialog open={creating} onOpenChange={setCreating} />
-      <VehicleFormDialog open={Boolean(editing)} onOpenChange={(open) => !open && openEdit(null)} vehicle={editing} />
+      <VehicleFormDialog open={Boolean(editing)} onOpenChange={(open) => !open && openEdit(null)} vehicle={editing} onDelete={(v) => void confirmDelete(v)} />
     </div>
   );
 }
