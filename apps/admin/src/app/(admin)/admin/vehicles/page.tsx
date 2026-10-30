@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Bike, Car, CarFront, Fuel, Gauge, Pencil, Plus, ShieldCheck, Trash2, Wrench } from "lucide-react";
+import { Car, Fuel, Gauge, Pencil, Plus, ShieldCheck, Trash2, Wrench } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VehicleFormDialog } from "@/components/vehicles/vehicle-form-dialog";
+import { VehicleVisual } from "@/components/vehicles/vehicle-photos";
 import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useVehicleMutations, useVehicles } from "@/hooks/use-vehicles";
 import { cn } from "@/lib/utils";
@@ -134,7 +135,6 @@ export default function VehiclesPage() {
 
 function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: VehicleDto; onEdit: () => void; onDelete: () => void }) {
   const tone = STATUS_TONE[vehicle.status as keyof typeof STATUS_TONE] ?? "neutral";
-  const Icon = vehicle.transmission === "MOTO" ? Bike : CarFront;
   const today = new Date().toISOString().slice(0, 10);
   const dueTone = (day: string | null) => {
     if (!day) return "text-muted-foreground";
@@ -151,10 +151,10 @@ function VehicleCard({ vehicle, onEdit, onDelete }: { vehicle: VehicleDto; onEdi
       transition={{ duration: 0.25, ease: EASE_OUT }}
       className="group flex flex-col rounded-2xl border border-border bg-card p-4 shadow-xs transition-[border-color,box-shadow] hover:border-primary/25 hover:shadow-sm"
     >
+      <div role="button" tabIndex={-1} onClick={onEdit} className="-mx-1 -mt-1 mb-3 cursor-pointer">
+        <VehicleVisual vehicle={vehicle} className="aspect-[16/9]" />
+      </div>
       <button type="button" onClick={onEdit} className="flex items-start gap-3 text-left focus-visible:outline-none">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-          <Icon className="size-5" />
-        </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold text-foreground group-hover:text-primary">{vehicle.name}</span>
           <span className="mt-1 inline-flex rounded-md border border-slate-300 bg-white px-1.5 py-px font-mono text-[12px] font-semibold tracking-wide text-slate-700">

@@ -143,6 +143,8 @@ const models: Record<string, ModelDef> = {
       nextServiceMileage: null,
       insurer: null,
       insurancePolicy: null,
+      bodyType: null,
+      photos: [],
     }),
   },
   drivingLesson: {

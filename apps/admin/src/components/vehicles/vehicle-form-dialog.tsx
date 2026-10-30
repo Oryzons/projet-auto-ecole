@@ -11,12 +11,16 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useVehicleMutations } from "@/hooks/use-vehicles";
 import {
+  guessBody,
+  VEHICLE_BODY_LABELS,
   VEHICLE_FUEL_LABELS,
   VEHICLE_PERMIT_LABELS,
   VEHICLE_STATUS_LABELS,
   VEHICLE_TRANSMISSION_LABELS,
   type VehicleDto,
 } from "@/lib/vehicles";
+
+import { VehiclePhotosField } from "./vehicle-photos";
 
 const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 
@@ -69,6 +73,8 @@ function VehicleForm({ vehicle, onDone }: { vehicle: VehicleDto | null; onDone: 
     insurer: vehicle?.insurer ?? "",
     insurancePolicy: vehicle?.insurancePolicy ?? "",
     notes: vehicle?.notes ?? "",
+    bodyType: vehicle?.bodyType ?? "",
+    photos: vehicle?.photos ?? [],
   });
   const [error, setError] = useState<{ field?: string; message: string } | null>(null);
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
@@ -105,6 +111,15 @@ function VehicleForm({ vehicle, onDone }: { vehicle: VehicleDto | null; onDone: 
       <div className="max-h-[min(64svh,620px)] space-y-6 overflow-y-auto px-6 pt-5 pb-2">
         {error && !error.field && <p className="rounded-xl border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-sm text-danger">{error.message}</p>}
 
+        <Section title="Photos">
+          <VehiclePhotosField
+            look={{ name: form.name || "Véhicule", color: form.color || null, bodyType: form.bodyType || null, transmission: form.transmission }}
+            photos={form.photos}
+            onChange={(photos) => set("photos", photos)}
+            onError={(message) => setError({ message })}
+          />
+        </Section>
+
         <Section title="Identité">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Marque et modèle" htmlFor="veh-name" error={error?.field === "name" ? error.message : null}>
@@ -122,6 +137,17 @@ function VehicleForm({ vehicle, onDone }: { vehicle: VehicleDto | null; onDone: 
             </Field>
             <Field label="Couleur" htmlFor="veh-color" hint="Facultatif">
               <Input id="veh-color" value={form.color} maxLength={30} placeholder="Blanc" onChange={(e) => set("color", e.target.value)} />
+            </Field>
+            <Field label="Silhouette" hint="Pour l'illustration affichée sans photo">
+              <Select
+                value={form.bodyType || "AUTO"}
+                onValueChange={(v) => set("bodyType", v === "AUTO" ? "" : v)}
+                options={[
+                  { value: "AUTO", label: `Automatique (${VEHICLE_BODY_LABELS[guessBody(form.name, form.transmission)].toLowerCase()})` },
+                  ...options(VEHICLE_BODY_LABELS),
+                ]}
+                aria-label="Silhouette"
+              />
             </Field>
             <Field label="Première mise en circulation">
               <DatePicker value={form.firstRegistrationAt} onChange={(v) => set("firstRegistrationAt", v)} clearable />

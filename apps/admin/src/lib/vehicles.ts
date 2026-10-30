@@ -19,6 +19,41 @@ export const VEHICLE_PERMIT_LABELS: Record<string, string> = {
   AM: "Permis AM",
 };
 
+export const VEHICLE_BODY_LABELS: Record<string, string> = { CITY: "Citadine", COMPACT: "Compacte / berline", SUV: "SUV", MOTO: "Moto" };
+
+/** Silhouette devinée d'après le modèle quand elle n'est pas choisie. */
+export function guessBody(name: string, transmission?: string) {
+  const n = name.toLowerCase();
+  if (transmission === "MOTO" || /\b(mt-?\d+|moto|scooter|cb ?\d+|z ?\d{3}|er-?\d|ninja|duke|tracer|hornet)\b/.test(n)) return "MOTO";
+  if (/\b(2008|3008|5008|captur|arkana|austral|kadjar|tiguan|t-roc|t-cross|qashqai|juke|duster|c-hr|rav4|yaris cross|kona|tucson|sportage|niro|model y|puma|kuga|c3 aircross|c5 aircross|x1|q3|suv)\b/.test(n)) return "SUV";
+  if (/\b(208|clio|yaris|polo|corsa|c3|sandero|i20|fiesta|twingo|up|aygo|mini|zoe|500|ibiza|fabia|swift|micra|e-208)\b/.test(n)) return "CITY";
+  return "COMPACT";
+}
+
+/** Teinte approchée à partir du nom de la couleur (« Gris titanium » → gris). */
+const COLOR_WORDS: [RegExp, string][] = [
+  [/noir|black/, "#2a2e38"],
+  [/blanc|white|nacr/, "#f4f5f7"],
+  [/argent|silver|alu/, "#c4c9d2"],
+  [/gris|grey|gray|anthracite|titan/, "#8a93a3"],
+  [/rouge|red|bordeaux/, "#e0413a"],
+  [/orange/, "#f08a2c"],
+  [/jaune|yellow/, "#f2c230"],
+  [/bleu|blue|marine/, "#2d50f5"],
+  [/turquoise|cyan/, "#22a7b8"],
+  [/\bvert\b|green|kaki/, "#3f9a5f"],
+  [/violet|mauve|pourpre/, "#7b5bd6"],
+  [/rose|pink/, "#ec6fa4"],
+  [/marron|brun|brown|chocolat/, "#7a5236"],
+  [/beige|sable|champagne|or\b|gold/, "#d8c6a3"],
+];
+export function colorHex(color: string | null | undefined) {
+  const c = (color ?? "").toLowerCase();
+  return COLOR_WORDS.find(([re]) => re.test(c))?.[1] ?? "#e8ecf3";
+}
+
+export const MAX_VEHICLE_PHOTOS = 6;
+
 const keys = (labels: Record<string, string>) => Object.keys(labels) as [string, ...string[]];
 /** Date du formulaire (AAAA-MM-JJ), ou vide. */
 const day = z.preprocess(
@@ -59,6 +94,11 @@ export const vehicleSchema = z.object({
   insurer: text(60),
   insurancePolicy: text(40),
   notes: text(2000),
+  bodyType: z.preprocess((v) => (v === "" ? null : v), z.enum(keys(VEHICLE_BODY_LABELS)).nullable().optional().transform((v) => v ?? null)),
+  photos: z
+    .array(z.string().regex(/^data:image\/(jpeg|png|webp);base64,/, "Format de photo non pris en charge").max(3_000_000, "Photo trop lourde"))
+    .max(MAX_VEHICLE_PHOTOS, `${MAX_VEHICLE_PHOTOS} photos au maximum`)
+    .default([]),
 });
 export type VehicleInput = z.infer<typeof vehicleSchema>;
 
@@ -88,6 +128,8 @@ export function serializeVehicle(vehicle: DbRow, usage?: { lessons: number; task
     insurer: (vehicle.insurer ?? null) as string | null,
     insurancePolicy: (vehicle.insurancePolicy ?? null) as string | null,
     notes: (vehicle.notes ?? null) as string | null,
+    bodyType: (vehicle.bodyType ?? null) as string | null,
+    photos: (vehicle.photos ?? []) as string[],
     alerts: vehicleAlerts(vehicle),
     lessons: usage?.lessons ?? 0,
     openTasks: usage?.tasks ?? 0,
