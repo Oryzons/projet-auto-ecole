@@ -15,6 +15,7 @@ import {
 import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBar, MetricTile, PressableScale } from '@/components/blocks';
 import { HelpSheet } from '@/components/help-sheet';
 import { colors, font, radius, shadow, space, toneColors, type Tone } from '@/theme';
 
@@ -177,9 +178,9 @@ export function Card({
         : null;
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [styles.card, toneStyle, style, pressed && styles.pressed]}>
+      <PressableScale onPress={onPress} scale={0.98} style={[styles.card, toneStyle, style]}>
         {children}
-      </Pressable>
+      </PressableScale>
     );
   }
   return <View style={[styles.card, toneStyle, style]}>{children}</View>;
@@ -206,12 +207,7 @@ export function Badge({ label, tone = 'neutral', icon: Icon }: { label: string; 
 }
 
 export function Progress({ value, tone = 'primary', height = 6 }: { value: number; tone?: Tone; height?: number }) {
-  const pct = Math.max(0, Math.min(1, value));
-  return (
-    <View style={{ height, borderRadius: height, backgroundColor: '#E8EEF6', overflow: 'hidden' }}>
-      <View style={{ width: `${pct * 100}%`, height, borderRadius: height, backgroundColor: toneColors[tone].fg }} />
-    </View>
-  );
+  return <AnimatedBar value={value} color={toneColors[tone].fg} track="#E8EEF6" height={height} />;
 }
 
 export function Avatar({ name, size = 44, tone = 'primary' }: { name: string; size?: number; tone?: Tone }) {
@@ -377,7 +373,7 @@ export function StatBar({ children }: { children: ReactNode }) {
   );
 }
 
-export function Stat({ label, value, hint, tone = 'neutral' }: { label: string; value: string; hint?: string; tone?: Tone }) {
+export function Stat({ label, value, hint, tone = 'neutral', onPress }: { label: string; value: string; hint?: string; tone?: Tone; onPress?: () => void }) {
   const inBar = useContext(StatBarContext);
   if (inBar)
     return (
@@ -389,13 +385,8 @@ export function Stat({ label, value, hint, tone = 'neutral' }: { label: string; 
         {hint ? <Text style={[font.tiny, { color: toneColors[tone].fg, fontWeight: '600' }]}>{hint}</Text> : null}
       </View>
     );
-  return (
-    <Card style={{ flex: 1, gap: 4, padding: 14 }}>
-      <Text style={font.tiny}>{label}</Text>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }}>{value}</Text>
-      {hint ? <Text style={[font.tiny, { color: toneColors[tone].fg, fontWeight: '600' }]}>{hint}</Text> : null}
-    </Card>
-  );
+  // hors bloc : tuile du site admin (point de couleur, valeur, détail)
+  return <MetricTile label={label} value={value} hint={hint} tone={tone} onPress={onPress} />;
 }
 
 export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -436,7 +427,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 },
   sectionCount: { minWidth: 22, height: 20, borderRadius: 10, paddingHorizontal: 7, backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' },
   sectionCountText: { fontSize: 11, fontWeight: '600', color: colors.muted },
-  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
+  pressed: { opacity: 0.92, transform: [{ scale: 0.97 }] },
   statBar: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
   statDivider: { width: 1, backgroundColor: colors.border },
   statCell: { flex: 1, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8, gap: 2 },
@@ -445,7 +436,7 @@ const styles = StyleSheet.create({
   link: { fontSize: 13, fontWeight: '600', color: colors.primary },
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 18,

@@ -1,12 +1,16 @@
 import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
-import { ArrowUpRight, Bell, BookOpen, CalendarPlus, CarFront, Files, Flag, MapPin, MessageCircle, Motorbike, type LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ArrowUpRight, Bell, BookOpen, CalendarClock, CalendarPlus, CarFront, Files, Flag, MapPin, MessageCircle, Motorbike, Navigation, type LucideIcon } from 'lucide-react-native';
+import { useState } from 'react';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { AnimatedBar, ListCard, PressableScale, SectionLabel, StatStrip, TimeRow } from '@/components/blocks';
 import { HoursOffer } from '@/components/hours-offer';
-import { Screen } from '@/components/ui';
-import { student, upcomingLessons } from '@/data/mock';
+import { DetailList, SidePanel } from '@/components/panel';
+import { Button, Screen } from '@/components/ui';
+import { useRemainingHours } from '@/data/billing';
+import { documents, student, upcomingLessons } from '@/data/mock';
 import { useProfile } from '@/data/profile';
 import { colors, font, radius, shadow } from '@/theme';
 
@@ -19,6 +23,9 @@ export default function EleveAccueil() {
   const next = upcomingLessons[0];
   // « Décembre 2026 » → « décembre » et « Déc. 2026 »
   const [month = '', year = ''] = profile.objectif.split(' ');
+  const remaining = useRemainingHours();
+  const docsToDo = documents.filter((d) => d.status === 'refused' || d.status === 'missing').length;
+  const [panel, setPanel] = useState<(typeof upcomingLessons)[number] | null>(null);
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
   return (
@@ -55,7 +62,17 @@ export default function EleveAccueil() {
         )}
       </Animated.View>
 
-      <Animated.View entering={enter(1)} style={{ gap: 12 }}>
+      <Animated.View entering={enter(1)}>
+        <StatStrip
+          items={[
+            { label: 'Leçons prévues', value: `${upcomingLessons.length}`, onPress: () => router.push('/eleve/lecons') },
+            { label: 'Heures en crédit', value: `${remaining} h`, tone: 'primary', onPress: () => router.push('/eleve/paiements') },
+            { label: 'Pièces à fournir', value: `${docsToDo}`, tone: docsToDo ? 'warning' : 'neutral', onPress: () => router.push('/eleve/documents') },
+          ]}
+        />
+      </Animated.View>
+
+      <Animated.View entering={enter(2)} style={{ gap: 12 }}>
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Chaque étape compte</Text>
           <Pressable onPress={() => router.push('/eleve/progression')}>
@@ -77,16 +94,18 @@ export default function EleveAccueil() {
         </View>
       </Animated.View>
 
-      <Animated.View entering={enter(2)} style={{ gap: 12 }}>
+      <Animated.View entering={enter(3)} style={{ gap: 12 }}>
         <Text style={styles.sectionTitle}>Votre prochain rendez-vous</Text>
-        <View style={styles.card}>
+        <PressableScale style={styles.card} scale={0.98} onPress={() => setPanel(next)} accessibilityLabel="Voir le détail du rendez-vous">
           <View style={{ flexDirection: 'row', gap: 16 }}>
             <View style={styles.dateBox}>
-              <Text style={styles.dateDay}>29</Text>
-              <Text style={styles.dateMonth}>OCT.</Text>
+              <Text style={styles.dateDay}>{next.date.split(' ')[0]}</Text>
+              <Text style={styles.dateMonth}>{next.date.split(' ')[1]?.toUpperCase()}</Text>
             </View>
             <View style={{ flex: 1, gap: 5 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Jeudi · 14:00 – 15:00</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>
+                {dayLong(next.day)} · {next.start} – {next.end}
+              </Text>
               <Text style={font.small}>
                 Avec {next.instructor} · {moto ? 'Moto A2' : 'Manuelle'}
               </Text>
@@ -99,16 +118,33 @@ export default function EleveAccueil() {
           <View style={styles.sectionHead}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <MapPin size={15} color={colors.muted} />
-              <Text style={font.small}>Agence Lyon République</Text>
+              <Text style={font.small}>{next.place}</Text>
             </View>
-            <Pressable onPress={() => router.push('/eleve/lecons')}>
-              <Text style={styles.link}>Gérer</Text>
-            </Pressable>
+            <Text style={styles.link}>Détails</Text>
           </View>
-        </View>
+        </PressableScale>
       </Animated.View>
 
-      <Animated.View entering={enter(3)} style={{ gap: 12 }}>
+      {upcomingLessons.length > 1 ? (
+        <Animated.View entering={enter(4)} style={{ gap: 8 }}>
+          <SectionLabel count={upcomingLessons.length - 1}>Ensuite</SectionLabel>
+          <ListCard>
+            {upcomingLessons.slice(1).map((l) => (
+              <TimeRow
+                key={l.id}
+                time={l.start}
+                sub={`${l.day} ${l.date.split(' ')[0]}`}
+                color={l.type === 'Code' ? colors.violet : colors.primary}
+                title={l.type === 'Code' ? 'Séance de code' : `Conduite avec ${l.instructor.split(' ')[0]}`}
+                detail={l.place}
+                onPress={() => setPanel(l)}
+              />
+            ))}
+          </ListCard>
+        </Animated.View>
+      ) : null}
+
+      <Animated.View entering={enter(5)} style={{ gap: 12 }}>
         <Text style={styles.sectionTitle}>À portée de main</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Shortcut icon={CalendarPlus} label="Réserver" primary href="/eleve/lecons" />
@@ -119,6 +155,41 @@ export default function EleveAccueil() {
 
       {/* Proposition de rachat d'heures dès la moitié du forfait */}
       <HoursOffer dismissible delay={200} />
+
+      <SidePanel
+        open={!!panel}
+        onClose={() => setPanel(null)}
+        icon={panel?.type === 'Code' ? BookOpen : moto ? Motorbike : CarFront}
+        tone={panel?.type === 'Code' ? 'violet' : 'primary'}
+        title={panel ? (panel.type === 'Code' ? 'Séance de code' : 'Leçon de conduite') : ''}
+        subtitle={panel ? `${dayLong(panel.day)} ${panel.date} · ${panel.start} – ${panel.end}` : undefined}
+        footer={
+          <>
+            <Button
+              label="Itinéraire vers le rendez-vous"
+              icon={Navigation}
+              onPress={() => panel && Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${panel.place}, Lyon`)}`)}
+            />
+            <Button variant="secondary" label="Déplacer ou annuler" icon={CalendarClock} onPress={() => (setPanel(null), router.push('/eleve/lecons'))} />
+          </>
+        }>
+        {panel ? (
+          <>
+            <DetailList
+              rows={[
+                { label: 'Horaire', value: `${panel.start} – ${panel.end}` },
+                { label: panel.type === 'Code' ? 'Salle' : 'Moniteur', value: panel.instructor },
+                { label: 'Rendez-vous', value: panel.place },
+                ...(panel.vehicle ? [{ label: 'Véhicule', value: panel.vehicle }] : []),
+                { label: 'Statut', value: 'Confirmée', tone: 'success' as const },
+              ]}
+            />
+            <Text style={[font.small, { lineHeight: 19 }]}>
+              Annulation gratuite jusqu’à 48 h avant. Pensez à votre livret d’apprentissage et à une pièce d’identité.
+            </Text>
+          </>
+        ) : null}
+      </SidePanel>
     </Screen>
   );
 }
@@ -154,9 +225,7 @@ function ProgressCard({
         </Text>
         <Text style={font.tiny}>{caption}</Text>
       </View>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress * 100}%` }]} />
-      </View>
+      <AnimatedBar value={progress} height={5} delay={250} />
       <Pressable onPress={() => router.push(href)} style={styles.sectionHead}>
         <Text style={[styles.link, { fontWeight: '500' }]}>{action}</Text>
         <ArrowUpRight size={15} color={colors.primary} />
@@ -167,14 +236,15 @@ function ProgressCard({
 
 function Shortcut({ icon: Icon, label, primary, href }: { icon: LucideIcon; label: string; primary?: boolean; href: Href }) {
   return (
-    <Pressable
-      onPress={() => router.push(href)}
-      style={({ pressed }) => [styles.shortcut, primary && styles.shortcutPrimary, pressed && { transform: [{ scale: 0.97 }] }]}>
+    <PressableScale onPress={() => router.push(href)} scale={0.95} style={[styles.shortcut, primary && styles.shortcutPrimary]}>
       <Icon size={22} color={primary ? '#fff' : colors.primary} strokeWidth={1.8} />
       <Text style={[styles.shortcutText, primary && { color: '#fff' }]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
+
+const DAYS: Record<string, string> = { 'Lun.': 'Lundi', 'Mar.': 'Mardi', 'Mer.': 'Mercredi', 'Jeu.': 'Jeudi', 'Ven.': 'Vendredi', 'Sam.': 'Samedi', 'Dim.': 'Dimanche' };
+const dayLong = (d: string) => DAYS[d] ?? d;
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8 },
@@ -194,8 +264,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: 20, padding: 18, ...shadow.card },
   bigValue: { fontSize: 30, fontWeight: '800', color: colors.ink, letterSpacing: -0.8 },
   unit: { fontSize: 13, fontWeight: '500', color: colors.muted, letterSpacing: 0 },
-  track: { height: 5, borderRadius: 3, backgroundColor: '#E6EAF8', overflow: 'hidden' },
-  fill: { height: 5, borderRadius: 3, backgroundColor: colors.primary },
   dateBox: { width: 56, height: 64, borderRadius: radius.md, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   dateDay: { fontSize: 22, fontWeight: '800', color: colors.primary },
   dateMonth: { fontSize: 10, fontWeight: '700', color: colors.primary },
