@@ -1,0 +1,15 @@
+{
+  "name": "@virage/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Code commun à l'app mobile et au site admin : couleurs, formats, types et données",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}
