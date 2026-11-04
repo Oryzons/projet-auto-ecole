@@ -49,6 +49,8 @@ export function useLessonRequests() {
   );
 }
 
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
 const fmt = (at: number) => {
   const d = new Date(at);
   const day = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -61,7 +63,10 @@ export function requestLesson(at: number, hours: number, place: string) {
   requests = [req, ...requests];
   emit();
   // côté auto-école : une nouvelle demande arrive (même téléphone en démo)
-  notifyNow('Nouvelle demande de cours', `${req.studentName} demande ${fmt(at)} (${hours} h) avec ${req.instructor.split(' ')[0]}.`, '/admin/planning', 4).catch(() => {});
+  notifyNow(
+    { title: '📩 Nouvelle demande de cours', subtitle: `${req.studentName} · ${hours} h`, body: `🗓️ ${cap(fmt(at))}\n👤 Avec ${req.instructor} · 📍 ${place}`, url: '/admin/planning' },
+    4,
+  ).catch(() => {});
   return req;
 }
 
@@ -71,7 +76,8 @@ export function acceptRequest(id: string) {
   if (!req) return;
   requests = requests.map((r) => (r.id === id ? { ...r, status: 'accepted' } : r));
   emit();
-  if (req.mine) notifyNow('Leçon confirmée ✅', `Votre leçon du ${fmt(req.at)} avec ${req.instructor} est confirmée. Départ ${req.place}.`, '/eleve/lecons', 2).catch(() => {});
+  if (req.mine)
+    notifyNow({ title: '✅ Leçon confirmée', subtitle: cap(fmt(req.at)), body: `👤 Avec ${req.instructor}\n📍 Départ : ${req.place}`, url: '/eleve/lecons' }).catch(() => {});
 }
 
 /** L'auto-école refuse, avec un motif */
@@ -80,7 +86,7 @@ export function refuseRequest(id: string, reason = 'Le moniteur n’est plus dis
   if (!req) return;
   requests = requests.map((r) => (r.id === id ? { ...r, status: 'refused', reason } : r));
   emit();
-  if (req.mine) notifyNow('Demande de cours refusée', `${fmt(req.at)} : ${reason} Choisissez un autre créneau.`, '/eleve/lecons', 2).catch(() => {});
+  if (req.mine) notifyNow({ title: '❌ Demande refusée', subtitle: cap(fmt(req.at)), body: `${reason}\n👉 Choisissez un autre créneau.`, url: '/eleve/lecons' }).catch(() => {});
 }
 
 /** L'élève annule sa demande en attente */

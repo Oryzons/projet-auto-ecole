@@ -1,3 +1,5 @@
+import { Asset } from 'expo-asset';
+import { File, Paths } from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
 import { router, type Href } from 'expo-router';
 import { Platform } from 'react-native';
@@ -23,7 +25,47 @@ if (supported) {
   });
 }
 
-type Planned = { title: string; body: string; at: number; url: Href };
+type Planned = { title: string; subtitle?: string; body: string; at: number; url: Href };
+
+/**
+ * Logo Shift affiché en vignette à droite de la notification (iOS).
+ * Dans Expo Go, l'icône en haut à gauche reste celle d'Expo Go : seule une
+ * build de l'appli peut la remplacer. La vignette, elle, marche partout.
+ * iOS déplace le fichier joint, donc on en copie un neuf à chaque notification.
+ */
+let logoSource: Promise<string | null> | null = null;
+const logoUri = () =>
+  (logoSource ??= Asset.fromModule(require('../../assets/images/notification-logo.png'))
+    .downloadAsync()
+    .then((a) => a.localUri)
+    .catch(() => null));
+
+async function logoAttachment(): Promise<Notifications.NotificationContentAttachmentIos[] | undefined> {
+  if (Platform.OS !== 'ios') return undefined;
+  try {
+    const src = await logoUri();
+    if (!src) return undefined;
+    const copy = new File(Paths.cache, `shift-logo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.png`);
+    new File(src).copy(copy);
+    return [{ identifier: 'shift-logo', url: copy.uri, type: 'public.png', typeHint: 'public.png' }];
+  } catch {
+    return undefined;
+  }
+}
+
+/** Contenu commun : titre court, sous-titre en gras (iOS), texte, logo Shift */
+async function content(n: { title: string; subtitle?: string; body: string; url: Href }): Promise<Notifications.NotificationContentInput> {
+  const subtitle = Platform.OS === 'ios' ? n.subtitle : undefined;
+  // Android n'a pas de sous-titre : on le met en tête du texte
+  const body = Platform.OS === 'ios' || !n.subtitle ? n.body : `${n.subtitle}\n${n.body}`;
+  return { title: n.title, subtitle, body, data: { url: n.url }, sound: true, attachments: await logoAttachment() };
+}
+
+const firstName = (name = '') => name.split(' ')[0] ?? name;
+const duration = (start: string, end: string) => {
+  const min = Number(end.slice(0, 2)) * 60 + Number(end.slice(3)) - (Number(start.slice(0, 2)) * 60 + Number(start.slice(3)));
+  return min % 60 ? `${Math.floor(min / 60)} h ${min % 60}` : `${min / 60} h`;
+};
 
 /** Demande l'autorisation, une seule fois ; renvoie true si l'utilisateur accepte */
 export async function enablePhoneNotifications() {
@@ -54,7 +96,7 @@ async function replaceAll(list: Planned[]) {
   for (const n of list) {
     if (n.at <= now + 5_000) continue;
     await Notifications.scheduleNotificationAsync({
-      content: { title: n.title, body: n.body, data: { url: n.url }, sound: true },
+      content: await content(n),
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(n.at) },
     });
   }
@@ -73,9 +115,11 @@ export async function scheduleStudentNotifications(p: Preferences) {
     for (const l of upcomingLessons) {
       if (!l.at) continue;
       const at = l.at - REMINDER_MS[p.lessonReminder];
+      const when = p.lessonReminder === '2h' ? `dans 2 h, à ${l.start}` : p.lessonReminder === '24h' ? `demain à ${l.start}` : `${l.day.toLowerCase()} ${l.date} à ${l.start}`;
       list.push({
-        title: p.lessonReminder === '2h' ? `Leçon à ${l.start}` : `Leçon ${p.lessonReminder === '24h' ? 'demain' : `${l.day.toLowerCase()} ${l.date}`} à ${l.start}`,
-        body: `Avec ${l.instructor}, départ ${l.place}. Pensez à votre livret d’apprentissage.`,
+        title: `🚗 Leçon ${when}`,
+        subtitle: `Avec ${l.instructor} · ${duration(l.start, l.end)}`,
+        body: `📍 Départ : ${l.place}\n📘 Pensez à votre livret d’apprentissage.`,
         at: p.lessonReminder === '2h' ? at : quiet(at),
         url: '/eleve',
       });
@@ -85,8 +129,9 @@ export async function scheduleStudentNotifications(p: Preferences) {
     const refused = documents.filter((d) => d.status === 'refused');
     if (refused.length) {
       list.push({
-        title: 'Une pièce de votre dossier est refusée',
-        body: `${refused[0]!.name} : ${refused[0]!.note ?? 'merci d’en déposer une nouvelle.'}`,
+        title: '📄 Pièce refusée',
+        subtitle: refused[0]!.name,
+        body: `${refused[0]!.note ?? 'Merci d’en déposer une nouvelle.'}\nDéposez-la depuis l’appli, c’est rapide.`,
         at: quiet(now + 60_000),
         url: '/eleve/documents',
       });
@@ -94,7 +139,14 @@ export async function scheduleStudentNotifications(p: Preferences) {
   }
   if (p.payments) {
     const due = invoices.find((i) => i.status === 'due');
-    if (due) list.push({ title: 'Échéance à venir', body: `${due.label} : ${due.amount} € à régler.`, at: quiet(now + 3 * 3600_000), url: '/eleve/paiements' });
+    if (due)
+      list.push({
+        title: `💳 Échéance de ${due.amount} € à régler`,
+        subtitle: due.label,
+        body: `À payer avant le ${due.date}. Réglez-la en un geste depuis l’appli.`,
+        at: quiet(now + 3 * 3600_000),
+        url: '/eleve/paiements',
+      });
   }
   await replaceAll(list);
 }
@@ -106,9 +158,21 @@ export async function scheduleInstructorNotifications() {
   const list: Planned[] = [];
   for (const l of instructorWeek) {
     if (!l.at) continue;
-    list.push({ title: `Leçon à ${l.start} · ${l.student}`, body: `${l.place} · ${l.vehicle}. ${l.hoursDone} h déjà faites.`, at: l.at - 15 * 60_000, url: `/moniteur/lecon/${l.id}` });
+    list.push({
+      title: `⏰ Leçon dans 15 min avec ${firstName(l.student)}`,
+      subtitle: `${l.start} – ${l.end} · ${l.student}`,
+      body: `📍 ${l.place}\n🚘 ${l.vehicle} · ${l.hoursDone} h déjà faites`,
+      at: l.at - 15 * 60_000,
+      url: `/moniteur/lecon/${l.id}`,
+    });
     const end = l.at + (Number(l.end.slice(0, 2)) * 60 + Number(l.end.slice(3)) - (Number(l.start.slice(0, 2)) * 60 + Number(l.start.slice(3)))) * 60_000;
-    list.push({ title: 'Compte rendu à rédiger', body: `Leçon de ${l.student} terminée : notez les points travaillés.`, at: end + 5 * 60_000, url: `/moniteur/lecon/${l.id}` });
+    list.push({
+      title: '📝 Compte rendu à rédiger',
+      subtitle: `Leçon de ${l.student} terminée`,
+      body: 'Notez les points travaillés pendant que c’est frais.',
+      at: end + 5 * 60_000,
+      url: `/moniteur/lecon/${l.id}`,
+    });
   }
   await replaceAll(list);
 }
@@ -119,24 +183,28 @@ export async function sendTestNotification(delaySeconds = 5) {
   if (!(await enablePhoneNotifications())) return false;
   const next = upcomingLessons[0];
   await Notifications.scheduleNotificationAsync({
-    content: {
-      title: next ? `Leçon à ${next.start} avec ${next.instructor.split(' ')[0]}` : 'Shift',
-      body: next ? `${student.firstName}, rendez-vous ${next.place}. Touchez pour voir le détail.` : 'Les notifications fonctionnent.',
-      data: { url: '/eleve' },
-      sound: true,
-    },
+    content: await content(
+      next
+        ? {
+            title: `🚗 Leçon ${next.day.toLowerCase()} ${next.date} à ${next.start}`,
+            subtitle: `Avec ${next.instructor} · ${duration(next.start, next.end)}`,
+            body: `📍 Départ : ${next.place}\n${student.firstName}, touchez pour voir le détail.`,
+            url: '/eleve',
+          }
+        : { title: '🔔 Shift', body: 'Les notifications fonctionnent.', url: '/eleve' },
+    ),
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: delaySeconds },
   });
   return true;
 }
 
 /** Notification immédiate (quelques secondes), si l'utilisateur l'a autorisée */
-export async function notifyNow(title: string, body: string, url: Href, delaySeconds = 2) {
+export async function notifyNow(n: { title: string; subtitle?: string; body: string; url: Href }, delaySeconds = 2) {
   if (!supported) return false;
   const perm = await Notifications.getPermissionsAsync();
   if (!perm.granted) return false;
   await Notifications.scheduleNotificationAsync({
-    content: { title, body, data: { url }, sound: true },
+    content: await content(n),
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: delaySeconds },
   });
   return true;
