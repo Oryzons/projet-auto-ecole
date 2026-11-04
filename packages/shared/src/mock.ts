@@ -551,3 +551,17 @@ export const permLabels: Record<string, string> = {
   exams: 'Examens et résultats',
   settings: 'Tarifs et paramètres',
 };
+
+/* ---------- Disponibilités pour les demandes de cours ---------- */
+
+const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+/** Créneaux déjà pris chez le moniteur de l'élève (clés « année-mois-jour:heure ») */
+export const takenSlots: string[] = ALL_LESSONS.filter((l) => l.instructorId === me.instructorId && l.status !== 'CANCELLED').flatMap((l) => {
+  const out: string[] = [];
+  for (let m = 0; m < l.durationMinutes; m += 60) {
+    const d = new Date(l.startsAt.getTime() + m * 60_000);
+    out.push(`${dayKey(d)}:${d.getHours()}`);
+  }
+  return out;
+});
+export const slotKey = (d: Date, hour: number) => `${dayKey(d)}:${hour}`;

@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router, type Href } from 'expo-router';
 import {
   AlertTriangle,
@@ -11,6 +10,7 @@ import {
   ChevronRight,
   Clock3,
   Flag,
+  Hourglass,
   MapPin,
   MessageCircle,
   Motorbike,
@@ -20,14 +20,16 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, useAnimatedProps, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInRight, useAnimatedProps, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 
 import { AnimatedBar, ListCard, PressableScale, SectionLabel, StatStrip, TimeRow } from '@/components/blocks';
+import { CarArt } from '@/components/car-art';
 import { HoursOffer } from '@/components/hours-offer';
 import { DetailList, SidePanel } from '@/components/panel';
 import { Button, Screen } from '@/components/ui';
 import { useRemainingHours } from '@/data/billing';
+import { useLessonRequests } from '@/data/lesson-requests';
 import { documents, invoices, student, upcomingLessons, type Lesson } from '@/data/mock';
 import { useProfile } from '@/data/profile';
 import { colors, font, shadow } from '@/theme';
@@ -52,6 +54,9 @@ export default function EleveAccueil() {
   const docsOk = documents.filter((d) => d.status === 'accepted').length;
   const due = invoices.find((i) => i.status === 'due');
   const [panel, setPanel] = useState<Lesson | null>(null);
+  const allRequests = useLessonRequests();
+  const accepted = allRequests.filter((r) => r.mine && r.status === 'accepted').length;
+  const waiting = allRequests.filter((r) => r.mine && r.status === 'pending').length;
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
   // parcours : dossier, code, conduite, examen
@@ -84,7 +89,9 @@ export default function EleveAccueil() {
                 <Motorbike size={96} color="rgba(255,255,255,0.22)" strokeWidth={1.2} />
               </View>
             ) : (
-              <Image source={require('@/assets/images/vehicule-voiture.png')} style={styles.vehicle} contentFit="contain" />
+              <Animated.View entering={FadeInRight.delay(150).duration(700).easing(Easing.out(Easing.cubic))} style={styles.vehicle} pointerEvents="none">
+                <CarArt width={168} />
+              </Animated.View>
             )}
             <View style={styles.heroTop}>
               <Text style={styles.heroEyebrow}>PROCHAINE LEÇON</Text>
@@ -149,10 +156,22 @@ export default function EleveAccueil() {
         </Animated.View>
       ) : null}
 
+      {waiting ? (
+        <Animated.View entering={enter(1)}>
+          <PressableScale style={styles.waiting} scale={0.98} onPress={() => router.push('/eleve/lecons')}>
+            <Hourglass size={17} color={colors.warning} />
+            <Text style={styles.waitingText}>
+              {waiting} demande{waiting > 1 ? 's' : ''} de cours en attente de confirmation
+            </Text>
+            <ChevronRight size={17} color={colors.muted} />
+          </PressableScale>
+        </Animated.View>
+      ) : null}
+
       <Animated.View entering={enter(2)}>
         <StatStrip
           items={[
-            { label: 'Leçons prévues', value: `${upcomingLessons.length}`, onPress: () => router.push('/eleve/lecons') },
+            { label: 'Leçons prévues', value: `${upcomingLessons.length + accepted}`, onPress: () => router.push('/eleve/lecons') },
             { label: 'Heures à réserver', value: `${remaining} h`, tone: 'primary', onPress: () => router.push('/eleve/lecons') },
             { label: due ? 'À régler' : 'Solde', value: due ? `${due.amount} €` : '0 €', tone: due ? 'warning' : 'success', onPress: () => router.push('/eleve/paiements') },
           ]}
@@ -379,9 +398,11 @@ const styles = StyleSheet.create({
   heroWho: { fontSize: 14, fontWeight: '700', color: '#fff' },
   heroWhere: { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
   heroGo: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  vehicle: { position: 'absolute', right: -26, top: 46, width: 158, height: 84 },
+  vehicle: { position: 'absolute', right: 12, top: 56 },
   vehicleFallback: { position: 'absolute', right: 6, top: 30 },
 
+  waiting: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  waitingText: { flex: 1, fontSize: 13.5, fontWeight: '600', color: colors.ink },
   alert: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.warningSoft, borderWidth: 1, borderColor: '#F6DDB5' },
   alertIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   alertTitle: { fontSize: 14.5, fontWeight: '700', color: colors.ink },

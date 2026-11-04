@@ -130,6 +130,18 @@ export async function sendTestNotification(delaySeconds = 5) {
   return true;
 }
 
+/** Notification immédiate (quelques secondes), si l'utilisateur l'a autorisée */
+export async function notifyNow(title: string, body: string, url: Href, delaySeconds = 2) {
+  if (!supported) return false;
+  const perm = await Notifications.getPermissionsAsync();
+  if (!perm.granted) return false;
+  await Notifications.scheduleNotificationAsync({
+    content: { title, body, data: { url }, sound: true },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: delaySeconds },
+  });
+  return true;
+}
+
 /** Ouvre le bon écran quand on touche une notification */
 export function listenToNotificationTaps() {
   if (!supported) return () => {};
