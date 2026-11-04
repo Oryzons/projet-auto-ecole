@@ -1,9 +1,12 @@
 import bcrypt from "bcryptjs";
 
+import { DEMO_STAFF, DEMO_STUDENTS, REQUIRED_DOCS, studentDocs } from "@virage/shared/demo";
+
 import type { Store } from "./engine";
+import { seedCrm } from "./seed-crm";
 
 /**
- * Données de démonstration de l'auto-école Virage (Lyon 7e).
+ * Données de démonstration de l'auto-école Shift (Lyon 7e).
  * Les identifiants sont fixes pour que les sessions restent valides après un redémarrage.
  * Connexion : sophie@virage.fr / virage2026
  */
@@ -21,7 +24,7 @@ const rand = () => {
 const pick = <T,>(list: readonly T[]) => list[Math.floor(rand() * list.length)];
 
 const PRICES: Record<string, number> = { "permis-b": 135000, "permis-b-auto": 99000, aac: 149000, a2: 129000 };
-const REQUIRED = ["TRAINING_CONTRACT", "ID_CARD", "ID_PHOTO", "PROOF_OF_ADDRESS", "ASSR", "JDC"] as const;
+const REQUIRED = REQUIRED_DOCS;
 const FILES: Record<string, string> = {
   TRAINING_CONTRACT: "contrat-formation-signe.pdf",
   ID_CARD: "carte-identite.pdf",
@@ -34,27 +37,8 @@ const FILES: Record<string, string> = {
 
 type Stage = "DRAFT" | "DOCUMENTS_PENDING" | "DOCUMENTS_REVIEW" | "PAYMENT_PENDING" | "PAID" | "COMPLETED";
 
-/** Élèves : prénom, nom, permis, étape, ancienneté du dossier (jours), paiement en plusieurs fois */
-const STUDENTS: [string, string, string, Stage, number, number?][] = [
-  ["Lucas", "Martin", "permis-b", "DOCUMENTS_REVIEW", 12],
-  ["Emma", "Petit", "aac", "PAID", 150, 3],
-  ["Inès", "Moreau", "permis-b", "PAYMENT_PENDING", 40],
-  ["Nathan", "Roux", "permis-b", "PAID", 120],
-  ["Chloé", "Garnier", "permis-b-auto", "PAYMENT_PENDING", 75, 3],
-  ["Hugo", "Lefebvre", "permis-b", "DOCUMENTS_PENDING", 6],
-  ["Sarah", "Benali", "permis-b", "DOCUMENTS_REVIEW", 3],
-  ["Léo", "Perrin", "a2", "PAID", 95],
-  ["Manon", "Faure", "permis-b", "COMPLETED", 175],
-  ["Théo", "Blanc", "permis-b-auto", "PAID", 60, 3],
-  ["Camille", "Royer", "aac", "DOCUMENTS_PENDING", 18],
-  ["Jade", "Morel", "permis-b", "COMPLETED", 168],
-  ["Louis", "Henry", "permis-b", "PAYMENT_PENDING", 30],
-  ["Zoé", "Lambert", "permis-b", "PAID", 45],
-  ["Adam", "Mercier", "a2", "DOCUMENTS_REVIEW", 9],
-  ["Lina", "Fontaine", "permis-b", "DRAFT", 1],
-  ["Yanis", "Chevalier", "permis-b-auto", "COMPLETED", 140],
-  ["Clara", "Dupuis", "permis-b", "PAID", 25, 3],
-];
+/** Élèves : ils viennent de @virage/shared/demo, la même liste que l'app mobile */
+const STUDENTS: [string, string, string, Stage, number, number?][] = DEMO_STUDENTS.map((st) => [st.firstName, st.lastName, st.permitType, st.stage, st.days, st.installments]);
 
 const STREETS = ["rue de Marseille", "avenue Jean Jaurès", "rue Garibaldi", "cours Gambetta", "rue de la Guillotière", "avenue Berthelot", "rue Pasteur"];
 const CITIES: [string, string][] = [
@@ -84,7 +68,7 @@ export function seed(store: Store) {
   t.organization.push({
     id: ORG,
     slug: "virage",
-    name: "Virage",
+    name: "Shift",
     stripeAccountId: null,
     createdAt: ago(400),
     updatedAt: ago(2),
@@ -100,9 +84,9 @@ export function seed(store: Store) {
       partnerPrice: 115000,
       fiscalStampPrice: 8000,
       discountCodes: [{ code: "PARRAIN", label: "Parrainage d'un ami", kind: "amount", value: 5000 }],
-      bankTransfer: { enabled: true, holder: "VIRAGE AUTO-ECOLE", iban: "FR76 3000 4012 3400 0101 2345 678", bic: "BNPAFRPPXXX" },
+      bankTransfer: { enabled: true, holder: "SHIFT AUTO-ECOLE", iban: "FR76 3000 4012 3400 0101 2345 678", bic: "BNPAFRPPXXX" },
       company: {
-        legalName: "Virage Auto-École SAS",
+        legalName: "Shift Auto-École SAS",
         address: "12 rue de Marseille",
         postalCode: "69007",
         city: "Lyon",
@@ -143,22 +127,27 @@ export function seed(store: Store) {
   };
 
   // équipe
-  user("u-sophie", "ADMIN", "Sophie", "Laurent", { email: DEMO_LOGIN.email, phone: "06 11 22 33 44" });
-  user("u-thomas", "ADMIN", "Thomas", "Girard", { email: "thomas@virage.fr" });
-  const instructors = [
-    user("u-julie", "SKIPPER", "Julie", "Bernard", { email: "julie@virage.fr" }),
-    user("u-karim", "SKIPPER", "Karim", "Haddad", { email: "karim@virage.fr" }),
-    user("u-marc", "SKIPPER", "Marc", "Dubois", { email: "marc@virage.fr" }),
-  ];
+  // dernière visite la veille au soir : le récap de connexion a de quoi montrer
+  // l'équipe vient de @virage/shared/demo : mêmes personnes et mêmes téléphones dans l'app
+  const team = DEMO_STAFF.map((m) =>
+    user(m.id, m.role, m.firstName, m.lastName, {
+      email: m.id === "u-sophie" ? DEMO_LOGIN.email : m.email,
+      phone: m.phone,
+      ...(m.id === "u-sophie" ? { lastSeenAt: ago(0, 15) } : {}),
+    }),
+  );
+  const instructors = team.filter((m) => m.role === "SKIPPER");
 
   let invoice = 0;
   const candidates: { id: string; app: string; stage: Stage; created: number }[] = [];
 
   STUDENTS.forEach(([firstName, lastName, permitType, stage, days, installments], index) => {
+    const shared = DEMO_STUDENTS[index]!;
     const id = `u-${firstName.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")}`;
     const [postalCode, city] = pick(CITIES);
     const age = permitType === "aac" ? 15 + Math.floor(rand() * 2) : 17 + Math.floor(rand() * 9);
     user(id, "CANDIDATE", firstName, lastName, {
+      phone: shared.phone,
       street: `${Math.floor(2 + rand() * 120)} ${pick(STREETS)}`,
       postalCode,
       city,
@@ -186,6 +175,8 @@ export function seed(store: Store) {
       briefingSeenAt: stage === "DRAFT" ? null : ago(days - 1),
       totalAmount: index === 13 ? total - 5000 : total,
       archivedAt: null,
+      instructorId: shared.instructorId,
+      hoursPlanned: shared.hoursPlanned,
       createdAt: ago(days, 2),
       updatedAt: ago(Math.min(days, finished ? 6 : 1 + (index % 4))),
     });
@@ -197,13 +188,14 @@ export function seed(store: Store) {
     event("CREATED", days);
 
     // pièces du dossier
-    const docCount = stage === "DRAFT" ? 0 : stage === "DOCUMENTS_PENDING" ? 2 + (index % 3) : REQUIRED.length;
-    const types = [...REQUIRED.slice(0, docCount), ...(partner && docCount ? ["PARTNER_BADGE"] : [])];
+    // même état des pièces que dans l'app mobile (Documents de l'élève)
+    const docStates = studentDocs(shared, index);
+    const deposited = REQUIRED.filter((type) => docStates[type]);
+    const docCount = deposited.length;
+    const types: string[] = [...deposited, ...(partner && docCount ? ["PARTNER_BADGE"] : [])];
     types.forEach((type, i) => {
       const uploaded = Math.max(0.2, days - 2 - i * 0.6);
-      let status = "APPROVED";
-      if (stage === "DOCUMENTS_PENDING") status = i === 0 ? "APPROVED" : i === docCount - 1 && index % 2 ? "REJECTED" : "PENDING";
-      if (stage === "DOCUMENTS_REVIEW") status = i < 2 ? "APPROVED" : "PENDING";
+      const status: string = docStates[type as keyof typeof docStates] ?? "APPROVED";
       t.document.push({
         id: `doc-${app}-${type.toLowerCase()}`,
         applicationId: app,
@@ -214,7 +206,12 @@ export function seed(store: Store) {
         fileName: FILES[type],
         fileSize: 180_000 + Math.floor(rand() * 900_000),
         mimeType: FILES[type].endsWith(".jpg") ? "image/jpeg" : "application/pdf",
-        rejectionReason: status === "REJECTED" ? "Le document est flou, merci d'en renvoyer une photo nette." : null,
+        rejectionReason:
+          status === "REJECTED"
+            ? type === "PROOF_OF_ADDRESS"
+              ? "Document de plus de 6 mois, merci d'en déposer un récent."
+              : "Le document est flou, merci d'en renvoyer une photo nette."
+            : null,
         reviewedById: status === "PENDING" ? null : "u-sophie",
         reviewedAt: status === "PENDING" ? null : ago(uploaded - 0.5),
         createdAt: ago(uploaded),
@@ -256,6 +253,12 @@ export function seed(store: Store) {
           paid(Math.max(0.5, days - 8 - k * 30), k === installments - 1 ? amount - part * (installments - 1) : part, { installmentCount: installments, installmentIndex: k + 1, method: "STRIPE" });
         }
       } else paid(Math.max(1, days - 8), amount);
+    } else if (shared.paidInstallments && installments) {
+      // échéancier en cours (Lucas : 2 échéances sur 3, comme dans l'app)
+      const part = Math.round(amount / installments);
+      for (let k = 0; k < shared.paidInstallments; k++) {
+        paid(Math.max(0.5, days - 2 - k * 30), part, { installmentCount: installments, installmentIndex: k + 1, method: "STRIPE" });
+      }
     } else if (stage === "PAYMENT_PENDING" && installments) {
       const part = Math.round(amount / installments);
       paid(Math.max(1, days - 10), part, { installmentCount: installments, installmentIndex: 1, method: "STRIPE" });
@@ -366,4 +369,6 @@ export function seed(store: Store) {
   });
 
   t.invoiceCounter.push({ organizationId: ORG, year: new Date().getFullYear(), value: invoice });
+
+  seedCrm(store, now);
 }

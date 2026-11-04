@@ -157,7 +157,7 @@ export function LegalCenter({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `virage-mes-donnees-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `shift-mes-donnees-${new Date().toISOString().slice(0, 10)}.json`;
       link.click();
       URL.revokeObjectURL(url);
       toast.success("Vos données ont été téléchargées");
@@ -196,7 +196,7 @@ export function LegalCenter({
     CANDIDATE: [
       <><strong>Identité et contact</strong> : nom, prénom, email, téléphone, adresse, date de naissance, photo d&apos;identité.</>,
       <><strong>Dossier de permis</strong> : type de permis, numéro NEPH, pièces justificatives (identité, certificat médical, photo…) et leur statut de vérification.</>,
-      <><strong>Paiements</strong> : montants, échéances, mode de paiement et factures. Les numéros de carte ne sont jamais stockés par Virage : ils sont traités par Stripe.</>,
+      <><strong>Paiements</strong> : montants, échéances, mode de paiement et factures. Les numéros de carte ne sont jamais stockés par Shift : ils sont traités par Stripe.</>,
       <><strong>Formation</strong> : inscriptions aux séances de code et rappels.</>,
       <><strong>Échanges</strong> : messages avec votre auto-école et historique de votre dossier.</>,
     ],
@@ -427,7 +427,7 @@ export function LegalCenter({
               ...(contact || company.phone
                 ? ([["Contact", [contact, company.phone].filter(Boolean).join(" · ")]] as [string, ReactNode][])
                 : []),
-              ["Plateforme", "Virage, logiciel de gestion des dossiers de permis de conduire, édité pour le compte de l'auto-école."],
+              ["Plateforme", "Shift, logiciel de gestion des dossiers de permis de conduire, édité pour le compte de l'auto-école."],
               ["Hébergeur", "Hostinger International Ltd, 61 Lordou Vironos, 6023 Larnaca, Chypre — hostinger.fr"],
             ]}
           />

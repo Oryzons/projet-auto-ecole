@@ -4,19 +4,27 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
-const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+  display: "swap",
+});
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
-    default: "Virage · Auto-école",
-    template: "%s · Virage",
+    default: "Shift · Auto-école",
+    template: "%s · Shift",
   },
-  description: "Gestion de l'auto-école Virage : élèves, planning, paiements",
+  description: "Gestion de l'auto-école Shift : élèves, planning, paiements",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Virage",
+    title: "Shift",
   },
 };
 
@@ -33,8 +41,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={cn(geistSans.variable, geistMono.variable)}>
-      <body className="min-h-svh">
+    <html
+      lang="fr"
+      suppressHydrationWarning
+      className={cn(geistSans.variable, geistMono.variable)}
+    >
+      {/* des extensions du navigateur (ColorZilla, Grammarly…) ajoutent des attributs à <body> avant React */}
+      <body className="min-h-svh" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

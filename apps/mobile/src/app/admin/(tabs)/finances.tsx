@@ -2,7 +2,7 @@ import { ArrowDownLeft, ArrowUpRight, Plus, Receipt } from 'lucide-react-native'
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { Badge, Button, Card, Chips, Divider, IconBox, Intro, Row, Screen, Section, Stat } from '@/components/ui';
+import { Badge, Button, Card, Chips, Divider, IconBox, Intro, Row, Screen, Section, Stat, StatBar } from '@/components/ui';
 import { financeDocs, payments } from '@/data/mock';
 import { colors, font } from '@/theme';
 
@@ -22,10 +22,10 @@ export default function AdminFinances() {
   return (
     <Screen withTabBar>
       <Intro title="Finances" description="Octobre 2026" />
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      <StatBar>
         <Stat label="Encaissé" value="41 910 €" hint="87 % du facturé" tone="success" />
         <Stat label="À encaisser" value="6 340 €" hint="dont 2 180 € en retard" tone="danger" />
-      </View>
+      </StatBar>
 
       <Section title="Documents">
         <Chips items={[...tabs]} value={tab} onChange={setTab} />

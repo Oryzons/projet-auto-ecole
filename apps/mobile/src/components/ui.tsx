@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ArrowLeft, ArrowRight, ChevronRight, CircleQuestionMark, type LucideIcon } from 'lucide-react-native';
-import { useState, type ReactNode } from 'react';
+import { Children, createContext, Fragment, useContext, useState, type ReactNode } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -15,6 +15,7 @@ import {
 import { ScrollView as GHScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AnimatedBar, MetricTile, PressableScale } from '@/components/blocks';
 import { HelpSheet } from '@/components/help-sheet';
 import { colors, font, radius, shadow, space, toneColors, type Tone } from '@/theme';
 
@@ -122,21 +123,31 @@ export function Intro({ title, description, eyebrow }: { title: string; descript
   );
 }
 
+/** Section : titre en petites capitales (comme le site admin), compteur et lien optionnels */
 export function Section({
   title,
   action,
   onAction,
+  count,
   children,
 }: {
   title: string;
   action?: string;
   onAction?: () => void;
+  count?: number;
   children: ReactNode;
 }) {
   return (
-    <View style={{ gap: space.md }}>
+    <View style={{ gap: 10 }}>
       <View style={styles.sectionHead}>
-        <Text style={font.h2}>{title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {count !== undefined ? (
+            <View style={styles.sectionCount}>
+              <Text style={styles.sectionCountText}>{count}</Text>
+            </View>
+          ) : null}
+        </View>
         {action ? (
           <Pressable onPress={onAction} hitSlop={8}>
             <Text style={styles.link}>{action}</Text>
@@ -167,9 +178,9 @@ export function Card({
         : null;
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [styles.card, toneStyle, style, pressed && { opacity: 0.85 }]}>
+      <PressableScale onPress={onPress} scale={0.98} style={[styles.card, toneStyle, style]}>
         {children}
-      </Pressable>
+      </PressableScale>
     );
   }
   return <View style={[styles.card, toneStyle, style]}>{children}</View>;
@@ -196,12 +207,7 @@ export function Badge({ label, tone = 'neutral', icon: Icon }: { label: string; 
 }
 
 export function Progress({ value, tone = 'primary', height = 6 }: { value: number; tone?: Tone; height?: number }) {
-  const pct = Math.max(0, Math.min(1, value));
-  return (
-    <View style={{ height, borderRadius: height, backgroundColor: '#E8EEF6', overflow: 'hidden' }}>
-      <View style={{ width: `${pct * 100}%`, height, borderRadius: height, backgroundColor: toneColors[tone].fg }} />
-    </View>
-  );
+  return <AnimatedBar value={value} color={toneColors[tone].fg} track="#E8EEF6" height={height} />;
 }
 
 export function Avatar({ name, size = 44, tone = 'primary' }: { name: string; size?: number; tone?: Tone }) {
@@ -257,7 +263,7 @@ export function Button({
         small && { height: 40, paddingHorizontal: 14 },
         { backgroundColor: v.bg, borderColor: v.border },
         variant === 'primary' && shadow.primary,
-        pressed && { opacity: 0.8, transform: [{ scale: 0.99 }] },
+        pressed && styles.pressed,
         style,
       ]}>
       {Icon ? <Icon size={small ? 16 : 18} color={v.fg} /> : null}
@@ -269,7 +275,7 @@ export function Button({
 /** Bouton d'action principal des parcours : libellé à gauche, flèche à droite */
 export function CtaButton({ label, onPress, icon: Icon = ArrowRight }: { label: string; onPress?: () => void; icon?: LucideIcon }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.cta, shadow.primary, pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.cta, shadow.primary, pressed && styles.pressed]}>
       <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{label}</Text>
       <Icon size={20} color={colors.onPrimary} />
     </Pressable>
@@ -289,9 +295,9 @@ export function Field({ label, hint, ...props }: TextInputProps & { label: strin
 export function Chip({ label, active, onPress, count }: { label: string; active?: boolean; onPress?: () => void; count?: number }) {
   return (
     <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <Text style={[styles.chipText, active && { color: colors.onPrimary }]}>{label}</Text>
+      <Text style={[styles.chipText, active && { color: colors.primaryStrong }]}>{label}</Text>
       {count !== undefined ? (
-        <View style={[styles.chipCount, active && { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
+        <View style={[styles.chipCount, active && { backgroundColor: colors.primary }]}>
           <Text style={[styles.chipCountText, active && { color: colors.onPrimary }]}>{count}</Text>
         </View>
       ) : null}
@@ -331,7 +337,7 @@ export function ListItem({
   chevron?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => [styles.listItem, pressed && { opacity: 0.6 }]}>
+    <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => [styles.listItem, pressed && styles.listItemPressed]}>
       {avatar ? <Avatar name={avatar} size={40} tone={tone} /> : icon ? <IconBox icon={icon} tone={tone} size={40} /> : null}
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={font.h3} numberOfLines={1}>
@@ -349,14 +355,38 @@ export function ListItem({
   );
 }
 
-export function Stat({ label, value, hint, tone = 'neutral' }: { label: string; value: string; hint?: string; tone?: Tone }) {
+const StatBarContext = createContext(false);
+
+/** Bloc de chiffres du site admin : une carte, colonnes séparées par un trait fin */
+export function StatBar({ children }: { children: ReactNode }) {
   return (
-    <Card style={{ flex: 1, gap: 4, padding: 14 }}>
-      <Text style={font.tiny}>{label}</Text>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 }}>{value}</Text>
-      {hint ? <Text style={[font.tiny, { color: toneColors[tone].fg, fontWeight: '600' }]}>{hint}</Text> : null}
-    </Card>
+    <View style={styles.statBar}>
+      <StatBarContext.Provider value>
+        {Children.toArray(children).map((child, i) => (
+          <Fragment key={i}>
+            {i > 0 ? <View style={styles.statDivider} /> : null}
+            {child}
+          </Fragment>
+        ))}
+      </StatBarContext.Provider>
+    </View>
   );
+}
+
+export function Stat({ label, value, hint, tone = 'neutral', onPress }: { label: string; value: string; hint?: string; tone?: Tone; onPress?: () => void }) {
+  const inBar = useContext(StatBarContext);
+  if (inBar)
+    return (
+      <View style={styles.statCell}>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        {hint ? <Text style={[font.tiny, { color: toneColors[tone].fg, fontWeight: '600' }]}>{hint}</Text> : null}
+      </View>
+    );
+  // hors bloc : tuile du site admin (point de couleur, valeur, détail)
+  return <MetricTile label={label} value={value} hint={hint} tone={tone} onPress={onPress} />;
 }
 
 export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -394,10 +424,19 @@ const styles = StyleSheet.create({
   },
   eyebrow: { fontSize: 12, fontWeight: '700', color: colors.primary, textTransform: 'uppercase', letterSpacing: 1 },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 },
+  sectionCount: { minWidth: 22, height: 20, borderRadius: 10, paddingHorizontal: 7, backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' },
+  sectionCountText: { fontSize: 11, fontWeight: '600', color: colors.muted },
+  pressed: { opacity: 0.92, transform: [{ scale: 0.97 }] },
+  statBar: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, ...shadow.card },
+  statDivider: { width: 1, backgroundColor: colors.border },
+  statCell: { flex: 1, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8, gap: 2 },
+  statValue: { fontSize: 20, fontWeight: '700', color: colors.ink, letterSpacing: -0.4 },
+  statLabel: { fontSize: 11.5, color: colors.muted, textAlign: 'center' },
   link: { fontSize: 13, fontWeight: '600', color: colors.primary },
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 18,
@@ -447,9 +486,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  chipActive: { backgroundColor: colors.ink, borderColor: colors.ink },
+  chipActive: { backgroundColor: colors.primarySoft, borderColor: colors.primary },
   chipText: { fontSize: 13, fontWeight: '600', color: colors.ink },
   chipCount: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   chipCountText: { fontSize: 11, fontWeight: '700', color: colors.primary },
-  listItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  listItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, marginHorizontal: -8, paddingHorizontal: 8, borderRadius: radius.md },
+  listItemPressed: { backgroundColor: '#EEF2F7' },
 });

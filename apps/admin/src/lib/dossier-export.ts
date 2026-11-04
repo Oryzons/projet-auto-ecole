@@ -247,7 +247,7 @@ function informationText(application: ExportableApplication, missingFiles: strin
 
 function readmeText() {
   return [
-    "Export Virage",
+    "Export Shift",
     "",
     "Ce dossier contient un sous-dossier par élève.",
     "Chaque sous-dossier inclut informations.txt et, lorsqu'ils existent, les fichiers de l'élève dans documents/.",

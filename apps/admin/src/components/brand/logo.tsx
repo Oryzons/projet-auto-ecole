@@ -1,37 +1,55 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useId } from "react";
 
-import { LOGO_PATHS, LOGO_VIEWBOX } from "@/lib/logo-paths";
+import { LOGO_BOTTOM, LOGO_GRADIENT, LOGO_TILE_RADIUS, LOGO_TOP, LOGO_VIEWBOX } from "@virage/shared/brand";
 import { cn } from "@/lib/utils";
 
-/** Marque seule : le « V » de Virage, en `currentColor`. */
+/** Marque seule : la tuile bleue et le S en deux barres. `inverse` : tuile blanche, S bleu. */
 export function LogoMark({
   className,
   animated = false,
+  inverse = false,
 }: {
   className?: string;
   animated?: boolean;
+  inverse?: boolean;
 }) {
   const reduce = useReducedMotion();
   const play = animated && !reduce;
+  const id = useId();
+  const tile = inverse ? "#ffffff" : `url(#${id}-g)`;
+  const ink = inverse ? "#2d50f5" : "#ffffff";
   return (
-    <svg viewBox={LOGO_VIEWBOX} className={cn("h-8 w-auto text-primary", className)} aria-hidden>
-      {LOGO_PATHS.sails.map((d, index) => (
-        <motion.path
-          key={index}
-          d={d}
-          fill="currentColor"
-          initial={play ? { opacity: 0, y: 6 } : false}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: index * 0.08 }}
-        />
-      ))}
+    <svg viewBox={LOGO_VIEWBOX} className={cn("size-8 shrink-0", className)} aria-hidden>
+      <defs>
+        <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={LOGO_GRADIENT[0]} />
+          <stop offset="1" stopColor={LOGO_GRADIENT[1]} />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx={LOGO_TILE_RADIUS} fill={tile} />
+      {/* les deux voies glissent en place, comme un changement de voie */}
+      <motion.path
+        d={LOGO_TOP}
+        fill={ink}
+        initial={play ? { x: -14, opacity: 0 } : false}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <motion.path
+        d={LOGO_BOTTOM}
+        fill={ink}
+        initial={play ? { x: 14, opacity: 0 } : false}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, delay: play ? 0.12 : 0, ease: [0.22, 1, 0.36, 1] }}
+      />
     </svg>
   );
 }
 
-/** Logo complet : le V et le nom, comme dans l'app mobile. */
+/** Logo complet : la marque et le nom, comme dans l'app mobile. */
 export function Logo({
   className,
   showText = true,
@@ -45,7 +63,7 @@ export function Logo({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", tone === "inverse" ? "text-white" : "text-[#1c2430]", className)}>
-      <LogoMark className={cn("h-7 w-auto", tone === "inverse" && "text-white")} animated={animated} />
+      <LogoMark className="size-8" animated={animated} inverse={tone === "inverse"} />
       {showText && (
         <span
           className={cn(
@@ -53,7 +71,7 @@ export function Logo({
             tone === "inverse" ? "text-white" : "text-foreground",
           )}
         >
-          virage
+          shift
         </span>
       )}
     </span>

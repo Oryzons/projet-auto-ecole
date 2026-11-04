@@ -261,3 +261,142 @@ html.is-leaving body {
     opacity 0.32s var(--ease-out-expo),
     transform 0.32s var(--ease-out-expo);
 }
+
+/* ---------- plan isométrique ---------- */
+.plan-lift {
+  transition: transform 0.22s var(--ease-out-expo, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.plan-zone {
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+.plan-zone:focus-visible .plan-lift {
+  transform: translateY(-8px);
+}
+.plan-selected {
+  animation: plan-selected 2.4s ease-in-out infinite;
+}
+.plan-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: plan-pulse 2s ease-out infinite;
+}
+.plan-traffic {
+  animation-name: plan-drive;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes plan-selected {
+  0%, 100% { stroke-opacity: 0.9; }
+  50% { stroke-opacity: 0.45; }
+}
+@keyframes plan-pulse {
+  from { transform: scale(1); opacity: 0.45; }
+  to { transform: scale(1.7); opacity: 0; }
+}
+@keyframes plan-drive {
+  0% { transform: translate(0, 0); opacity: 0; }
+  4%, 94% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+}
+/* vie du plan : pas, bulles, voyants (figés quand une fenêtre recouvre le plan) */
+.plan-paused * {
+  animation-play-state: paused !important;
+}
+.plan-breathe {
+  animation: plan-breathe 3.2s ease-in-out infinite;
+}
+.plan-step {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: plan-step 0.55s ease-in-out infinite alternate;
+}
+.plan-step-b {
+  animation-delay: -0.55s;
+}
+.plan-bubble {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: plan-bubble 7s ease-out infinite;
+}
+.plan-blink {
+  animation: plan-blink 1.6s steps(2, jump-none) infinite;
+}
+.plan-glow {
+  animation: plan-glow 4s ease-in-out infinite;
+}
+@keyframes plan-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.8px); }
+}
+@keyframes plan-step {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.72); }
+}
+@keyframes plan-bubble {
+  0%, 8% { opacity: 0; transform: translateY(4px) scale(0.6); }
+  14%, 44% { opacity: 1; transform: translateY(0) scale(1); }
+  52%, 100% { opacity: 0; transform: translateY(-3px) scale(0.9); }
+}
+@keyframes plan-blink {
+  0% { opacity: 1; }
+  100% { opacity: 0.25; }
+}
+@keyframes plan-glow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-selected, .plan-pulse, .plan-traffic, .plan-breathe, .plan-step, .plan-blink, .plan-glow { animation: none; }
+  .plan-bubble { animation: none; opacity: 0; }
+  .plan-lift { transition: none; }
+}
+
+/* Arrivée après la connexion : le plan est en place, les éléments viennent se poser autour */
+[data-intro] .intro-top,
+[data-intro] .intro-bottom,
+[data-intro] .intro-left,
+[data-intro] .intro-right {
+  animation: intro-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--intro-delay, 0ms);
+}
+[data-intro] .intro-top { --intro-from: 0 -18px; }
+[data-intro] .intro-bottom { --intro-from: 0 18px; }
+[data-intro] .intro-left { --intro-from: -18px 0; --intro-delay: 420ms; }
+[data-intro] .intro-right { --intro-from: 18px 0; --intro-delay: 400ms; }
+[data-intro] .plan-badge { animation: intro-fade 0.5s ease-out 0.55s both; }
+@keyframes intro-in {
+  from { opacity: 0; translate: var(--intro-from); }
+}
+@keyframes intro-fade {
+  from { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-intro] * { animation: none !important; }
+}
+
+/* Déconnexion depuis le plan : tout ce qui l'entoure s'en va, le plan reste seul */
+html[data-outro] .intro-top,
+html[data-outro] .intro-bottom,
+html[data-outro] .intro-left,
+html[data-outro] .intro-right {
+  animation: outro-out 0.45s cubic-bezier(0.55, 0, 0.75, 0) both;
+}
+html[data-outro] .intro-top { --intro-from: 0 -18px; }
+html[data-outro] .intro-bottom { --intro-from: 0 18px; }
+html[data-outro] .intro-left { --intro-from: -18px 0; }
+html[data-outro] .intro-right { --intro-from: 18px 0; }
+html[data-outro] .plan-badge,
+html[data-outro] [data-page-popup] {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+html[data-outro] [data-slot="dialog-content"],
+html[data-outro] [data-slot="popover-content"],
+html[data-outro] [data-slot="dropdown-menu-content"] {
+  display: none;
+}
+@keyframes outro-out {
+  to { opacity: 0; translate: var(--intro-from); }
+}

@@ -133,7 +133,7 @@ export async function GET() {
   return new NextResponse(JSON.stringify(data, null, 2), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="virage-mes-donnees-${day}.json"`,
+      "Content-Disposition": `attachment; filename="shift-mes-donnees-${day}.json"`,
       "Cache-Control": "no-store",
     },
   });

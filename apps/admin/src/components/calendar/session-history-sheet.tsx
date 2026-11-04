@@ -8,7 +8,8 @@ import { useMemo, useState } from "react";
 import { EASE_OUT } from "@/components/motion/tokens";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SidePanel } from "@/components/ui/side-panel";
 import { cn } from "@/lib/utils";
 
 import { DateTile, formatTimeRange, isPast } from "./calendar-shared";
@@ -144,8 +145,7 @@ export function SessionHistorySheet({ sessions, open, onOpenChange }: { sessions
   const called = past.filter((s) => s.attendanceClosedAt).length;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 sm:max-w-md">
+    <SidePanel open={open} onOpenChange={onOpenChange}>
         <SheetHeader className="border-b border-border px-5 pt-5 pb-4">
           <SheetTitle className="flex items-center gap-2">
             <History className="size-5 text-primary" /> Historique des séances
@@ -181,7 +181,6 @@ export function SessionHistorySheet({ sessions, open, onOpenChange }: { sessions
             </ul>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+    </SidePanel>
   );
 }

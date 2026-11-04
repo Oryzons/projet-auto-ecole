@@ -70,7 +70,7 @@ export default function SuppressionCompte() {
 
       <BottomSheet open={confirm} onClose={() => setConfirm(false)}>
         <Text style={s.sheetTitle}>Dernière confirmation</Text>
-        <Text style={s.sheetText}>Votre compte Virage sera supprimé immédiatement. Cette action ne peut pas être annulée.</Text>
+        <Text style={s.sheetText}>Votre compte Shift sera supprimé immédiatement. Cette action ne peut pas être annulée.</Text>
         <Pressable
           onPress={() => {
             setConfirm(false);

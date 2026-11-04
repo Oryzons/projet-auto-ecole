@@ -21,6 +21,7 @@ const PAGE_DATA: Record<string, (client: QueryClient) => Promise<unknown>> = {
   "/admin/calendar": (client) =>
     client.prefetchQuery({ queryKey: ["sessions", "staff"], queryFn: async () => (await getJson("/api/sessions")).sessions }),
   "/admin/finances": (client) => client.prefetchQuery({ queryKey: ["finances"], queryFn: () => getJson("/api/finances") }),
+  "/admin/vehicles": (client) => client.prefetchQuery({ queryKey: ["vehicles"], queryFn: () => getJson("/api/vehicles") }),
   "/admin/messages": (client) => client.prefetchQuery({ queryKey: ["conversations"], queryFn: () => getJson("/api/messages/conversations") }),
 };
 

@@ -58,7 +58,7 @@ export function OceanPanel() {
 
       <div className="my-auto max-w-md py-12">
         <motion.p {...rise(0.1)} className="text-[13px] font-semibold tracking-[0.1em] text-white/70 uppercase">
-          Auto-école Virage
+          Auto-école Shift
         </motion.p>
         <motion.h1 {...rise(0.18)} className="mt-3 text-[40px] leading-[1.08] font-semibold tracking-[-0.03em] xl:text-[46px]">
           Vos élèves, de l'inscription jusqu'au permis.

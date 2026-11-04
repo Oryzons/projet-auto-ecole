@@ -38,7 +38,7 @@ export default function InscriptionObjectif() {
       footer={
         <View style={{ gap: 12 }}>
           <CtaButton
-            label="Créer mon espace Virage"
+            label="Créer mon espace Shift"
             icon={Check}
             onPress={() => router.replace({ pathname: '/inscription/confirmee', params: { ...params, objectif: goal } })}
           />

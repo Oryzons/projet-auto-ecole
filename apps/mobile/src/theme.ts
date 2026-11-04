@@ -1,5 +1,5 @@
 /**
- * Virage — design system
+ * Shift — design system
  * Couleurs reprises des maquettes Figma : un bleu électrique pour l'action, un bleu nuit
  * pour le texte, des fonds blancs légèrement bleutés. Les couleurs d'état restent discrètes.
  * Toutes les couleurs de l'app passent par ce fichier.

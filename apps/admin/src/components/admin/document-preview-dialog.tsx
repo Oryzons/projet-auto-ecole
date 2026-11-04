@@ -4,7 +4,8 @@ import { Check, Download, ExternalLink, FileText, Loader2, X } from "lucide-reac
 import { useState } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel } from "@/components/ui/side-panel";
 import { DocumentStatusBadge } from "@/components/ui/status-badge";
 import { DocumentStatus } from "@/lib/db/client";
 import { cn, formatDay } from "@/lib/utils";
@@ -42,14 +43,13 @@ export function DocumentPreviewDialog({
   const previewable = image || (doc.mimeType ? doc.mimeType === "application/pdf" : extension === "pdf");
 
   return (
-    <Dialog
+    <SidePanel
       open={open}
       onOpenChange={(next) => {
         if (!next) setLoaded(false);
         onOpenChange(next);
       }}
     >
-      <DialogContent className="flex h-[min(88svh,920px)] max-w-4xl flex-col overflow-hidden p-0">
         <div className="flex items-start gap-3 border-b border-border px-5 py-4 pr-14 sm:px-6">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
             <FileText className="size-5" />
@@ -116,7 +116,6 @@ export function DocumentPreviewDialog({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+    </SidePanel>
   );
 }

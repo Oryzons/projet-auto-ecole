@@ -13,7 +13,8 @@ import { FadeIn } from "@/components/motion";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel } from "@/components/ui/side-panel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, InputWithIcon } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -280,11 +281,9 @@ function InviteDialog({
   onInvited: (result: InviteResult) => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        {open && <InviteForm onDone={() => onOpenChange(false)} onInvited={onInvited} />}
-      </DialogContent>
-    </Dialog>
+    <SidePanel open={open} onOpenChange={onOpenChange} className="overflow-y-auto">
+      {open && <InviteForm onDone={() => onOpenChange(false)} onInvited={onInvited} />}
+    </SidePanel>
   );
 }
 

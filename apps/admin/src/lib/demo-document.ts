@@ -25,7 +25,7 @@ export async function renderDemoDocument(input: { type: DocumentType; fileName: 
     page.drawText(toPdfText(value), { x, y, size, font, color });
 
   page.drawRectangle({ x: 0, y: 782, width: 595, height: 60, color: BLUE });
-  text("virage", 48, 805, 22, bold, rgb(1, 1, 1));
+  text("shift", 48, 805, 22, bold, rgb(1, 1, 1));
   text("Document de démonstration", 400, 808, 11, regular, rgb(1, 1, 1));
 
   text(DOCUMENT_LABELS[input.type], 48, 712, 24, bold);

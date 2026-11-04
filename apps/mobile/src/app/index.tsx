@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/logo';
 import { colors, shadow } from '@/theme';
 
-/** Écran d'accueil « Bienvenue chez Virage », calqué sur la maquette Figma */
+/** Écran d'accueil « Bienvenue chez Shift », calqué sur la maquette Figma */
 export default function Welcome() {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>

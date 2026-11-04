@@ -4,7 +4,7 @@ import { seed } from "./db/seed";
 const one = (model: string, from: string, to = "id") => ({ model, kind: "one" as const, from, to });
 const many = (model: string, to: string, from = "id") => ({ model, kind: "many" as const, from, to });
 
-/** Même schéma que Virage (prisma/schema.prisma), adapté au permis de conduire */
+/** Même schéma que Shift (prisma/schema.prisma), adapté au permis de conduire */
 const models: Record<string, ModelDef> = {
   organization: {
     relations: {
@@ -36,6 +36,8 @@ const models: Record<string, ModelDef> = {
       city: null,
       dateOfBirth: null,
       oedippNumber: null,
+      lastSeenAt: null,
+      previousSeenAt: null,
     }),
   },
   permitApplication: {
@@ -46,6 +48,9 @@ const models: Record<string, ModelDef> = {
       payments: many("payment", "applicationId"),
       messages: many("message", "applicationId"),
       events: many("applicationEvent", "applicationId"),
+      instructor: one("user", "instructorId"),
+      lessons: many("drivingLesson", "applicationId"),
+      exams: many("exam", "applicationId"),
     },
     compound: { candidateId_organizationId: ["candidateId", "organizationId"] },
     defaults: () => ({
@@ -59,6 +64,8 @@ const models: Record<string, ModelDef> = {
       briefingSeenAt: null,
       totalAmount: null,
       archivedAt: null,
+      instructorId: null,
+      hoursPlanned: 20,
     }),
   },
   document: {
@@ -124,6 +131,55 @@ const models: Record<string, ModelDef> = {
       attendanceClosedAt: null,
     }),
   },
+  vehicle: {
+    relations: { lessons: many("drivingLesson", "vehicleId") },
+    defaults: () => ({
+      status: "AVAILABLE",
+      notes: null,
+      fuel: "PETROL",
+      permitCategory: "B",
+      dualControls: true,
+      color: null,
+      vin: null,
+      firstRegistrationAt: null,
+      nextServiceMileage: null,
+      insurer: null,
+      insurancePolicy: null,
+      bodyType: null,
+      photos: [],
+      documents: [],
+      journal: [],
+    }),
+  },
+  drivingLesson: {
+    relations: {
+      application: one("permitApplication", "applicationId"),
+      instructor: one("user", "instructorId"),
+      vehicle: one("vehicle", "vehicleId"),
+    },
+    defaults: () => ({ durationMinutes: 60, status: "PLANNED", vehicleId: null, notes: null, report: null }),
+  },
+  exam: {
+    relations: { application: one("permitApplication", "applicationId") },
+    defaults: () => ({ result: "PENDING", location: null }),
+  },
+  task: {
+    relations: { assignee: one("user", "assigneeId") },
+    defaults: () => ({
+      description: null,
+      assigneeId: null,
+      assigneeIds: [],
+      links: [],
+      dueAt: null,
+      priority: "NORMAL",
+      status: "TODO",
+      entityType: null,
+      entityId: null,
+      entityLabel: null,
+      history: [],
+      completedAt: null,
+    }),
+  },
   sessionRegistration: {
     relations: {
       session: one("theorySession", "sessionId"),
@@ -181,6 +237,10 @@ type Models = {
   applicationEvent: Delegate;
   theorySession: Delegate;
   sessionRegistration: Delegate;
+  vehicle: Delegate;
+  drivingLesson: Delegate;
+  exam: Delegate;
+  task: Delegate;
 };
 type Client = Models & {
   $transaction<T>(fn: (tx: Models) => Promise<T>): Promise<T>;
@@ -190,13 +250,16 @@ type Client = Models & {
 };
 
 // une seule base pour tout le serveur, conservée entre deux rechargements à chaud
-const globalForDb = globalThis as unknown as { virageDb?: Store };
+// si les modèles changent pendant que le serveur tourne, la base de démo est recréée
+const globalForDb = globalThis as unknown as { virageDb?: Store; virageDbSchema?: string };
+const schema = JSON.stringify(Object.entries(models).map(([name, def]) => [name, Object.keys(def.relations ?? {}), Object.keys(def.defaults?.() ?? {})]));
 
 function getStore() {
-  if (!globalForDb.virageDb) {
+  if (!globalForDb.virageDb || globalForDb.virageDbSchema !== schema) {
     const store = new Store(models);
     seed(store);
     globalForDb.virageDb = store;
+    globalForDb.virageDbSchema = schema;
   }
   return globalForDb.virageDb;
 }

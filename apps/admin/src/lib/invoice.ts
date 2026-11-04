@@ -175,7 +175,7 @@ export async function buildInvoicePdf(input: InvoiceInput): Promise<Uint8Array> 
     draw("TVA non applicable, article 293 B du CGI.", 48, 110, { size: 9, color: muted });
   }
   page.drawLine({ start: { x: 48, y: 90 }, end: { x: right, y: 90 }, thickness: 1, color: line });
-  draw(`${sellerName} · Document édité par Virage`, 48, 72, { size: 9, color: muted });
+  draw(`${sellerName} · Document édité par Shift`, 48, 72, { size: 9, color: muted });
 
   return doc.save();
 }

@@ -1,0 +1,113 @@
+import type { Tone } from "@/lib/crm";
+
+/** Zones du plan, dans l'ordre de la barre de navigation par zones. */
+export const ZONE_IDS = ["accueil", "inscriptions", "administratif", "code", "planning", "parc", "examens", "comptabilite", "communication"] as const;
+export type ZoneId = (typeof ZONE_IDS)[number];
+
+/** Catégorie de tâche rattachée à chaque zone (l'accueil reprend toutes les tâches en retard). */
+export const ZONE_TASK_CATEGORY: Record<ZoneId, string | null> = {
+  accueil: null,
+  inscriptions: "INSCRIPTION",
+  administratif: "ADMIN",
+  code: "CODE",
+  planning: "PLANNING",
+  parc: "VEHICLE",
+  examens: "EXAM",
+  comptabilite: "PAYMENT",
+  communication: "COMMUNICATION",
+};
+
+export type PlanMetric = { label: string; value: string | number; tone: Tone; href?: string };
+
+export type PlanItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+  tone: Tone;
+  badge?: string;
+  /** Lien vers une page (fiche élève, messages…) */
+  href?: string;
+  /** Détail affiché dans le panneau, sans quitter le plan */
+  detail?: { title: string; rows: { label: string; value: string; tone?: Tone }[]; note?: string };
+};
+
+export type PlanTask = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  dueAt: string | null;
+  tone: Tone;
+  assignee: string | null;
+  entityLabel: string | null;
+  href: string | null;
+  /** tous les élèves et véhicules liés */
+  links?: { label: string; href: string | null }[];
+};
+
+/** Journée de conduite affichée dans le panneau Planning du plan. */
+export type PlanSchedule = {
+  instructors: { id: string; firstName: string; lastName: string }[];
+  lessons: {
+    id: string;
+    startsAt: string;
+    endsAt: string;
+    status: string;
+    student: string;
+    instructorId: string | null;
+    vehicle: string | null;
+  }[];
+  /** leçons annulées ces 7 derniers jours */
+  cancelled: number;
+  week: number;
+};
+
+/** Examens affichés dans le panneau Espace examens du plan. */
+export type PlanExams = {
+  upcoming: { id: string; date: string; kind: string; location: string | null; student: string; href: string }[];
+  /** élèves prêts pour l'examen pratique, sans date */
+  ready: { id: string; student: string; hours: number; href: string }[];
+  /** résultats des 60 derniers jours, du plus récent au plus ancien */
+  recent: { id: string; date: string; kind: string; student: string; passed: boolean; href: string }[];
+  passRate: number | null;
+};
+
+/** Inscriptions affichées dans le panneau Inscriptions du plan. */
+export type PlanSignups = {
+  /** nouveaux dossiers sur 7 jours */
+  week: number;
+  /** dossiers pas encore payés */
+  inProgress: number;
+  /** part des inscrits des 30 derniers jours déjà payés, en % */
+  conversion: number | null;
+  /** parcours du dossier, de l'inscription au paiement */
+  steps: { status: string; label: string; count: number; href: string }[];
+  recent: { id: string; createdAt: string; student: string; permit: string; stage: string; href: string }[];
+  /** dossiers sans avancée depuis plus de 7 jours */
+  stalled: { id: string; student: string; days: number; reason: string; href: string }[];
+};
+
+export type PlanZone = {
+  id: ZoneId;
+  title: string;
+  subtitle: string;
+  /** Nombre affiché sur le badge du plan */
+  count: number;
+  countLabel: string;
+  tone: Tone;
+  metrics: PlanMetric[];
+  itemsTitle: string;
+  items: PlanItem[];
+  tasks: PlanTask[];
+  page: { label: string; href: string };
+  schedule?: PlanSchedule;
+  exams?: PlanExams;
+  signups?: PlanSignups;
+};
+
+export type PlanData = {
+  generatedAt: string;
+  kpis: PlanMetric[];
+  zones: PlanZone[];
+};
+

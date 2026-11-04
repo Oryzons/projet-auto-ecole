@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { RemcGrid } from '@/components/remc';
-import { Avatar, Badge, Button, Card, Chips, Divider, Progress, Row, Screen, Stat, TopBar } from '@/components/ui';
+import { Avatar, Badge, Button, Card, Chips, Divider, Progress, Row, Screen, Stat, StatBar, TopBar } from '@/components/ui';
 import { adminStudents, docStatus, documents, invoices, student } from '@/data/mock';
 import { colors, font } from '@/theme';
 
@@ -68,10 +68,10 @@ export default function AdminFicheEleve() {
 
       {tab === 'paiements' ? (
         <>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
+          <StatBar>
             <Stat label="Réglé" value={`${student.balance.paid} €`} tone="success" hint="2 échéances sur 3" />
             <Stat label="Reste dû" value={`${s.balance} €`} tone={s.balance ? 'danger' : 'success'} hint={s.balance ? 'Échéance le 21 nov.' : 'À jour'} />
-          </View>
+          </StatBar>
           <Card style={{ paddingVertical: 4 }}>
             {invoices.map((inv, i) => (
               <View key={inv.id}>

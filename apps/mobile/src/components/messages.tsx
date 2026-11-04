@@ -111,7 +111,7 @@ export function Inbox({ basePath, intro, tab = false }: { basePath: string; intr
             { key: 'all', label: 'Toutes' },
             { key: 'unread', label: 'Non lues', count: unreadCount },
             { key: 'moniteurs', label: 'Moniteurs' },
-            { key: 'equipe', label: 'Équipe Virage' },
+            { key: 'equipe', label: 'Équipe Shift' },
           ]}
         />
       </Animated.View>

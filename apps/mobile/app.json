@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Virage",
-    "slug": "virage-auto-ecole",
+    "name": "Shift",
+    "slug": "mathis",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -32,11 +32,30 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#2D50F5"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "2de676dd-dc55-4673-99ea-e93f7828d43b"
+      }
+    },
+    "owner": "oryzons-sys"
   }
 }

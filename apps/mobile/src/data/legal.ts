@@ -10,7 +10,7 @@ export const legalDocs: Record<LegalDoc, Doc> = {
     short: 'CGV',
     updated: '1er septembre 2026',
     sections: [
-      { heading: 'Objet', body: 'Les présentes conditions encadrent la vente des formations au permis de conduire proposées par Virage, auto-école agréée.' },
+      { heading: 'Objet', body: 'Les présentes conditions encadrent la vente des formations au permis de conduire proposées par Shift, auto-école agréée.' },
       { heading: 'Tarifs et formules', body: 'Les prix sont indiqués TTC. Le détail de chaque formule (heures de conduite, accès au code, frais de présentation) figure dans le contrat de formation.' },
       { heading: 'Paiement', body: 'Le règlement peut être effectué comptant ou en 3 ou 4 fois sans frais. Le financement par le permis à 1 € par jour et le CPF est accepté.' },
       { heading: 'Rétractation', body: 'Vous disposez de 14 jours après la signature du contrat pour vous rétracter, sans justification ni frais.' },
@@ -22,7 +22,7 @@ export const legalDocs: Record<LegalDoc, Doc> = {
     short: 'CGU',
     updated: '1er septembre 2026',
     sections: [
-      { heading: 'Accès au service', body: 'L’application Virage est réservée aux élèves, moniteurs et personnels de l’auto-école disposant d’un compte.' },
+      { heading: 'Accès au service', body: 'L’application Shift est réservée aux élèves, moniteurs et personnels de l’auto-école disposant d’un compte.' },
       { heading: 'Compte et identifiants', body: 'Vous êtes responsable de la confidentialité de votre mot de passe. Signalez-nous toute utilisation non autorisée.' },
       { heading: 'Bon usage', body: 'Les messages échangés doivent rester courtois. Tout contenu abusif peut entraîner la suspension du compte.' },
       { heading: 'Disponibilité', body: 'Nous faisons notre possible pour que l’application soit accessible en continu, hors opérations de maintenance.' },
@@ -44,8 +44,8 @@ export const legalDocs: Record<LegalDoc, Doc> = {
     short: 'Mentions légales',
     updated: '1er septembre 2026',
     sections: [
-      { heading: 'Éditeur', body: 'Virage SAS, auto-école agréée, 12 rue Garibaldi, 69007 Lyon. Agrément préfectoral n° E 26 069 0000 0.' },
-      { heading: 'Contact', body: 'contact@virage-auto.fr · 04 78 00 00 00' },
+      { heading: 'Éditeur', body: 'Shift SAS, auto-école agréée, 12 rue Garibaldi, 69007 Lyon. Agrément préfectoral n° E 26 069 0000 0.' },
+      { heading: 'Contact', body: 'contact@shift-auto.fr · 04 78 00 00 00' },
       { heading: 'Hébergement', body: 'Les données sont hébergées en France, chez un prestataire certifié HDS.' },
     ],
   },

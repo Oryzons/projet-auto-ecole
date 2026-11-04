@@ -8,7 +8,8 @@ import { toast } from "sonner";
 
 import { FormAlert } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel } from "@/components/ui/side-panel";
 import { Field, Input, InputWithIcon } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cleanOedipp, emptyCandidateForm, isValidBirthDate, isValidOedipp, OEDIPP_ERROR, OEDIPP_LENGTH, type CandidateFormData } from "@/lib/candidate-schema";
@@ -134,7 +135,7 @@ function CandidateForm({
   const priceLocked = target?.paid ?? false;
 
   return (
-    <form onSubmit={submit} noValidate>
+    <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
       <DialogHeader>
         <DialogTitle>{editing ? "Modifier l'élève" : "Nouvel élève"}</DialogTitle>
         <DialogDescription>
@@ -144,7 +145,7 @@ function CandidateForm({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="scroll-area max-h-[min(62vh,560px)] space-y-6 overflow-y-auto px-6 pt-5 pb-2">
+      <div className="scroll-area min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pt-5 pb-2">
         <AnimatePresence initial={false}>{error && <FormAlert key="error">{error}</FormAlert>}</AnimatePresence>
 
         <section className="space-y-4">
@@ -320,8 +321,7 @@ export function CandidateFormDialog({
   onSaved: (applicationId: string) => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+    <SidePanel open={open} onOpenChange={onOpenChange}>
         {open && (
           <CandidateForm
             key={target?.id ?? "new"}
@@ -336,7 +336,6 @@ export function CandidateFormDialog({
             }}
           />
         )}
-      </DialogContent>
-    </Dialog>
+    </SidePanel>
   );
 }

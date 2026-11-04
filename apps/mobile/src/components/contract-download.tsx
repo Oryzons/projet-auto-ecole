@@ -9,7 +9,7 @@ import { colors } from '@/theme';
 
 type Stage = 'idle' | 'loading' | 'done';
 
-const fileName = `Contrat-Virage-${student.firstName}-${student.lastName}.pdf`;
+const fileName = `Contrat-Shift-${student.firstName}-${student.lastName}.pdf`;
 
 /** Bouton de téléchargement du contrat : progression animée, puis ouverture du PDF */
 export function ContractDownload({ getHtml, signed }: { getHtml: () => string; signed?: boolean }) {

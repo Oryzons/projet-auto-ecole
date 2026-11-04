@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { findNavItem, navForRole, type NavConfig } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "./mobile-nav";
+import { ActivityWatcher } from "./activity-watcher";
 import { NavigationProgress } from "./navigation-progress";
 import { RouteWarmup } from "./route-warmup";
 import { Sidebar } from "./sidebar";
@@ -84,6 +85,7 @@ export function AppShell({
     <TooltipProvider delay={300}>
       <NavigationProgress>
         <RouteWarmup config={config} />
+        <ActivityWatcher />
         <div
           className={cn(
             "min-h-svh bg-background",

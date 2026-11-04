@@ -3,7 +3,7 @@ import { Bell, CarFront, LockKeyhole, LogOut, Smartphone } from 'lucide-react-na
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Avatar, Card, Divider, ListItem, Row, Screen, Section, Stat, Toggle, TopBar } from '@/components/ui';
+import { Avatar, Card, Divider, ListItem, Row, Screen, Section, Stat, StatBar, Toggle, TopBar } from '@/components/ui';
 import { instructor } from '@/data/mock';
 import { colors, font } from '@/theme';
 
@@ -20,10 +20,10 @@ export default function MoniteurProfil() {
           <Text style={font.small}>{instructor.licence}</Text>
         </View>
       </Row>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      <StatBar>
         <Stat label="Heures ce mois" value="112 h" hint="+8 % vs sept." tone="success" />
         <Stat label="Taux de réussite" value="78 %" hint="sur 12 mois" tone="primary" />
-      </View>
+      </StatBar>
       <Section title="Véhicule attitré">
         <Card>
           <ListItem icon={CarFront} title="Renault Clio V" subtitle="GH-412-KL · Manuelle · double commande" />

@@ -1,5 +1,5 @@
 /**
- * Modèles des emails Virage.
+ * Modèles des emails Shift.
  *
  * Chaque fonction renvoie l'objet, le HTML et les pièces jointes éventuelles.
  * Le HTML suit les contraintes des messageries (Gmail, Outlook, Apple Mail) :
@@ -213,8 +213,8 @@ function layout({
         <!-- En-tête -->
         <tr><td bgcolor="${C.brand}" style="background: ${C.brand}; background-image: linear-gradient(135deg, ${C.brand} 0%, ${C.brandDark} 100%); border-radius: 20px 20px 0 0; padding: 20px 28px;">
           <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
-            <td style="vertical-align: middle;"><img src="cid:${LOGO_CID}" width="30" height="31" alt="" style="display: block; border: 0; width: 30px; height: 31px;"></td>
-            <td style="vertical-align: middle; padding-left: 10px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #ffffff;">Virage</td>
+            <td style="vertical-align: middle;"><img src="cid:${LOGO_CID}" width="30" height="30" alt="" style="display: block; border: 0; width: 30px; height: 30px;"></td>
+            <td style="vertical-align: middle; padding-left: 10px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #ffffff;">Shift</td>
           </tr></table>
         </td></tr>
 
@@ -235,7 +235,7 @@ function layout({
         <!-- Pied de page -->
         <tr><td style="padding: 22px 12px 0; text-align: center; font-size: 12px; line-height: 1.7; color: ${C.muted};">
           ${footerNote ? `${footerNote}<br>` : ""}
-          <a href="${appUrl("/")}" target="_blank" style="color: ${C.muted}; text-decoration: underline;">Virage</a> · Votre dossier de permis de conduire, simplement.<br>
+          <a href="${appUrl("/")}" target="_blank" style="color: ${C.muted}; text-decoration: underline;">Shift</a> · Votre dossier de permis de conduire, simplement.<br>
           Cet email est envoyé automatiquement, merci de ne pas y répondre.
         </td></tr>
 
@@ -282,7 +282,7 @@ export function candidateInviteEmail(name: string, email: string, activationLink
       eyebrow: "Votre dossier",
       title: "Votre dossier permis de conduire est ouvert",
       preheader: "Choisissez votre mot de passe pour accéder à votre espace.",
-      body: `${p(`Bonjour ${escapeHtml(name)}, votre auto-école a créé votre dossier sur Virage. Il ne reste qu'à choisir votre mot de passe.`)}
+      body: `${p(`Bonjour ${escapeHtml(name)}, votre auto-école a créé votre dossier sur Shift. Il ne reste qu'à choisir votre mot de passe.`)}
         ${button("Activer mon compte", activationLink)}
         ${details([
           ["Identifiant", escapeHtml(email)],
@@ -296,14 +296,14 @@ export function candidateInviteEmail(name: string, email: string, activationLink
 export function memberInviteEmail(name: string, email: string, roleLabel: string, activationLink: string): EmailMessage {
   const moniteur = roleLabel.toLowerCase().includes("moniteur");
   return {
-    subject: "Vous rejoignez l'équipe sur Virage",
+    subject: "Vous rejoignez l'équipe sur Shift",
     html: layout({
       theme: "teal",
       icon: moniteur ? "⛵" : "🧭",
       eyebrow: "Invitation",
       title: "Vous rejoignez l'équipe",
-      preheader: "Activez votre compte Virage.",
-      body: `${p(`Bonjour ${escapeHtml(name)}, votre auto-école vous a ajouté à son équipe sur Virage.`)}
+      preheader: "Activez votre compte Shift.",
+      body: `${p(`Bonjour ${escapeHtml(name)}, votre auto-école vous a ajouté à son équipe sur Shift.`)}
         ${details(
           [
             ["Rôle", escapeHtml(roleLabel)],
@@ -538,7 +538,7 @@ function icsAttachment(info: SessionEmailInfo): EmailAttachment {
   const content = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Virage//Cours theorique//FR",
+    "PRODID:-//Shift//Cours theorique//FR",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

@@ -1,22 +1,44 @@
-import { Bell, CalendarClock, CreditCard, FileCheck, Mail, Megaphone, MessageCircle, Moon, Smartphone } from 'lucide-react-native';
-import { Text, View } from 'react-native';
+import { Bell, BellRing, CalendarClock, CreditCard, FileCheck, Mail, Megaphone, MessageCircle, Moon, Smartphone } from 'lucide-react-native';
+import { useState } from 'react';
+import { Platform, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { MenuGroup, MenuRow, PageTitle, Segmented, Switch, settingsStyles as s } from '@/components/settings';
 import { Screen, TopBar } from '@/components/ui';
+import { sendTestNotification } from '@/data/phone-notifications';
 import { bind, setPrefs, usePrefs } from '@/data/preferences';
 import { colors } from '@/theme';
 
 /** Réglages des notifications */
 export default function ReglagesNotifications() {
   const p = usePrefs();
+  const [test, setTest] = useState<'idle' | 'sent' | 'refused'>('idle');
+  const onTest = async () => {
+    const ok = await sendTestNotification(5);
+    setTest(ok ? 'sent' : 'refused');
+  };
   return (
     <Screen>
       <TopBar title="Notifications" />
-      <PageTitle title="Restez informé." text="Choisissez comment et quand Virage vous prévient." />
+      <PageTitle title="Restez informé." text="Choisissez comment et quand Shift vous prévient." />
 
       <MenuGroup title="Canaux" delay={60}>
         <MenuRow icon={Bell} title="Notifications push" subtitle="Sur ce téléphone" right={<Switch {...bind(p, 'push')} />} />
+        <MenuRow
+          icon={BellRing}
+          tone="success"
+          title="Envoyer une notification test"
+          subtitle={
+            Platform.OS === 'web'
+              ? 'Disponible sur le téléphone'
+              : test === 'sent'
+                ? 'Arrive dans 5 secondes : verrouillez le téléphone'
+                : test === 'refused'
+                  ? 'Autorisez Shift dans Réglages › Notifications'
+                  : 'Pour vérifier que tout fonctionne'
+          }
+          onPress={onTest}
+        />
         <MenuRow icon={Mail} title="E-mail" subtitle="lucas.martin@email.fr" right={<Switch {...bind(p, 'email')} />} />
         <MenuRow icon={Smartphone} title="SMS" subtitle="06 12 34 56 78" right={<Switch {...bind(p, 'sms')} />} />
       </MenuGroup>

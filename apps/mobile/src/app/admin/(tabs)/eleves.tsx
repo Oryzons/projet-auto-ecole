@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
 import { Avatar, Badge, Card, Chips, IconButton, Intro, Row, Screen } from '@/components/ui';
-import { adminStudents } from '@/data/mock';
+import { adminKpis, adminStudents } from '@/data/mock';
 import { colors, font, radius } from '@/theme';
 
 const filters = [
@@ -22,7 +22,7 @@ export default function AdminEleves() {
     <Screen withTabBar>
       <Row style={{ justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
-          <Intro title="Élèves" description="186 dossiers actifs" />
+          <Intro title="Élèves" description={`${adminKpis.activeStudents} dossiers actifs`} />
         </View>
         <IconButton icon={Plus} tone="primary" />
       </Row>

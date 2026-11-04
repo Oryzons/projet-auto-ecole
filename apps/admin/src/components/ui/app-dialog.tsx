@@ -49,11 +49,14 @@ export function AppDialogView({
 
   useEffect(() => {
     if (!open) return;
+    // capturé en premier : Échap ferme la confirmation seule, pas le panneau latéral en dessous
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismiss();
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      dismiss();
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [open, dismiss]);
 
   if (typeof document === 'undefined') return null;
@@ -65,7 +68,7 @@ export function AppDialogView({
           <motion.button
             type="button"
             aria-label="Fermer"
-            className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-ink/35"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

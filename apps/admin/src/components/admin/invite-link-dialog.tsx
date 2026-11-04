@@ -5,7 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, useLastValue } from "@/components/ui/side-panel";
 
 export type InviteResult = { name: string; email: string; inviteLink: string; emailSent: boolean };
 
@@ -13,7 +14,9 @@ export type InviteResult = { name: string; email: string; inviteLink: string; em
  * Affiche le lien d'activation après une invitation : l'admin peut le copier
  * ou le partager lui-même (SMS, WhatsApp…), même si l'email n'est pas parti.
  */
-export function InviteLinkDialog({ result, onClose }: { result: InviteResult | null; onClose: () => void }) {
+export function InviteLinkDialog({ result: current, onClose }: { result: InviteResult | null; onClose: () => void }) {
+  // garde le lien affiché pendant que le panneau se referme
+  const result = useLastValue(current, Boolean(current));
   const [copied, setCopied] = useState(false);
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
@@ -32,8 +35,8 @@ export function InviteLinkDialog({ result, onClose }: { result: InviteResult | n
     if (!result) return;
     try {
       await navigator.share({
-        title: "Votre accès Virage",
-        text: `Bonjour ${result.name}, voici votre lien pour activer votre compte Virage :`,
+        title: "Votre accès Shift",
+        text: `Bonjour ${result.name}, voici votre lien pour activer votre compte Shift :`,
         url: result.inviteLink,
       });
     } catch {
@@ -42,8 +45,7 @@ export function InviteLinkDialog({ result, onClose }: { result: InviteResult | n
   }
 
   return (
-    <Dialog open={Boolean(result)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <SidePanel open={Boolean(current)} onOpenChange={(open) => !open && onClose()} className="overflow-y-auto">
         {result && (
           <>
             <DialogHeader>
@@ -85,7 +87,6 @@ export function InviteLinkDialog({ result, onClose }: { result: InviteResult | n
             </DialogFooter>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+    </SidePanel>
   );
 }

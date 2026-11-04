@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Bell, FileCheck, TrendingUp } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 
-import { Badge, Button, Card, Divider, IconButton, ListItem, Row, Screen, Section, Stat } from '@/components/ui';
+import { Badge, Button, Card, Divider, IconButton, ListItem, Row, Screen, Section, Stat, StatBar } from '@/components/ui';
 import { adminKpis, docsToReview, recentActivity, revenueByMonth, school } from '@/data/mock';
 import { colors, font, toneColors } from '@/theme';
 
@@ -44,14 +44,14 @@ export default function AdminDashboard() {
         </View>
       </Card>
 
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      <StatBar>
         <Stat label="Impayés" value={euro(adminKpis.unpaid)} hint={`${adminKpis.unpaidCount} élèves concernés`} tone="danger" />
         <Stat label="Élèves actifs" value={`${adminKpis.activeStudents}`} hint="+11 ce mois" tone="success" />
-      </View>
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      </StatBar>
+      <StatBar>
         <Stat label="Leçons aujourd’hui" value={`${adminKpis.lessonsToday}`} hint="4 moniteurs" tone="primary" />
         <Stat label="Réussite examen" value={`${Math.round(adminKpis.successRate * 100)} %`} hint="Moyenne nationale 59 %" tone="primary" />
-      </View>
+      </StatBar>
 
       <Section title={`Pièces à vérifier (${adminKpis.docsToReview})`} action="Tout voir" onAction={() => router.push('/admin/eleves')}>
         <Card style={{ paddingVertical: 4 }}>

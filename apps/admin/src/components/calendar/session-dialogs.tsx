@@ -9,7 +9,8 @@ import { toast } from "sonner";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SidePanel, useLastValue } from "@/components/ui/side-panel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { DatePicker, timeOptions } from "@/components/ui/date-picker";
@@ -58,22 +59,22 @@ export function SessionFormDialog({
   onOpenChange,
   session,
   defaultDay,
+  defaultTime,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session?: StaffSession | null;
   defaultDay?: string | null;
+  defaultTime?: string | null;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100svh-2rem)] max-w-xl overflow-y-auto">
-        {open && <SessionForm key={session?.id ?? defaultDay ?? "new"} session={session} defaultDay={defaultDay} onDone={() => onOpenChange(false)} />}
-      </DialogContent>
-    </Dialog>
+    <SidePanel open={open} onOpenChange={onOpenChange} className="overflow-y-auto">
+      {open && <SessionForm key={session?.id ?? `${defaultDay}-${defaultTime}`} session={session} defaultDay={defaultDay} defaultTime={defaultTime} onDone={() => onOpenChange(false)} />}
+    </SidePanel>
   );
 }
 
-function SessionForm({ session, defaultDay, onDone }: { session?: StaffSession | null; defaultDay?: string | null; onDone: () => void }) {
+function SessionForm({ session, defaultDay, defaultTime, onDone }: { session?: StaffSession | null; defaultDay?: string | null; defaultTime?: string | null; onDone: () => void }) {
   const queryClient = useQueryClient();
   const editing = Boolean(session);
   const start = session ? new Date(session.startsAt) : null;
@@ -83,7 +84,7 @@ function SessionForm({ session, defaultDay, onDone }: { session?: StaffSession |
   const [form, setForm] = useState({
     title: session?.title ?? "Séance de code",
     date: start ? dayKey(start) : defaultDay && defaultDay >= dayKey(new Date()) ? defaultDay : tomorrow,
-    time: start ? toTimeInput(start) : "09:00",
+    time: start ? toTimeInput(start) : (defaultTime ?? "09:00"),
     durationMinutes: session?.durationMinutes ?? 240,
     location: session?.location ?? "",
     capacity: String(session?.capacity ?? 12),
@@ -203,12 +204,12 @@ export function SessionDetailDialog({
   onOpenChange: (open: boolean) => void;
   onEdit: (session: StaffSession) => void;
 }) {
+  // une autre séance cliquée remplace le contenu, sans refermer le panneau
+  const shown = useLastValue(session, Boolean(session));
   return (
-    <Dialog open={Boolean(session)} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100svh-2rem)] max-w-xl overflow-y-auto">
-        {session && <SessionDetail session={session} onClose={() => onOpenChange(false)} onEdit={onEdit} />}
-      </DialogContent>
-    </Dialog>
+    <SidePanel open={Boolean(session)} onOpenChange={onOpenChange} className="overflow-y-auto">
+      {shown && <SessionDetail key={shown.id} session={shown} onClose={() => onOpenChange(false)} onEdit={onEdit} />}
+    </SidePanel>
   );
 }
 

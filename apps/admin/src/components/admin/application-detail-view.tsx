@@ -38,6 +38,7 @@ import { InviteLinkDialog, type InviteResult } from "@/components/admin/invite-l
 import { TheoryCourseBadge } from "@/components/ui/theory-course-badge";
 import { CandidateFormDialog } from "@/components/admin/candidate-form-dialog";
 import { DocumentPreviewDialog } from "@/components/admin/document-preview-dialog";
+import { ConversationPanel } from "@/components/messages/conversation-panel";
 import { ACCEPTED_FILES } from "@/components/documents/file-drop";
 import { FadeIn, ProgressRing, Stagger, StaggerItem } from "@/components/motion";
 import { EASE_OUT } from "@/components/motion/tokens";
@@ -138,7 +139,8 @@ function DetailContent({ application, onChanged }: { application: ApplicationDet
   const priceLocked = coverage.paidAmount > 0;
 
   return (
-    <div className="space-y-6">
+    // largeur de la page, pas de l'écran : elle se rétrécit quand un panneau s'ouvre à droite
+    <div className="@container space-y-6">
       <FadeIn>
         <Link
           href="/admin/applications"
@@ -150,9 +152,9 @@ function DetailContent({ application, onChanged }: { application: ApplicationDet
 
       <HeaderCard application={application} paymentState={paymentState} onEdit={() => setEditing(true)} onChanged={onChanged} />
 
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid items-start gap-5 @4xl:grid-cols-[minmax(0,1fr)_340px]">
         <DocumentsCard application={application} onChanged={onChanged} />
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
+        <div className="grid gap-5 @xl:grid-cols-2 @4xl:grid-cols-1">
           <ProgressCard application={application} />
           <PaymentCard application={application} onChanged={onChanged} />
         </div>
@@ -191,6 +193,7 @@ function HeaderCard({
   const permit = PERMIT_TYPES.find((p) => p.value === application.permitType)?.label ?? application.permitType;
 
   const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const invite = useMutation({
     mutationFn: () => postJson(`/api/applications/${application.id}/invite`),
     onSuccess: (json) =>
@@ -260,9 +263,9 @@ function HeaderCard({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:pt-3">
-              <Link href={`/admin/messages?application=${application.id}`} className={buttonVariants({ variant: "outline" })}>
+              <Button variant="outline" onClick={() => setChatOpen(true)}>
                 <MessagesSquare /> Message
-              </Link>
+              </Button>
               <Button variant="outline" onClick={onEdit}>
                 <Pencil /> Modifier
               </Button>
@@ -328,6 +331,7 @@ function HeaderCard({
         </div>
       </Card>
       <InviteLinkDialog result={inviteResult} onClose={() => setInviteResult(null)} />
+      <ConversationPanel applicationId={application.id} candidate={candidate} open={chatOpen} onOpenChange={setChatOpen} />
     </FadeIn>
   );
 }

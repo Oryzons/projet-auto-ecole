@@ -1,7 +1,7 @@
 import { CircleCheck, CircleX, MapPin, Plus } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 
-import { Avatar, Badge, Button, Card, Divider, Intro, Row, Screen, Section, Stat, TopBar } from '@/components/ui';
+import { Avatar, Badge, Button, Card, Divider, Intro, Row, Screen, Section, Stat, StatBar, TopBar } from '@/components/ui';
 import { examResults, exams } from '@/data/mock';
 import { colors, font } from '@/theme';
 
@@ -11,10 +11,10 @@ export default function AdminExamens() {
     <Screen>
       <TopBar title="Examens" />
       <Intro title="Examens et résultats" />
-      <View style={{ flexDirection: 'row', gap: 12 }}>
+      <StatBar>
         <Stat label="Réussite code" value="84 %" hint="12 derniers mois" tone="success" />
         <Stat label="Réussite conduite" value="71 %" hint="1re présentation" tone="primary" />
-      </View>
+      </StatBar>
       <Section title="Sessions à venir" action="Ajouter">
         <View style={{ gap: 10 }}>
           {exams.map((x) => (
