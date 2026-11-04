@@ -34,20 +34,28 @@ export function SidePanel({
 }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const hidden = -height;
   const [mounted, setMounted] = useState(open);
-  const y = useSharedValue(hidden);
+  // p : 0 caché → 1 ouvert ; drag : déplacement du doigt ; h : hauteur réelle du panneau
+  const p = useSharedValue(0);
+  const drag = useSharedValue(0);
+  const h = useSharedValue(height * 0.6);
 
   if (open && !mounted) setMounted(true);
   useEffect(() => {
     if (open) {
-      y.value = withSpring(0, { damping: 26, stiffness: 240, mass: 0.9 });
+      drag.value = 0;
+      // courbe « expo out » : départ vif, arrivée très douce, sans rebond
+      p.value = withTiming(1, { duration: 520, easing: ENTER });
     } else if (mounted) {
-      y.value = withTiming(hidden, { duration: 240, easing: Easing.in(Easing.cubic) }, (done) => {
+      // on repart de la position actuelle (y compris pendant un glissement)
+      const from = Math.max(0, Math.min(1, p.value + drag.value / (h.value + 40)));
+      p.value = from;
+      drag.value = 0;
+      p.value = withTiming(0, { duration: 180 + 200 * from, easing: EXIT }, (done) => {
         if (done) scheduleOnRN(setMounted, false);
       });
     }
-  }, [open, mounted, hidden, y]);
+  }, [open, mounted, p, drag, h]);
 
   const pan = usePanGesture({
     activeOffsetY: [-12, 12],
@@ -55,17 +63,26 @@ export function SidePanel({
     onUpdate: (e) => {
       'worklet';
       const t = e.translationY;
-      y.value = t < 0 ? t : t * 0.12;
+      // vers le haut il suit le doigt, vers le bas il résiste
+      drag.value = t < 0 ? t : 22 * Math.log1p(t / 22);
     },
     onDeactivate: (e) => {
       'worklet';
-      if (y.value < -120 || e.velocityY < -700) scheduleOnRN(onClose);
-      else y.value = withSpring(0, { damping: 26, stiffness: 280 });
+      if (drag.value < -90 || e.velocityY < -600) scheduleOnRN(onClose);
+      else drag.value = withSpring(0, { damping: 22, stiffness: 260, mass: 0.8 });
     },
   });
 
-  const panel = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
-  const backdrop = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [hidden * 0.6, 0], [0, 1], 'clamp') }));
+  const panel = useAnimatedStyle(() => ({
+    transform: [{ translateY: -(h.value + 40) * (1 - p.value) + drag.value }],
+  }));
+  const content = useAnimatedStyle(() => ({
+    opacity: interpolate(p.value, [0.35, 1], [0, 1], 'clamp'),
+    transform: [{ translateY: interpolate(p.value, [0.35, 1], [-10, 0], 'clamp') }],
+  }));
+  const backdrop = useAnimatedStyle(() => ({
+    opacity: p.value * interpolate(drag.value, [-(h.value + 40), 0], [0, 1], 'clamp'),
+  }));
   const t = toneColors[tone];
 
   return (
@@ -76,28 +93,30 @@ export function SidePanel({
         </Animated.View>
 
         <GestureDetector gesture={pan}>
-          <Animated.View style={[styles.panel, { paddingTop: insets.top + 8, maxHeight: height * 0.88 }, panel]}>
-            <View style={styles.head}>
-              {Icon ? (
-                <View style={[styles.headIcon, { backgroundColor: t.bg }]}>
-                  <Icon size={20} color={t.fg} strokeWidth={2} />
+          <Animated.View onLayout={(e) => (h.value = e.nativeEvent.layout.height)} style={[styles.panel, { paddingTop: insets.top + 8, maxHeight: height * 0.88 }, panel]}>
+            <Animated.View style={[{ flexShrink: 1 }, content]}>
+              <View style={styles.head}>
+                {Icon ? (
+                  <View style={[styles.headIcon, { backgroundColor: t.bg }]}>
+                    <Icon size={20} color={t.fg} strokeWidth={2} />
+                  </View>
+                ) : null}
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.title} numberOfLines={1}>
+                    {title}
+                  </Text>
+                  {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
                 </View>
-              ) : null}
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {title}
-                </Text>
-                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+                <Pressable onPress={onClose} hitSlop={10} style={({ pressed }) => [styles.close, pressed && { backgroundColor: '#EEF2F7' }]} accessibilityLabel="Fermer">
+                  <X size={18} color={colors.muted} />
+                </Pressable>
               </View>
-              <Pressable onPress={onClose} hitSlop={10} style={({ pressed }) => [styles.close, pressed && { backgroundColor: '#EEF2F7' }]} accessibilityLabel="Fermer">
-                <X size={18} color={colors.muted} />
-              </Pressable>
-            </View>
 
-            <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-              {children}
-            </ScrollView>
-            {footer ? <View style={styles.footer}>{footer}</View> : null}
+              <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+                {children}
+              </ScrollView>
+              {footer ? <View style={styles.footer}>{footer}</View> : null}
+            </Animated.View>
             <View style={styles.grip} />
           </Animated.View>
         </GestureDetector>
@@ -120,6 +139,9 @@ export function DetailList({ rows }: { rows: { label: string; value: string; ton
   );
 }
 
+const ENTER = Easing.bezier(0.16, 1, 0.3, 1);
+const EXIT = Easing.bezier(0.55, 0, 0.75, 0.2);
+
 const styles = StyleSheet.create({
   backdrop: { backgroundColor: 'rgba(20,32,60,0.32)' },
   panel: {
@@ -138,7 +160,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 18,
   },
-  grip: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginTop: 4, marginBottom: 10, backgroundColor: '#D3DAE6' },
+  grip: {
+    alignSelf: 'center',
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 4,
+    marginBottom: 10,
+    backgroundColor: '#D3DAE6',
+  },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -149,15 +179,57 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  headIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 18, fontWeight: '700', color: colors.ink, letterSpacing: -0.3 },
+  headIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.ink,
+    letterSpacing: -0.3,
+  },
   subtitle: { fontSize: 13, color: colors.muted, lineHeight: 18 },
-  close: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  close: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   body: { padding: 20, gap: 20 },
-  footer: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, borderTopWidth: 1, borderTopColor: colors.border, gap: 10 },
-  dl: { borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
-  dlRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 14, paddingVertical: 11 },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: 10,
+  },
+  dl: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  dlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
   dlSep: { borderTopWidth: 1, borderTopColor: colors.border },
   dt: { fontSize: 13.5, color: colors.muted },
-  dd: { fontSize: 13.5, fontWeight: '600', color: colors.ink, flexShrink: 1, textAlign: 'right' },
+  dd: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: colors.ink,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
 });
