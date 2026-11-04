@@ -9,9 +9,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { colors, shadow, toneColors, type Tone } from '@/theme';
 
 /**
- * Panneau latéral, repris du site admin : il arrive de la droite par-dessus l'écran,
- * avec une en-tête (pastille d'icône, titre, sous-titre, croix).
- * On le ferme avec la croix, en touchant le fond, ou en le poussant vers la droite.
+ * Panneau pop-up : il descend du haut de l'écran, avec une en-tête
+ * (pastille d'icône, titre, sous-titre, croix).
+ * On le ferme avec la croix, en touchant le fond, ou en le poussant vers le haut.
  */
 export function SidePanel({
   open,
@@ -33,39 +33,39 @@ export function SidePanel({
   footer?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const panelWidth = Math.min(width * 0.92, 440);
+  const { height } = useWindowDimensions();
+  const hidden = -height;
   const [mounted, setMounted] = useState(open);
-  const x = useSharedValue(panelWidth);
+  const y = useSharedValue(hidden);
 
   if (open && !mounted) setMounted(true);
   useEffect(() => {
     if (open) {
-      x.value = withSpring(0, { damping: 26, stiffness: 240, mass: 0.9 });
+      y.value = withSpring(0, { damping: 26, stiffness: 240, mass: 0.9 });
     } else if (mounted) {
-      x.value = withTiming(panelWidth + 24, { duration: 220, easing: Easing.in(Easing.cubic) }, (done) => {
+      y.value = withTiming(hidden, { duration: 240, easing: Easing.in(Easing.cubic) }, (done) => {
         if (done) scheduleOnRN(setMounted, false);
       });
     }
-  }, [open, mounted, panelWidth, x]);
+  }, [open, mounted, hidden, y]);
 
   const pan = usePanGesture({
-    activeOffsetX: [-12, 12],
-    failOffsetY: [-14, 14],
+    activeOffsetY: [-12, 12],
+    failOffsetX: [-14, 14],
     onUpdate: (e) => {
       'worklet';
-      const t = e.translationX;
-      x.value = t > 0 ? t : t * 0.12;
+      const t = e.translationY;
+      y.value = t < 0 ? t : t * 0.12;
     },
     onDeactivate: (e) => {
       'worklet';
-      if (x.value > panelWidth * 0.3 || e.velocityX > 700) scheduleOnRN(onClose);
-      else x.value = withSpring(0, { damping: 26, stiffness: 280 });
+      if (y.value < -120 || e.velocityY < -700) scheduleOnRN(onClose);
+      else y.value = withSpring(0, { damping: 26, stiffness: 280 });
     },
   });
 
-  const panel = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  const backdrop = useAnimatedStyle(() => ({ opacity: interpolate(x.value, [0, panelWidth], [1, 0], 'clamp') }));
+  const panel = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  const backdrop = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [hidden * 0.6, 0], [0, 1], 'clamp') }));
   const t = toneColors[tone];
 
   return (
@@ -76,8 +76,7 @@ export function SidePanel({
         </Animated.View>
 
         <GestureDetector gesture={pan}>
-          <Animated.View style={[styles.panel, { width: panelWidth, paddingTop: insets.top + 8, paddingBottom: insets.bottom }, panel]}>
-            <View style={styles.grip} />
+          <Animated.View style={[styles.panel, { paddingTop: insets.top + 8, maxHeight: height * 0.88 }, panel]}>
             <View style={styles.head}>
               {Icon ? (
                 <View style={[styles.headIcon, { backgroundColor: t.bg }]}>
@@ -95,10 +94,11 @@ export function SidePanel({
               </Pressable>
             </View>
 
-            <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
               {children}
             </ScrollView>
             {footer ? <View style={styles.footer}>{footer}</View> : null}
+            <View style={styles.grip} />
           </Animated.View>
         </GestureDetector>
       </GestureHandlerRootView>
@@ -125,18 +125,20 @@ const styles = StyleSheet.create({
   panel: {
     position: 'absolute',
     top: 0,
-    bottom: 0,
+    left: 0,
     right: 0,
+    alignSelf: 'center',
+    maxWidth: 560,
     backgroundColor: colors.background,
-    borderTopLeftRadius: 28,
     borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     ...shadow.card,
     shadowOpacity: 0.2,
     shadowRadius: 30,
-    shadowOffset: { width: -6, height: 0 },
+    shadowOffset: { width: 0, height: 8 },
     elevation: 18,
   },
-  grip: { position: 'absolute', left: 6, top: '50%', width: 4, height: 44, marginTop: -22, borderRadius: 2, backgroundColor: '#D3DAE6' },
+  grip: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginTop: 4, marginBottom: 10, backgroundColor: '#D3DAE6' },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
