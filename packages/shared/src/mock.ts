@@ -3,29 +3,72 @@
  * quand le backend sera branché : les types ci-dessous servent de premier contrat.
  */
 
+import {
+  DEMO_INSTRUCTOR_ID,
+  DEMO_INSTRUCTORS,
+  DEMO_STUDENT_ID,
+  DEMO_STUDENTS,
+  DEMO_VEHICLES,
+  PERMIT_LABELS,
+  PERMIT_PRICES,
+  dateShort,
+  dayShort,
+  demoLessons,
+  endOf,
+  hhmm,
+  sameDay,
+  staffName,
+  studentById,
+  studentDocs,
+  vehicleLabel,
+  type DemoLesson,
+  type DemoStudent,
+} from './demo';
 import type { Tone } from './theme';
+
+/*
+ * Les élèves, moniteurs, véhicules et leçons viennent de ./demo, la même source
+ * que le site admin : ce que l'élève voit dans l'app correspond au planning du
+ * moniteur et à celui de l'administration.
+ */
+const NOW = Date.now();
+const TODAY = new Date(NOW);
+const ALL_LESSONS = demoLessons(NOW);
+const me = studentById(DEMO_STUDENT_ID)!;
+const fullName = (s: DemoStudent) => `${s.firstName} ${s.lastName}`;
+const isPast = (l: DemoLesson) => endOf(l).getTime() <= NOW;
+const myLessons = ALL_LESSONS.filter((l) => l.studentId === me.id && l.status !== 'CANCELLED');
+const myUpcoming = myLessons.filter((l) => !isPast(l) && l.status === 'PLANNED');
+const myDone = myLessons.filter((l) => l.status === 'DONE');
 
 export const school = { name: 'Virage', city: 'Lyon 7e', phone: '04 78 00 00 00' };
 
 /* ---------- Élève connecté ---------- */
 
 export const student = {
-  id: 's1',
-  firstName: 'Lucas',
-  lastName: 'Martin',
+  id: me.id,
+  firstName: me.firstName,
+  lastName: me.lastName,
   email: 'lucas.martin@email.fr',
-  phone: '06 12 34 56 78',
+  phone: me.phone,
   birthDate: '14/03/2007',
   address: '12 rue Garibaldi, 69007 Lyon',
-  licence: 'Permis B',
-  formula: 'Forfait 20 h',
+  licence: PERMIT_LABELS[me.permitType] ?? 'Permis B',
+  formula: `Forfait ${me.hoursPlanned} h`,
   fileNumber: 'VRG-2026-0148',
   goalDate: 'Objectif : mars 2027',
   availability: 'Soirs en semaine et samedi matin',
   status: 'Dossier en cours de validation',
+  instructor: staffName(me.instructorId),
   code: { score: 32, max: 40, series: 18, seriesTotal: 25, ratio: 0.82 },
-  driving: { done: 12, total: 20, skills: 9, skillsTotal: 22 },
-  balance: { remainingHours: 7, due: 450, paid: 450, total: 1350 },
+  driving: { done: myDone.length, total: me.hoursPlanned, skills: 9, skillsTotal: 22 },
+  balance: {
+    // heures du forfait ni faites ni déjà réservées
+    remainingHours: Math.max(0, me.hoursPlanned - myDone.length - myUpcoming.length),
+    due: PERMIT_PRICES[me.permitType]! / 100 / (me.installments ?? 1),
+    paid: ((PERMIT_PRICES[me.permitType]! / 100) * (me.paidInstallments ?? 0)) / (me.installments ?? 1),
+    total: PERMIT_PRICES[me.permitType]! / 100,
+  },
 };
 
 export type DocStatus = 'accepted' | 'pending' | 'refused' | 'missing';
@@ -37,13 +80,21 @@ export const docStatus: Record<DocStatus, { label: string; tone: Tone }> = {
   missing: { label: 'À déposer', tone: 'neutral' },
 };
 
-export const documents: { id: string; name: string; status: DocStatus; note?: string }[] = [
-  { id: 'd1', name: "Pièce d'identité", status: 'accepted' },
-  { id: 'd2', name: 'Photo e-photo (ANTS)', status: 'accepted' },
-  { id: 'd3', name: 'Justificatif de domicile', status: 'refused', note: 'Document de plus de 6 mois, merci d’en déposer un récent.' },
-  { id: 'd4', name: 'ASSR 2 ou ASR', status: 'pending' },
-  { id: 'd5', name: 'Attestation JDC', status: 'missing' },
-];
+const DOC_NAMES = { ID_CARD: "Pièce d'identité", ID_PHOTO: 'Photo e-photo (ANTS)', PROOF_OF_ADDRESS: 'Justificatif de domicile', ASSR: 'ASSR 2 ou ASR', JDC: 'Attestation JDC' } as const;
+const DOC_STATUS = { APPROVED: 'accepted', PENDING: 'pending', REJECTED: 'refused' } as const;
+const myDocs = studentDocs(me);
+
+/** Mêmes pièces et mêmes états que dans le dossier de l'élève sur le site admin */
+export const documents: { id: string; name: string; status: DocStatus; note?: string }[] = (Object.keys(DOC_NAMES) as (keyof typeof DOC_NAMES)[]).map((type, i) => {
+  const state = myDocs[type];
+  const status: DocStatus = state ? DOC_STATUS[state] : 'missing';
+  return {
+    id: `d${i + 1}`,
+    name: DOC_NAMES[type],
+    status,
+    ...(status === 'refused' && type === 'PROOF_OF_ADDRESS' ? { note: 'Document de plus de 6 mois, merci d’en déposer un récent.' } : {}),
+  };
+});
 
 /* ---------- Leçons ---------- */
 
@@ -59,18 +110,29 @@ export type Lesson = {
   place: string;
   student?: string;
   status?: 'confirmed' | 'todo' | 'done';
+  /** début de la leçon (horodatage), pour les « demain », « dans 2 h »… */
+  at?: number;
 };
 
-export const upcomingLessons: Lesson[] = [
-  { id: 'l1', day: 'Jeu.', date: '29 oct.', start: '17:30', end: '18:30', type: 'Conduite', instructor: 'Julie Bernard', vehicle: 'Clio V · GH-412-KL', place: 'Agence Jean Macé' },
-  { id: 'l2', day: 'Sam.', date: '31 oct.', start: '09:00', end: '11:00', type: 'Conduite', instructor: 'Julie Bernard', vehicle: 'Clio V · GH-412-KL', place: 'Lycée Récamier' },
-  { id: 'l3', day: 'Mar.', date: '3 nov.', start: '18:00', end: '19:00', type: 'Code', instructor: 'Salle de code', place: 'Agence Jean Macé' },
-];
+const toLesson = (l: DemoLesson): Lesson => ({
+  id: l.id,
+  day: dayShort(l.startsAt),
+  date: dateShort(l.startsAt),
+  start: hhmm(l.startsAt),
+  end: hhmm(endOf(l)),
+  type: 'Conduite',
+  instructor: staffName(l.instructorId),
+  vehicle: vehicleLabel(l.vehicleId),
+  place: l.place,
+  student: fullName(studentById(l.studentId)!),
+  status: l.status === 'DONE' ? 'done' : 'confirmed',
+  at: l.startsAt.getTime(),
+});
 
-export const pastLessons: Lesson[] = [
-  { id: 'p1', day: 'Lun.', date: '26 oct.', start: '18:00', end: '19:00', type: 'Conduite', instructor: 'Julie Bernard', place: 'Agence Jean Macé' },
-  { id: 'p2', day: 'Sam.', date: '24 oct.', start: '10:00', end: '12:00', type: 'Conduite', instructor: 'Karim Haddad', place: 'Lycée Récamier' },
-];
+/** Prochaines leçons de l'élève connecté : celles du planning admin */
+export const upcomingLessons: Lesson[] = myUpcoming.map(toLesson);
+
+export const pastLessons: Lesson[] = myDone.slice(-5).reverse().map(toLesson);
 
 /** Créneaux libres proposés à la réservation */
 export const bookingDays = [
@@ -207,32 +269,67 @@ export const invoices = [
 
 /* ---------- Moniteur ---------- */
 
-export const instructor = { name: 'Julie Bernard', licence: 'Permis B · BEPECASER', vehicle: 'Clio V · GH-412-KL' };
+const meInstructor = DEMO_INSTRUCTORS.find((i) => i.id === DEMO_INSTRUCTOR_ID)!;
+export const instructor = {
+  id: meInstructor.id,
+  firstName: meInstructor.firstName,
+  name: staffName(meInstructor.id),
+  licence: 'Permis B · BEPECASER',
+  vehicle: vehicleLabel(meInstructor.vehicleId),
+};
 
-export const instructorDays = [
-  { key: 'mon', day: 'Lun', date: '26' },
-  { key: 'tue', day: 'Mar', date: '27' },
-  { key: 'wed', day: 'Mer', date: '28' },
-  { key: 'thu', day: 'Jeu', date: '29' },
-  { key: 'fri', day: 'Ven', date: '30' },
-  { key: 'sat', day: 'Sam', date: '31' },
-];
+/** Semaine en cours, du lundi au samedi */
+const monday = new Date(TODAY);
+monday.setHours(0, 0, 0, 0);
+monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+export const instructorDays = DAY_KEYS.map((key, i) => {
+  const d = new Date(monday);
+  d.setDate(d.getDate() + i);
+  return { key, day: dayShort(d).replace('.', ''), date: String(d.getDate()), today: sameDay(d, TODAY), at: d };
+});
+export const todayKey = instructorDays.find((d) => d.today)?.key ?? 'mon';
 
-export const instructorLessons: (Lesson & { hoursDone: number; reportDone?: boolean })[] = [
-  { id: 'i1', day: 'Mar.', date: '27 oct.', start: '08:00', end: '09:00', type: 'Conduite', instructor: 'Julie Bernard', student: 'Emma Petit', vehicle: 'Clio V', place: 'Agence Jean Macé', status: 'done', hoursDone: 18, reportDone: true },
-  { id: 'i2', day: 'Mar.', date: '27 oct.', start: '09:00', end: '11:00', type: 'Conduite', instructor: 'Julie Bernard', student: 'Lucas Martin', vehicle: 'Clio V', place: 'Lycée Récamier', status: 'done', hoursDone: 12 },
-  { id: 'i3', day: 'Mar.', date: '27 oct.', start: '14:00', end: '15:00', type: 'Conduite', instructor: 'Julie Bernard', student: 'Inès Moreau', vehicle: 'Clio V', place: 'Agence Jean Macé', status: 'todo', hoursDone: 4 },
-  { id: 'i4', day: 'Mar.', date: '27 oct.', start: '15:00', end: '16:00', type: 'Examen blanc', instructor: 'Julie Bernard', student: 'Nathan Roux', vehicle: 'Clio V', place: 'Centre d’examen Bron', status: 'todo', hoursDone: 27 },
-  { id: 'i5', day: 'Mar.', date: '27 oct.', start: '17:30', end: '18:30', type: 'Conduite', instructor: 'Julie Bernard', student: 'Chloé Garnier', vehicle: 'Clio V', place: 'Agence Jean Macé', status: 'confirmed', hoursDone: 9 },
-];
+const hoursDoneBy = (studentId: string, before: number) =>
+  ALL_LESSONS.filter((l) => l.studentId === studentId && l.status === 'DONE' && l.startsAt.getTime() < before).length;
 
-export const plannedStudents = [
-  { id: 'lucas', name: 'Lucas Martin', licence: 'Permis B · 20 h', hours: '12/20 h', progress: 0.42, next: 'Sam. 31 oct. · 09:00' },
-  { id: 'emma', name: 'Emma Petit', licence: 'Permis B · AAC', hours: '18/20 h', progress: 0.78, next: 'Jeu. 29 oct. · 08:00' },
-  { id: 'ines', name: 'Inès Moreau', licence: 'Permis B · 20 h', hours: '4/20 h', progress: 0.12, next: 'Aujourd’hui · 14:00' },
-  { id: 'nathan', name: 'Nathan Roux', licence: 'Permis B · 30 h', hours: '27/30 h', progress: 0.91, next: 'Aujourd’hui · 15:00' },
-  { id: 'chloe', name: 'Chloé Garnier', licence: 'Permis B · Boîte auto', hours: '9/13 h', progress: 0.55, next: 'Aujourd’hui · 17:30' },
-];
+const toInstructorLesson = (l: DemoLesson) => ({
+  ...toLesson(l),
+  vehicle: DEMO_VEHICLES.find((v) => v.id === l.vehicleId)?.short ?? '—',
+  status: (l.status === 'DONE' || isPast(l) ? 'done' : 'confirmed') as Lesson['status'],
+  hoursDone: hoursDoneBy(l.studentId, l.startsAt.getTime()),
+  reportDone: l.status === 'DONE',
+  dayKey: DAY_KEYS[(l.startsAt.getDay() + 6) % 7],
+});
+
+const julieLessons = ALL_LESSONS.filter((l) => l.instructorId === meInstructor.id && l.status !== 'CANCELLED');
+
+/** Leçons du moniteur connecté pour toute la semaine (le planning du site admin) */
+export const instructorWeek = julieLessons
+  .filter((l) => l.startsAt >= monday && l.startsAt.getTime() < monday.getTime() + 7 * 86_400_000)
+  .map(toInstructorLesson);
+
+/** Leçons du jour du moniteur connecté */
+export const instructorLessons = julieLessons.filter((l) => sameDay(l.startsAt, TODAY)).map(toInstructorLesson);
+
+const nextLabel = (studentId: string) => {
+  const n = ALL_LESSONS.find((l) => l.studentId === studentId && l.status === 'PLANNED' && !isPast(l));
+  if (!n) return 'Aucune leçon prévue';
+  return `${sameDay(n.startsAt, TODAY) ? 'Aujourd’hui' : `${dayShort(n.startsAt)} ${dateShort(n.startsAt)}`} · ${hhmm(n.startsAt)}`;
+};
+
+/** Élèves suivis par le moniteur connecté : ses élèves référents sur le site */
+export const plannedStudents = DEMO_STUDENTS.filter((s) => s.instructorId === meInstructor.id && s.stage !== 'COMPLETED').map((s) => {
+  const done = hoursDoneBy(s.id, NOW);
+  return {
+    id: s.key,
+    name: fullName(s),
+    licence: `${PERMIT_LABELS[s.permitType]} · ${s.hoursPlanned} h`,
+    hours: `${done}/${s.hoursPlanned} h`,
+    progress: Math.min(1, done / s.hoursPlanned),
+    next: nextLabel(s.id),
+  };
+});
 
 export const weekAvailability = [
   { day: 'Lundi', slots: '08:00 – 12:00 · 14:00 – 19:00', off: false },
@@ -256,9 +353,10 @@ export const adminKpis = {
   revenueDelta: '+12 % vs sept.',
   unpaid: 6340,
   unpaidCount: 14,
-  activeStudents: 186,
-  docsToReview: 9,
-  lessonsToday: 42,
+  // mêmes chiffres que le site admin, calculés sur les mêmes élèves et leçons
+  activeStudents: DEMO_STUDENTS.filter((st) => st.stage !== 'DRAFT' && st.stage !== 'COMPLETED').length,
+  docsToReview: DEMO_STUDENTS.reduce((n, st) => n + Object.values(studentDocs(st)).filter((d) => d === 'PENDING').length, 0),
+  lessonsToday: ALL_LESSONS.filter((l) => l.status !== 'CANCELLED' && sameDay(l.startsAt, TODAY)).length,
   successRate: 0.71,
 };
 
@@ -288,20 +386,42 @@ export type AdminStudent = {
   phone: string;
 };
 
-export const adminStudents: AdminStudent[] = [
-  { id: 'lucas', name: 'Lucas Martin', licence: 'Permis B · Forfait 20 h', step: 'Pièces à vérifier', tone: 'warning', balance: 450, docs: '3/5', hours: 12, hoursTotal: 20, code: 32, instructor: 'Julie Bernard', phone: '06 12 34 56 78' },
-  { id: 'emma', name: 'Emma Petit', licence: 'Permis B · AAC', step: 'Prête pour l’examen', tone: 'success', balance: 0, docs: '5/5', hours: 22, hoursTotal: 20, code: 38, instructor: 'Julie Bernard', phone: '06 45 12 78 90' },
-  { id: 'ines', name: 'Inès Moreau', licence: 'Permis B · Forfait 20 h', step: 'En formation', tone: 'primary', balance: 900, docs: '5/5', hours: 8, hoursTotal: 20, code: 29, instructor: 'Karim Haddad', phone: '07 81 22 43 10' },
-  { id: 'nathan', name: 'Nathan Roux', licence: 'Permis B · Forfait 30 h', step: 'Examen le 12 nov.', tone: 'violet', balance: 0, docs: '5/5', hours: 27, hoursTotal: 30, code: 36, instructor: 'Julie Bernard', phone: '06 98 55 21 04' },
-  { id: 'chloe', name: 'Chloé Garnier', licence: 'Permis B · Boîte auto', step: 'Impayé', tone: 'danger', balance: 620, docs: '5/5', hours: 10, hoursTotal: 13, code: 34, instructor: 'Sophie Laurent', phone: '07 66 31 09 87' },
-  { id: 'hugo', name: 'Hugo Lefebvre', licence: 'Code seul', step: 'Dossier incomplet', tone: 'neutral', balance: 0, docs: '1/5', hours: 0, hoursTotal: 0, code: 21, instructor: '—', phone: '06 02 47 85 33' },
-];
+const STEP: Record<DemoStudent['stage'], { step: string; tone: Tone }> = {
+  DRAFT: { step: 'Inscription à finaliser', tone: 'neutral' },
+  DOCUMENTS_PENDING: { step: 'Dossier incomplet', tone: 'neutral' },
+  DOCUMENTS_REVIEW: { step: 'Pièces à vérifier', tone: 'warning' },
+  PAYMENT_PENDING: { step: 'Paiement en attente', tone: 'danger' },
+  PAID: { step: 'En formation', tone: 'primary' },
+  COMPLETED: { step: 'Permis obtenu', tone: 'success' },
+};
 
-export const docsToReview = [
-  { id: 'r1', student: 'Lucas Martin', doc: 'ASSR 2', sent: 'il y a 2 h' },
-  { id: 'r2', student: 'Hugo Lefebvre', doc: "Pièce d'identité", sent: 'il y a 5 h' },
-  { id: 'r3', student: 'Sarah Benali', doc: 'Justificatif de domicile', sent: 'hier' },
-];
+/** Élèves de l'auto-école : la même liste que la page Élèves du site */
+export const adminStudents: AdminStudent[] = DEMO_STUDENTS.filter((st) => st.stage !== 'DRAFT').map((st, i) => {
+  const docs = Object.values(studentDocs(st));
+  const price = PERMIT_PRICES[st.permitType]! / 100;
+  const paidShare =
+    st.stage === 'PAID' || st.stage === 'COMPLETED' ? 1 : st.installments ? (st.paidInstallments ?? (st.stage === 'PAYMENT_PENDING' ? 1 : 0)) / st.installments : 0;
+  return {
+    id: st.key,
+    name: fullName(st),
+    licence: `${PERMIT_LABELS[st.permitType]} · Forfait ${st.hoursPlanned} h`,
+    ...STEP[st.stage],
+    balance: Math.round(price * (1 - paidShare)),
+    docs: `${docs.filter((d) => d === 'APPROVED').length}/${docs.length}`,
+    hours: hoursDoneBy(st.id, NOW),
+    hoursTotal: st.hoursPlanned,
+    code: 24 + ((i * 7) % 16),
+    instructor: staffName(st.instructorId),
+    phone: st.phone,
+  };
+});
+
+const DOC_LABEL: Record<string, string> = { TRAINING_CONTRACT: 'Contrat de formation', ID_CARD: "Pièce d'identité", ID_PHOTO: 'Photo e-photo', PROOF_OF_ADDRESS: 'Justificatif de domicile', ASSR: 'ASSR 2', JDC: 'Attestation JDC' };
+export const docsToReview = DEMO_STUDENTS.flatMap((st) =>
+  Object.entries(studentDocs(st))
+    .filter(([, state]) => state === 'PENDING')
+    .map(([type]) => ({ id: `${st.key}-${type}`, student: fullName(st), doc: DOC_LABEL[type] ?? type, sent: st.days <= 1 ? 'aujourd’hui' : `il y a ${Math.min(st.days, 6)} j` })),
+).slice(0, 5);
 
 export const recentActivity = [
   { id: 'e1', text: 'Emma Petit a réglé 450 € (CB)', time: '10:42', tone: 'success' as Tone },
@@ -310,47 +430,41 @@ export const recentActivity = [
   { id: 'e4', text: 'Échéance impayée : Chloé Garnier · 620 €', time: 'Hier', tone: 'danger' as Tone },
 ];
 
-export const instructors = [
-  { id: 'julie', name: 'Julie Bernard', role: 'Monitrice · B', load: 0.86, today: '5 leçons', vehicle: 'Clio V · GH-412-KL' },
-  { id: 'karim', name: 'Karim Haddad', role: 'Moniteur · B / BE', load: 0.72, today: '4 leçons', vehicle: 'Peugeot 208 · FT-908-AB' },
-  { id: 'sophie', name: 'Sophie Laurent', role: 'Monitrice · B auto', load: 0.64, today: '3 leçons', vehicle: 'Zoé · GA-221-ZE' },
-  { id: 'marc', name: 'Marc Dubois', role: 'Moniteur · A2', load: 0.4, today: 'Absent', vehicle: 'MT-07 · EZ-778-RT' },
-];
+const lessonsOn = (instructorId: string) => ALL_LESSONS.filter((l) => l.instructorId === instructorId && l.status !== 'CANCELLED' && sameDay(l.startsAt, TODAY));
 
-export const vehicles = [
-  { id: 'v1', name: 'Renault Clio V', plate: 'GH-412-KL', type: 'Manuelle', status: 'Disponible', tone: 'success' as Tone, km: '48 210 km' },
-  { id: 'v2', name: 'Peugeot 208', plate: 'FT-908-AB', type: 'Manuelle', status: 'En leçon', tone: 'primary' as Tone, km: '62 870 km' },
-  { id: 'v3', name: 'Renault Zoé', plate: 'GA-221-ZE', type: 'Automatique', status: 'Disponible', tone: 'success' as Tone, km: '31 450 km' },
-  { id: 'v4', name: 'Yamaha MT-07', plate: 'EZ-778-RT', type: 'Moto A2', status: 'Révision', tone: 'warning' as Tone, km: '12 300 km' },
-];
+/** Moniteurs, avec leur charge du jour tirée du planning partagé */
+export const instructors = DEMO_INSTRUCTORS.map((m) => {
+  const n = lessonsOn(m.id).length;
+  return { id: m.key, name: staffName(m.id), role: m.title, load: Math.min(1, n / 8), today: n ? `${n} leçon${n > 1 ? 's' : ''}` : 'Pas de leçon', vehicle: vehicleLabel(m.vehicleId) };
+});
 
-/** Planning multi-moniteurs : une colonne par moniteur, créneaux de 1 h */
-export const planningHours = ['08', '09', '10', '11', '14', '15', '16', '17', '18'];
-export const planningGrid: Record<string, Record<string, { student: string; type?: string } | 'off'>> = {
-  julie: {
-    '08': { student: 'E. Petit' },
-    '09': { student: 'L. Martin' },
-    '10': { student: 'L. Martin' },
-    '14': { student: 'I. Moreau' },
-    '15': { student: 'N. Roux', type: 'Examen blanc' },
-    '17': { student: 'C. Garnier' },
-  },
-  karim: {
-    '08': { student: 'T. Faure' },
-    '10': { student: 'S. Benali' },
-    '11': { student: 'A. Girard' },
-    '15': { student: 'M. Blanc' },
-    '16': { student: 'M. Blanc' },
-    '18': { student: 'J. Morel' },
-  },
-  sophie: {
-    '09': { student: 'L. Perrin' },
-    '14': { student: 'P. Henry' },
-    '16': { student: 'C. Royer' },
-    '17': { student: 'C. Royer' },
-  },
-  marc: Object.fromEntries(['08', '09', '10', '11', '14', '15', '16', '17', '18'].map((h) => [h, 'off' as const])),
+const VEHICLE_STATUS = {
+  AVAILABLE: { status: 'Disponible', tone: 'success' as Tone },
+  IN_USE: { status: 'En leçon', tone: 'primary' as Tone },
+  MAINTENANCE: { status: 'Au garage', tone: 'warning' as Tone },
 };
+/** Parc automobile : le même que la page Véhicules du site */
+export const vehicles = DEMO_VEHICLES.map((v) => {
+  const inLesson = ALL_LESSONS.some((l) => l.vehicleId === v.id && l.status === 'PLANNED' && l.startsAt.getTime() <= NOW && endOf(l).getTime() > NOW);
+  const st = v.status === 'MAINTENANCE' ? VEHICLE_STATUS.MAINTENANCE : inLesson ? VEHICLE_STATUS.IN_USE : VEHICLE_STATUS.AVAILABLE;
+  return { id: v.id, name: v.name, plate: v.plate, type: v.transmission === 'MOTO' ? 'Moto A2' : v.transmission === 'AUTO' ? 'Automatique' : 'Manuelle', ...st, km: `${v.mileage.toLocaleString('fr-FR')} km` };
+});
+
+/** Planning du jour : une colonne par moniteur, créneaux de 1 h */
+export const planningHours = ['08', '09', '10', '11', '14', '15', '16', '17', '18'];
+export const planningGrid: Record<string, Record<string, { student: string; type?: string } | 'off'>> = Object.fromEntries(
+  DEMO_INSTRUCTORS.map((m) => {
+    const row: Record<string, { student: string; type?: string }> = {};
+    lessonsOn(m.id).forEach((l) => {
+      const st = studentById(l.studentId)!;
+      const label = `${st.firstName[0]}. ${st.lastName}`;
+      const startH = l.startsAt.getHours();
+      const endH = Math.ceil((endOf(l).getHours() * 60 + endOf(l).getMinutes()) / 60);
+      for (let h = startH; h < Math.max(endH, startH + 1); h++) row[String(h).padStart(2, '0')] = { student: label };
+    });
+    return [m.key, row];
+  }),
+);
 
 export const financeDocs = {
   factures: [

@@ -4,6 +4,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Badge, Card, Chips, IconButton, Intro, ListItem, Row, Screen, Section } from '@/components/ui';
 import { instructors, planningGrid, planningHours, vehicles } from '@/data/mock';
+
+const todayLabel = (() => {
+  const t = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  return t.charAt(0).toUpperCase() + t.slice(1);
+})();
 import { colors, font, radius } from '@/theme';
 
 /** Planning multi-moniteurs et multi-véhicules */
@@ -14,7 +19,7 @@ export default function AdminPlanning() {
       <Intro title="Planning" />
       <Row style={{ justifyContent: 'space-between' }}>
         <IconButton icon={ChevronLeft} />
-        <Text style={font.h3}>Mardi 27 octobre</Text>
+        <Text style={font.h3}>{todayLabel}</Text>
         <IconButton icon={ChevronRight} />
       </Row>
       <Chips

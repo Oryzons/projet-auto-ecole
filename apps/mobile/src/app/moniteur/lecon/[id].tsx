@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { AnimatedBar, SectionLabel, StatStrip } from '@/components/blocks';
 import { RemcGrid } from '@/components/remc';
 import { Avatar, Badge, Button, Card, Chip, Row, Screen, TopBar } from '@/components/ui';
-import { instructorLessons } from '@/data/mock';
+import { instructorWeek as instructorLessons } from '@/data/mock';
 import { colors, font, radius } from '@/theme';
 
 const worked = ['Démarrage en côte', 'Créneau', 'Ronds-points', 'Insertion', 'Contrôles visuels', 'Écoconduite'];

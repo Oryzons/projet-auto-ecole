@@ -1,3 +1,5 @@
+import { DEMO_VEHICLES, demoLessons } from "@virage/shared/demo";
+
 import type { Store } from "./engine";
 
 /**
@@ -8,8 +10,6 @@ import type { Store } from "./engine";
 
 const ORG = "org-virage";
 const DAY = 86_400_000;
-const INSTRUCTORS = ["u-julie", "u-karim", "u-marc"];
-const SLOTS = [8, 9, 10, 11, 14, 15, 16, 17];
 
 let state = 7;
 const rand = () => {
@@ -37,13 +37,8 @@ export function seedCrm(store: Store, now: number) {
   };
 
   /* ---------- parc automobile ---------- */
-  const vehicles = [
-    { id: "veh-208", fuel: "PETROL", permitCategory: "B", color: "Blanc nacré", year: 2022, insurer: "MMA Pro", policy: "AE-208-4471", name: "Peugeot 208", plate: "GH-208-VR", transmission: "MANUAL", status: "AVAILABLE", mileage: 41250, service: 38, inspection: 210, insurance: 160, notes: null },
-    { id: "veh-clio", fuel: "DIESEL", permitCategory: "B", color: "Gris titanium", year: 2020, insurer: "MMA Pro", policy: "AE-512-4472", name: "Renault Clio V", plate: "FT-512-VR", transmission: "MANUAL", status: "IN_USE", mileage: 68900, service: -4, inspection: 95, insurance: 160, notes: "Révision des 70 000 km dépassée." },
-    { id: "veh-yaris", fuel: "HYBRID", permitCategory: "B_AUTO", color: "Rouge", year: 2023, insurer: "MMA Pro", policy: "AE-731-4473", name: "Toyota Yaris Hybride", plate: "GK-731-VR", transmission: "AUTO", status: "AVAILABLE", mileage: 22400, service: 120, inspection: 18, insurance: 160, notes: "Contrôle technique à programmer." },
-    { id: "veh-208a", fuel: "PETROL", permitCategory: "B_AUTO", color: "Bleu vertigo", year: 2022, insurer: "MMA Pro", policy: "AE-044-4474", name: "Peugeot 208 EAT8", plate: "GL-044-VR", transmission: "AUTO", status: "MAINTENANCE", mileage: 35120, service: 2, inspection: 300, insurance: 160, notes: "Plaquettes de frein en cours de remplacement au garage." },
-    { id: "veh-mt07", fuel: "PETROL", permitCategory: "A2", color: "Noir", year: 2021, insurer: "AXA Moto", policy: "MO-907-1180", name: "Yamaha MT-07 A2", plate: "FZ-907-VR", transmission: "MOTO", status: "AVAILABLE", mileage: 15800, service: 64, inspection: 400, insurance: 25, notes: null },
-  ];
+  // même parc que l'app mobile
+  const vehicles = DEMO_VEHICLES;
   vehicles.forEach((v) =>
     t.vehicle.push({
       id: v.id,
@@ -70,90 +65,24 @@ export function seedCrm(store: Store, now: number) {
       updatedAt: ago(3),
     }),
   );
-  const vehicleFor = (permitType: string) =>
-    permitType === "a2" ? "veh-mt07" : permitType === "permis-b-auto" ? "veh-yaris" : rand() > 0.5 ? "veh-208" : "veh-clio";
-
   /* ---------- leçons de conduite ---------- */
-  // créneaux occupés par moniteur, pour ne jamais créer de conflit
-  const busy = new Set<string>();
-  const book = (instructorId: string, offset: number, hour: number) => {
-    const key = `${instructorId}:${offset}:${hour}`;
-    if (busy.has(key)) return false;
-    busy.add(key);
-    return true;
-  };
-  let lessonCount = 0;
-  const lesson = (app: Row, offset: number, hour: number, status: string) => {
-    const instructorId = app.instructorId as string;
-    if (!book(instructorId, offset, hour)) return;
-    const startsAt = dayAt(offset, hour);
-    if (startsAt.getDay() === 0) return;
-    lessonCount += 1;
+  // calculées dans @virage/shared/demo : l'élève et le moniteur voient les mêmes dans l'app
+  demoLessons(now).forEach((l) => {
     t.drivingLesson.push({
-      id: `les-${lessonCount}`,
+      id: l.id,
       organizationId: ORG,
-      applicationId: app.id,
-      instructorId,
-      vehicleId: vehicleFor(app.permitType as string),
-      startsAt,
-      durationMinutes: 60,
-      status,
-      notes: status === "CANCELLED" ? "Annulée par l'élève (malade)." : null,
-      createdAt: ago(Math.max(1, -offset + 7)),
-      updatedAt: ago(Math.max(0, -offset)),
+      applicationId: `app-${l.studentId.slice(2)}`,
+      instructorId: l.instructorId,
+      vehicleId: l.vehicleId,
+      startsAt: l.startsAt,
+      durationMinutes: l.durationMinutes,
+      status: l.status,
+      notes: l.notes,
+      meetingPoint: l.place,
+      createdAt: ago(Math.max(1, Math.round((now - l.startsAt.getTime()) / DAY) + 7)),
+      updatedAt: ago(Math.max(0, Math.round((now - l.startsAt.getTime()) / DAY))),
     });
-  };
-
-  apps.forEach((app, index) => {
-    if (!app.instructorId) return;
-    const planned = app.hoursPlanned as number;
-    const done =
-      app.status === "COMPLETED" ? planned : app.status === "PAID" ? 4 + ((index * 5) % 14) : app.status === "PAYMENT_PENDING" ? index % 3 : 0;
-    for (let k = 0; k < done; k++) lesson(app, -2 - k * 3 - (index % 3), SLOTS[(index + k) % SLOTS.length]!, "DONE");
-    if (app.status === "PAID") {
-      lesson(app, 0, SLOTS[index % SLOTS.length]!, "PLANNED");
-      lesson(app, 2 + (index % 3), SLOTS[(index + 3) % SLOTS.length]!, "PLANNED");
-      lesson(app, 6 + (index % 4), SLOTS[(index + 5) % SLOTS.length]!, "PLANNED");
-      if (index % 4 === 1) lesson(app, -1, SLOTS[(index + 6) % SLOTS.length]!, "CANCELLED");
-    }
-    if (app.status === "PAYMENT_PENDING" && index % 2 === 0) lesson(app, 1 + (index % 4), SLOTS[(index + 2) % SLOTS.length]!, "PLANNED");
   });
-
-  // une leçon en cours sur la Clio, pour la barre de temps restant de la fiche véhicule
-  // élève et moniteur libres sur ce créneau : le planning ne montre aucun conflit
-  const liveStart = now - 20 * 60_000;
-  const liveEnd = liveStart + 90 * 60_000;
-  const free = (key: string, id: unknown) =>
-    !(t.drivingLesson as Row[]).some((l) => {
-      const s = (l.startsAt as Date).getTime();
-      return l[key] === id && l.status !== "CANCELLED" && s < liveEnd && s + Number(l.durationMinutes ?? 60) * 60_000 > liveStart;
-    });
-  const driving = apps.find(
-    (app) =>
-      app.status === "PAID" &&
-      app.instructorId &&
-      app.permitType !== "a2" &&
-      app.permitType !== "permis-b-auto" &&
-      free("applicationId", app.id) &&
-      free("instructorId", app.instructorId) &&
-      free("vehicleId", "veh-clio"),
-  );
-  if (driving) {
-    lessonCount += 1;
-    t.drivingLesson.push({
-      id: `les-${lessonCount}`,
-      organizationId: ORG,
-      applicationId: driving.id,
-      instructorId: driving.instructorId,
-      vehicleId: "veh-clio",
-      startsAt: new Date(liveStart),
-      durationMinutes: 90,
-      status: "PLANNED",
-      notes: "Leçon de conduite en ville.",
-      createdAt: ago(3),
-      updatedAt: ago(0),
-    });
-  }
 
   /* ---------- comptes rendus des leçons, documents et journal des véhicules ---------- */
   const CAR_ISSUES = [

@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { AnimatedBar, ListCard, SectionLabel, StatStrip, TimeRow } from '@/components/blocks';
 import { RemcGrid } from '@/components/remc';
 import { Avatar, Badge, Button, Row, Screen, Section, TopBar } from '@/components/ui';
-import { instructorLessons, plannedStudents } from '@/data/mock';
+import { instructorWeek as instructorLessons, plannedStudents } from '@/data/mock';
 import { colors, font, toneColors } from '@/theme';
 
 const minutes = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));

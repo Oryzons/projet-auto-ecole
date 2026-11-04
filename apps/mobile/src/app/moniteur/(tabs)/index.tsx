@@ -7,21 +7,30 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { DayTimeline, ListCard, LiveCard, Notice, SectionLabel, StatStrip, TimeRow } from '@/components/blocks';
 import { DetailList, SidePanel } from '@/components/panel';
 import { Badge, Button, IconButton, Row, Screen } from '@/components/ui';
-import { instructor, instructorDays, instructorLessons, plannedStudents } from '@/data/mock';
+import { instructor, instructorDays, instructorWeek, plannedStudents, todayKey } from '@/data/mock';
 import { colors, font, radius } from '@/theme';
 
-type Lesson = (typeof instructorLessons)[number];
+type Lesson = (typeof instructorWeek)[number];
 
-/** Heure de démonstration : la maquette montre la journée du mardi 27 en début d'après-midi */
-const DEMO_NOW = '14:25';
+const DAY_ORDER = instructorDays.map((d) => d.key);
+const clock = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 const minutes = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 const typeColor = (type: string) => (type === 'Examen blanc' ? colors.violet : colors.primary);
 
 /** Calendrier personnel des leçons du moniteur */
 export default function MoniteurPlanning() {
-  const [day, setDay] = useState('tue');
+  const [day, setDay] = useState(todayKey);
   const [open, setOpen] = useState<Lesson | null>(null);
-  const now = minutes(DEMO_NOW);
+  // les leçons sont celles du planning partagé avec le site admin
+  const instructorLessons = instructorWeek.filter((l) => l.dayKey === day);
+  const order = DAY_ORDER.indexOf(day) - DAY_ORDER.indexOf(todayKey);
+  const nowLabel = order < 0 ? '23:59' : order > 0 ? '00:00' : clock();
+  const now = minutes(nowLabel);
+  const selected = instructorDays.find((d) => d.key === day)!;
+  const heading = selected.at.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
   const state = (l: Lesson) => {
     if (l.status === 'done' || minutes(l.end) <= now) return 'done' as const;
@@ -39,8 +48,8 @@ export default function MoniteurPlanning() {
     <Screen withTabBar>
       <Row style={{ justifyContent: 'space-between' }}>
         <View>
-          <Text style={styles.date}>MARDI 27 OCTOBRE</Text>
-          <Text style={font.title}>Bonjour Julie</Text>
+          <Text style={styles.date}>{heading}</Text>
+          <Text style={font.title}>Bonjour {instructor.firstName}</Text>
         </View>
         <IconButton icon={Bell} />
       </Row>
@@ -52,7 +61,7 @@ export default function MoniteurPlanning() {
             <Pressable key={d.key} onPress={() => setDay(d.key)} style={[styles.day, on && styles.dayOn]}>
               <Text style={[font.tiny, on && { color: 'rgba(255,255,255,0.8)' }]}>{d.day}</Text>
               <Text style={[font.h3, { fontSize: 17 }, on && { color: '#fff' }]}>{d.date}</Text>
-              <View style={[styles.dot, on && { backgroundColor: '#fff' }]} />
+              <View style={[styles.dot, on && { backgroundColor: '#fff' }, !instructorWeek.some((l) => l.dayKey === d.key) && { opacity: 0 }]} />
             </Pressable>
           );
         })}
@@ -88,13 +97,14 @@ export default function MoniteurPlanning() {
 
       <Animated.View entering={enter(2)} style={{ gap: 10 }}>
         <SectionLabel>Ma journée</SectionLabel>
-        <DayTimeline now={DEMO_NOW} blocks={instructorLessons.map((l) => ({ start: l.start, end: l.end, color: typeColor(l.type), done: state(l) === 'done' }))} />
+        <DayTimeline now={order === 0 ? nowLabel : undefined} blocks={instructorLessons.map((l) => ({ start: l.start, end: l.end, color: typeColor(l.type), done: state(l) === 'done' }))} />
       </Animated.View>
 
       {reports > 0 ? (
-        <Notice icon={PenLine} text={`${reports} compte rendu à rédiger`} onPress={() => setOpen(done.find((l) => !l.reportDone) ?? null)} />
+        <Notice icon={PenLine} text={`${reports} compte${reports > 1 ? 's' : ''} rendu${reports > 1 ? 's' : ''} à rédiger`} onPress={() => setOpen(done.find((l) => !l.reportDone) ?? null)} />
       ) : null}
 
+      {upcoming.length ? (
       <Animated.View entering={enter(3)} style={{ gap: 8 }}>
         <SectionLabel count={upcoming.length}>À venir</SectionLabel>
         <ListCard>
@@ -111,7 +121,9 @@ export default function MoniteurPlanning() {
           ))}
         </ListCard>
       </Animated.View>
+      ) : null}
 
+      {done.length ? (
       <Animated.View entering={enter(4)} style={{ gap: 8 }}>
         <SectionLabel count={done.length}>Terminées</SectionLabel>
         <ListCard>
@@ -130,6 +142,9 @@ export default function MoniteurPlanning() {
           ))}
         </ListCard>
       </Animated.View>
+      ) : null}
+
+      {!instructorLessons.length ? <Notice icon={CalendarClock} tone="neutral" text="Aucune leçon ce jour-là" /> : null}
 
       <Text style={[font.tiny, { textAlign: 'center' }]}>Véhicule du jour : {instructor.vehicle}</Text>
 
