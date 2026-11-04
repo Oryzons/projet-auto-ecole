@@ -33,7 +33,7 @@ export default function AdminHelpPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Aide" title="Comment pouvons-nous vous aider ?" description="Les réponses aux questions les plus fréquentes sur Virage." />
+      <PageHeader eyebrow="Aide" title="Comment pouvons-nous vous aider ?" description="Les réponses aux questions les plus fréquentes sur Shift." />
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <FadeIn>
@@ -110,10 +110,10 @@ export default function AdminHelpPage() {
             <p className="mt-4 text-[15px] font-semibold">Écrire au support</p>
             <p className="mt-1 text-[13px] leading-relaxed text-white/80">Réponse sous 24 h ouvrées. Joignez une capture d&apos;écran si possible.</p>
             <a
-              href="mailto:support@virage.fr"
+              href="mailto:support@shift-auto.fr"
               className="relative mt-4 inline-flex h-9 items-center rounded-[10px] bg-white px-4 text-[13px] font-semibold text-primary-strong transition-transform hover:-translate-y-0.5"
             >
-              support@virage.fr
+              support@shift-auto.fr
             </a>
           </Card>
           <Card className="gap-0 p-5">

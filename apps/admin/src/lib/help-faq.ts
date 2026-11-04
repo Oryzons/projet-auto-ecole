@@ -98,7 +98,7 @@ export const ADMIN_HELP_FAQS: FaqItem[] = [
     topic: "dossiers",
     question: "Quels emails reçoivent les élèves ?",
     answer:
-      "Un email aux couleurs de Virage part à chaque étape : bienvenue, document à renvoyer, dossier validé, paiement, nouveau message, séance de code (nouvelle date, inscription, rappel 2 jours avant, modification ou annulation). Dans Paramètres, section « Emails », vous pouvez tous les prévisualiser et vous en envoyer un exemplaire de test.",
+      "Un email aux couleurs de Shift part à chaque étape : bienvenue, document à renvoyer, dossier validé, paiement, nouveau message, séance de code (nouvelle date, inscription, rappel 2 jours avant, modification ou annulation). Dans Paramètres, section « Emails », vous pouvez tous les prévisualiser et vous en envoyer un exemplaire de test.",
   },
   {
     id: "bank-transfer",

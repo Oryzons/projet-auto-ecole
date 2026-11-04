@@ -33,7 +33,7 @@ export async function enablePhoneNotifications() {
   if (!current.canAskAgain) return false;
   const asked = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowBadge: true, allowSound: true } });
   if (asked.granted && Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', { name: 'Virage', importance: Notifications.AndroidImportance.HIGH });
+    await Notifications.setNotificationChannelAsync('default', { name: 'Shift', importance: Notifications.AndroidImportance.HIGH });
   }
   return asked.granted;
 }
@@ -120,7 +120,7 @@ export async function sendTestNotification(delaySeconds = 5) {
   const next = upcomingLessons[0];
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: next ? `Leçon à ${next.start} avec ${next.instructor.split(' ')[0]}` : 'Virage',
+      title: next ? `Leçon à ${next.start} avec ${next.instructor.split(' ')[0]}` : 'Shift',
       body: next ? `${student.firstName}, rendez-vous ${next.place}. Touchez pour voir le détail.` : 'Les notifications fonctionnent.',
       data: { url: '/eleve' },
       sound: true,

@@ -424,7 +424,7 @@ export function ZoneArt({ id }: { id: ZoneId }) {
           <polygon points={faceY(X + 2.2, X + 6.9, Y + 3, 0.2, 0.8)} fill="#2d50f5" />
           <g transform={onWallY(X + 3.55, Y + 3, 0.36)}>
             <text x={0} y={0} fontSize={10} fontWeight={800} fill="#ffffff" letterSpacing={2.5}>
-              VIRAGE
+              SHIFT
             </text>
           </g>
           <Box x={X + 2.1} y={Y + 2.2} z={1.05} w={4.9} d={0.9} h={0.06} colors={WOOD} />

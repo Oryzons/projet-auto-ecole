@@ -1,5 +1,5 @@
 /**
- * Virage — couleurs communes à l'app mobile et au site admin.
+ * Shift — couleurs communes à l'app mobile et au site admin.
  * Reprises des maquettes : bleu électrique pour l'action, bleu nuit pour le texte,
  * fonds blancs légèrement bleutés. Les couleurs d'état restent discrètes.
  */

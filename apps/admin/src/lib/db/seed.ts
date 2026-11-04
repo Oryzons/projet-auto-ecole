@@ -6,7 +6,7 @@ import type { Store } from "./engine";
 import { seedCrm } from "./seed-crm";
 
 /**
- * Données de démonstration de l'auto-école Virage (Lyon 7e).
+ * Données de démonstration de l'auto-école Shift (Lyon 7e).
  * Les identifiants sont fixes pour que les sessions restent valides après un redémarrage.
  * Connexion : sophie@virage.fr / virage2026
  */
@@ -68,7 +68,7 @@ export function seed(store: Store) {
   t.organization.push({
     id: ORG,
     slug: "virage",
-    name: "Virage",
+    name: "Shift",
     stripeAccountId: null,
     createdAt: ago(400),
     updatedAt: ago(2),
@@ -84,9 +84,9 @@ export function seed(store: Store) {
       partnerPrice: 115000,
       fiscalStampPrice: 8000,
       discountCodes: [{ code: "PARRAIN", label: "Parrainage d'un ami", kind: "amount", value: 5000 }],
-      bankTransfer: { enabled: true, holder: "VIRAGE AUTO-ECOLE", iban: "FR76 3000 4012 3400 0101 2345 678", bic: "BNPAFRPPXXX" },
+      bankTransfer: { enabled: true, holder: "SHIFT AUTO-ECOLE", iban: "FR76 3000 4012 3400 0101 2345 678", bic: "BNPAFRPPXXX" },
       company: {
-        legalName: "Virage Auto-École SAS",
+        legalName: "Shift Auto-École SAS",
         address: "12 rue de Marseille",
         postalCode: "69007",
         city: "Lyon",

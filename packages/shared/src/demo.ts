@@ -1,5 +1,5 @@
 /**
- * Source unique des données de démonstration de Virage.
+ * Source unique des données de démonstration de Shift.
  *
  * Le site admin (seed de la base en mémoire) et l'app mobile (espaces élève,
  * moniteur et administration) lisent tous les deux ce fichier : mêmes élèves,

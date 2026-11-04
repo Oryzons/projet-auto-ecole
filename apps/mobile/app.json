@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Virage",
+    "name": "Shift",
     "slug": "mathis",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -37,6 +37,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/notification-icon.png",
           "color": "#2D50F5"
         }
       ]

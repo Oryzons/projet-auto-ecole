@@ -88,7 +88,7 @@ function Scan({ method, onDone }: { method: 'faceid' | 'fingerprint'; onDone: ()
       </Animated.Text>
       <Text style={[s.sheetText, { textAlign: 'center' }]}>
         {done
-          ? 'Vous pourrez ouvrir Virage en un instant.'
+          ? 'Vous pourrez ouvrir Shift en un instant.'
           : method === 'faceid'
             ? 'Gardez votre visage dans le cadre pendant la vérification.'
             : 'Placez votre doigt sur le capteur jusqu’à la fin de la lecture.'}

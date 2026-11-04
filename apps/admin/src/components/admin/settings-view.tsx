@@ -455,7 +455,7 @@ function GeneralSection({ data }: { data: SettingsData }) {
 
   return (
     <>
-      <SectionCard title="Votre auto-école" description="Ces informations identifient votre espace Virage.">
+      <SectionCard title="Votre auto-école" description="Ces informations identifient votre espace Shift.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nom" htmlFor="org-name">
             <Input id="org-name" value={data.organization.name} readOnly className="bg-subtle text-muted-foreground" />

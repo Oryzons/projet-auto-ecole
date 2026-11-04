@@ -129,7 +129,7 @@ const entries: Entry[] = [
     title: 'Sécurité du compte',
     intro: 'Protégez l’accès à votre espace.',
     items: [
-      { q: 'Face ID ou empreinte, c’est sûr ?', a: 'Oui : votre visage ou votre empreinte restent sur votre téléphone, Virage ne les reçoit jamais.' },
+      { q: 'Face ID ou empreinte, c’est sûr ?', a: 'Oui : votre visage ou votre empreinte restent sur votre téléphone, Shift ne les reçoit jamais.' },
       { q: 'J’ai oublié mon code à 4 chiffres', a: 'Connectez-vous avec votre mot de passe puis choisissez un nouveau code ici.' },
       { q: 'Un appareil inconnu est connecté', a: 'Touchez « Retirer » puis changez votre mot de passe.' },
     ],
@@ -138,13 +138,13 @@ const entries: Entry[] = [
     match: /^\/eleve\/parametres\/notifications/,
     title: 'Notifications',
     intro: 'Choisissez ce que vous recevez et comment.',
-    items: [{ q: 'Je ne reçois rien sur mon téléphone', a: 'Vérifiez que les notifications de Virage sont autorisées dans les réglages de votre téléphone.' }],
+    items: [{ q: 'Je ne reçois rien sur mon téléphone', a: 'Vérifiez que les notifications de Shift sont autorisées dans les réglages de votre téléphone.' }],
   },
   {
     match: /^\/eleve\/parametres\/accessibilite/,
     title: 'Accessibilité',
     intro: 'Adaptez l’affichage à vos besoins.',
-    items: [{ q: 'Les réglages de mon téléphone sont-ils pris en compte ?', a: 'Oui, la taille du texte et la réduction des animations du téléphone s’appliquent aussi à Virage.' }],
+    items: [{ q: 'Les réglages de mon téléphone sont-ils pris en compte ?', a: 'Oui, la taille du texte et la réduction des animations du téléphone s’appliquent aussi à Shift.' }],
   },
   {
     match: /^\/eleve\/parametres\/suppression/,

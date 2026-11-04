@@ -57,7 +57,7 @@ export default function ConnexionEmail() {
           <CtaButton label="Continuer" onPress={() => router.push({ pathname: '/connexion/mot-de-passe', params: { email: email.trim() } })} />
         </View>
         <View style={styles.signup}>
-          <Text style={styles.small}>Nouveau chez Virage ?</Text>
+          <Text style={styles.small}>Nouveau chez Shift ?</Text>
           <Pressable onPress={() => router.push('/inscription/identite')} hitSlop={8}>
             <Text style={styles.link}>S’inscrire</Text>
           </Pressable>

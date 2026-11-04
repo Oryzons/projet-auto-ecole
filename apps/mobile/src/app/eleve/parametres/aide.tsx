@@ -35,7 +35,7 @@ export default function ReglagesAide() {
       <MenuGroup title="Nous trouver" delay={100}>
         <MenuRow icon={MapPin} title="Agence Lyon République" subtitle="12 rue de la République, Lyon 2e" onPress={() => Linking.openURL('https://maps.apple.com/?q=12+rue+de+la+R%C3%A9publique+Lyon')} />
         <MenuRow icon={Clock3} tone="neutral" title="Horaires" subtitle="Lun.–ven. 9 h–19 h · sam. 9 h–13 h" />
-        <MenuRow icon={Mail} tone="violet" title="contact@virage-auto.fr" onPress={() => Linking.openURL('mailto:contact@virage-auto.fr')} />
+        <MenuRow icon={Mail} tone="violet" title="contact@shift-auto.fr" onPress={() => Linking.openURL('mailto:contact@shift-auto.fr')} />
       </MenuGroup>
 
       <Animated.View entering={FadeInDown.delay(140).duration(360)} style={{ gap: 10 }}>
@@ -61,7 +61,7 @@ export default function ReglagesAide() {
       </Animated.View>
 
       <MenuGroup delay={180}>
-        <MenuRow icon={Bug} tone="warning" title="Signaler un problème" subtitle="Un bug, une erreur dans l’application" onPress={() => Linking.openURL('mailto:support@virage-auto.fr?subject=Problème%20application')} />
+        <MenuRow icon={Bug} tone="warning" title="Signaler un problème" subtitle="Un bug, une erreur dans l’application" onPress={() => Linking.openURL('mailto:support@shift-auto.fr?subject=Problème%20application')} />
       </MenuGroup>
     </Screen>
   );

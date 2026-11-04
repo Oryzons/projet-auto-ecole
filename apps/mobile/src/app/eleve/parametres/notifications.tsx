@@ -20,7 +20,7 @@ export default function ReglagesNotifications() {
   return (
     <Screen>
       <TopBar title="Notifications" />
-      <PageTitle title="Restez informé." text="Choisissez comment et quand Virage vous prévient." />
+      <PageTitle title="Restez informé." text="Choisissez comment et quand Shift vous prévient." />
 
       <MenuGroup title="Canaux" delay={60}>
         <MenuRow icon={Bell} title="Notifications push" subtitle="Sur ce téléphone" right={<Switch {...bind(p, 'push')} />} />
@@ -34,7 +34,7 @@ export default function ReglagesNotifications() {
               : test === 'sent'
                 ? 'Arrive dans 5 secondes : verrouillez le téléphone'
                 : test === 'refused'
-                  ? 'Autorisez Virage dans Réglages › Notifications'
+                  ? 'Autorisez Shift dans Réglages › Notifications'
                   : 'Pour vérifier que tout fonctionne'
           }
           onPress={onTest}

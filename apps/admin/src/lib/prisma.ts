@@ -4,7 +4,7 @@ import { seed } from "./db/seed";
 const one = (model: string, from: string, to = "id") => ({ model, kind: "one" as const, from, to });
 const many = (model: string, to: string, from = "id") => ({ model, kind: "many" as const, from, to });
 
-/** Même schéma que Virage (prisma/schema.prisma), adapté au permis de conduire */
+/** Même schéma que Shift (prisma/schema.prisma), adapté au permis de conduire */
 const models: Record<string, ModelDef> = {
   organization: {
     relations: {

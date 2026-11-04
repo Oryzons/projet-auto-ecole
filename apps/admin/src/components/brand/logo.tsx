@@ -3,10 +3,10 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useId } from "react";
 
-import { LOGO_ROAD, LOGO_VIEWBOX } from "@/lib/logo-paths";
+import { LOGO_BOTTOM, LOGO_GRADIENT, LOGO_TILE_RADIUS, LOGO_TOP, LOGO_VIEWBOX } from "@virage/shared/brand";
 import { cn } from "@/lib/utils";
 
-/** Marque seule : la tuile bleue et sa route en virage. `inverse` : tuile blanche, route bleue. */
+/** Marque seule : la tuile bleue et le S en deux barres. `inverse` : tuile blanche, S bleu. */
 export function LogoMark({
   className,
   animated = false,
@@ -20,46 +20,36 @@ export function LogoMark({
   const play = animated && !reduce;
   const id = useId();
   const tile = inverse ? "#ffffff" : `url(#${id}-g)`;
-  const edge = inverse ? "#2d50f5" : "#ffffff";
-  const dash = inverse ? "#ffffff" : "#2d50f5";
+  const ink = inverse ? "#2d50f5" : "#ffffff";
   return (
     <svg viewBox={LOGO_VIEWBOX} className={cn("size-8 shrink-0", className)} aria-hidden>
       <defs>
         <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#4f6fff" />
-          <stop offset="1" stopColor="#2140d8" />
+          <stop offset="0" stopColor={LOGO_GRADIENT[0]} />
+          <stop offset="1" stopColor={LOGO_GRADIENT[1]} />
         </linearGradient>
-        <clipPath id={`${id}-c`}>
-          <rect width="32" height="32" rx="9" />
-        </clipPath>
       </defs>
-      <rect width="32" height="32" rx="9" fill={tile} />
-      <g clipPath={`url(#${id}-c)`}>
-        <motion.path
-          d={LOGO_ROAD}
-          stroke={edge}
-          strokeWidth={7.5}
-          fill="none"
-          initial={play ? { pathLength: 0 } : false}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        />
-        <motion.path
-          d={LOGO_ROAD}
-          stroke={dash}
-          strokeWidth={1.3}
-          fill="none"
-          strokeDasharray="2.4 2.4"
-          initial={play ? { opacity: 0 } : false}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: play ? 0.6 : 0 }}
-        />
-      </g>
+      <rect width="100" height="100" rx={LOGO_TILE_RADIUS} fill={tile} />
+      {/* les deux voies glissent en place, comme un changement de voie */}
+      <motion.path
+        d={LOGO_TOP}
+        fill={ink}
+        initial={play ? { x: -14, opacity: 0 } : false}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <motion.path
+        d={LOGO_BOTTOM}
+        fill={ink}
+        initial={play ? { x: 14, opacity: 0 } : false}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, delay: play ? 0.12 : 0, ease: [0.22, 1, 0.36, 1] }}
+      />
     </svg>
   );
 }
 
-/** Logo complet : le V et le nom, comme dans l'app mobile. */
+/** Logo complet : la marque et le nom, comme dans l'app mobile. */
 export function Logo({
   className,
   showText = true,
@@ -81,7 +71,7 @@ export function Logo({
             tone === "inverse" ? "text-white" : "text-foreground",
           )}
         >
-          virage
+          shift
         </span>
       )}
     </span>

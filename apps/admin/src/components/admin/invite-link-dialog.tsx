@@ -35,8 +35,8 @@ export function InviteLinkDialog({ result: current, onClose }: { result: InviteR
     if (!result) return;
     try {
       await navigator.share({
-        title: "Votre accès Virage",
-        text: `Bonjour ${result.name}, voici votre lien pour activer votre compte Virage :`,
+        title: "Votre accès Shift",
+        text: `Bonjour ${result.name}, voici votre lien pour activer votre compte Shift :`,
         url: result.inviteLink,
       });
     } catch {

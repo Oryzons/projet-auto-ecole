@@ -41,7 +41,7 @@ const myLessons = ALL_LESSONS.filter((l) => l.studentId === me.id && l.status !=
 const myUpcoming = myLessons.filter((l) => !isPast(l) && l.status === 'PLANNED');
 const myDone = myLessons.filter((l) => l.status === 'DONE');
 
-export const school = { name: 'Virage', city: 'Lyon 7e', phone: '04 78 00 00 00' };
+export const school = { name: 'Shift', city: 'Lyon 7e', phone: '04 78 00 00 00' };
 
 /* ---------- Élève connecté ---------- */
 
@@ -244,7 +244,7 @@ export type Conversation = {
 
 export const conversations: Conversation[] = [
   { id: 'julie', name: 'Julie Bernard', role: 'Monitrice · Permis B', date: '09:12', last: 'Pense à prendre tes lunettes samedi, on part sur le périphérique 🙂', unread: 1 },
-  { id: 'accueil', name: 'Accueil Virage', role: 'Secrétariat', date: 'Hier', last: 'Votre justificatif de domicile a été refusé : il date de plus de 6 mois.', unread: 2 },
+  { id: 'accueil', name: 'Accueil Shift', role: 'Secrétariat', date: 'Hier', last: 'Votre justificatif de domicile a été refusé : il date de plus de 6 mois.', unread: 2 },
   { id: 'karim', name: 'Karim Haddad', role: 'Moniteur · Permis B', date: 'Lun.', last: 'Très bonne séance, on travaillera les ronds-points la prochaine fois.' },
   { id: 'compta', name: 'Comptabilité', role: 'Paiements et factures', date: '21 oct.', last: 'Votre facture n°F-2026-0312 est disponible.', read: true },
   { id: 'examens', name: 'Service examens', role: 'Inscriptions et convocations', date: '15 oct.', last: 'Vous êtes inscrit à la session de code du 12 novembre.' },

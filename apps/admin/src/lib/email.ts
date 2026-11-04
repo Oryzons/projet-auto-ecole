@@ -34,7 +34,7 @@ const resend = process.env.RESEND_API_KEY
   : null;
 
 /** Expéditeur : doit utiliser le domaine vérifié dans Resend (virage.fr). */
-const FROM = process.env.EMAIL_FROM || "Virage <notifications@virage.fr>";
+const FROM = process.env.EMAIL_FROM || "Shift <notifications@virage.fr>";
 const REPLY_TO = process.env.EMAIL_REPLY_TO || undefined;
 
 /** Logo joint en ligne (cid:) : affiché même si le site n'est pas accessible publiquement. */

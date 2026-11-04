@@ -78,7 +78,7 @@ export default function EleveReglages() {
         <MenuRow icon={Trash2} danger title="Supprimer mon compte" onPress={go('/eleve/parametres/suppression')} />
       </MenuGroup>
 
-      <Text style={styles.version}>Virage · version 1.0.0</Text>
+      <Text style={styles.version}>Shift · version 1.0.0</Text>
 
       <BottomSheet open={logout} onClose={() => setLogout(false)}>
         <Text style={s.sheetTitle}>Se déconnecter ?</Text>

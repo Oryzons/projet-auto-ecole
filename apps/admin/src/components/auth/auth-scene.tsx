@@ -121,7 +121,7 @@ export function AuthScene({ children, outro = false }: { children: ReactNode; ou
 
           <footer className="flex flex-wrap items-end justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Virage · Gestion des dossiers de permis de conduire
+              © {new Date().getFullYear()} Shift · Gestion des dossiers de permis de conduire
             </p>
             <ul className="flex flex-wrap gap-1.5 max-lg:hidden">
               {ROOMS.map((room) => (

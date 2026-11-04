@@ -17,14 +17,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Virage · Auto-école",
-    template: "%s · Virage",
+    default: "Shift · Auto-école",
+    template: "%s · Shift",
   },
-  description: "Gestion de l'auto-école Virage : élèves, planning, paiements",
+  description: "Gestion de l'auto-école Shift : élèves, planning, paiements",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Virage",
+    title: "Shift",
   },
 };
 

@@ -95,7 +95,7 @@ export function SidebarNav({ config, onNavigate }: { config: NavConfig; onNaviga
 export function Sidebar({ config }: { config: NavConfig }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-border bg-card px-4 pt-5 pb-4 lg:flex">
-      <Link href={config.home} className="mb-8 flex items-center px-2" aria-label="Accueil Virage">
+      <Link href={config.home} className="mb-8 flex items-center px-2" aria-label="Accueil Shift">
         <Logo />
       </Link>
       <SidebarNav config={config} />

@@ -4,7 +4,7 @@ import { colors } from '@/theme';
 
 /**
  * Voiture d'auto-école vue de profil, dessinée en vectoriel :
- * nette à toutes les tailles, aux couleurs de Virage, avec le panneau
+ * nette à toutes les tailles, aux couleurs de Shift, avec le panneau
  * « AUTO-ÉCOLE » sur le toit.
  */
 export function CarArt({ width = 180 }: { width?: number }) {
@@ -46,7 +46,7 @@ export function CarArt({ width = 180 }: { width?: number }) {
         stroke="#C8D1E2"
         strokeWidth="1"
       />
-      {/* bande Virage */}
+      {/* bande Shift */}
       <Path d="M14 76 L306 76 L306 82 L13 82 Z" fill={colors.primary} opacity={0.95} />
       {/* vitres */}
       <Path d="M58 53 C70 41 87 33 106 32 L141 32 L141 53 Z" fill="url(#glass)" />
